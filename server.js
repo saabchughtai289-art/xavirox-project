@@ -3,10 +3,11 @@ const path = require('path');
 const mongoose = require('mongoose');
 const app = express();
 
-// 1. DATABASE CONNECTION
-// deployment ke waqt 'mongodb://...' ki jagah process.env.MONGO_URI use hoga
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/xavirox_core')
-    .then(() => console.log('✅ NEURAL CORE CONNECTED'))
+// 1. DATABASE CONNECTION (Cloud Atlas Integrated)
+const dbURI = "mongodb+srv://xavirox_boss:noESvAPXb6tGrvqi@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority&appName=Cluster0";
+
+mongoose.connect(dbURI)
+    .then(() => console.log('✅ XAVIROX NEURAL CORE CONNECTED (CLOUD)'))
     .catch(err => console.error('❌ CONNECTION FAILED:', err));
 
 // 2. DATA SCHEMAS
@@ -23,6 +24,7 @@ const Feedback = mongoose.model('Feedback', new mongoose.Schema({
     date: { type: Date, default: Date.now }
 }));
 
+// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.static('public')); 
@@ -64,18 +66,18 @@ app.get('/dashboard', async (req, res) => {
 
         let postHTML = allPosts.map(p => `
             <div class="glass-card post" id="post-${p._id}">
-                <div class="post-header">
+                <div class="post-header" style="display:flex; align-items:center; margin-bottom:15px;">
                     <div class="avatar-glow">X</div>
-                    <div class="post-meta">
-                        <span class="author-name">Xavirox User <i class="fas fa-check-circle bluetick"></i></span>
-                        <div class="post-time">${p.date.toLocaleTimeString()} | Node Stable</div>
+                    <div class="post-meta" style="margin-left:15px;">
+                        <span class="author-name" style="font-weight:bold; color:var(--cyan);">Xavirox User <i class="fas fa-check-circle bluetick"></i></span>
+                        <div class="post-time" style="font-size:11px; opacity:0.5;">${new Date(p.date).toLocaleTimeString()} | Neural Link</div>
                     </div>
                 </div>
-                <div class="post-body">${p.content}</div>
-                <div class="post-actions">
+                <div class="post-body" style="margin-bottom:20px; line-height:1.6;">${p.content}</div>
+                <div class="post-actions" style="display:flex; gap:15px;">
                     <div class="luxury-action-group">
                         <button class="lux-btn upvote" onclick="handleVote('${p._id}', 'up')"><i class="fas fa-caret-up"></i> <span class="v-count">${p.votes}</span></button>
-                        <div class="divider"></div>
+                        <div class="divider" style="width:1px; background:rgba(255,255,255,0.1);"></div>
                         <button class="lux-btn downvote" onclick="handleVote('${p._id}', 'down')"><i class="fas fa-caret-down"></i></button>
                     </div>
                     <button class="lux-btn-single share" onclick="copyLink('${p._id}')"><i class="fas fa-paper-plane"></i></button>
@@ -92,46 +94,25 @@ app.get('/dashboard', async (req, res) => {
                 <style>
                     :root { --glow: #ff007f; --cyan: #00ffff; --purple: #7b61ff; --bg: #05050a; }
                     body { margin: 0; background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-                    
-                    /* Background Universe */
                     .universe { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05050a 100%); }
                     .star { position: absolute; background: white; border-radius: 50%; animation: twinkle var(--d) infinite ease-in-out; }
-                    @keyframes twinkle { 
-                        0%, 100% { opacity: 0.2; transform: scale(1); } 
-                        50% { opacity: 1; transform: scale(1.5); box-shadow: 0 0 10px var(--cyan); } 
-                    }
-
-                    .navbar { 
-                        width: 100%; height: 75px; background: rgba(0,0,0,0.8); backdrop-filter: blur(30px); 
-                        border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; 
-                        justify-content: space-between; padding: 0 40px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; 
-                    }
-
+                    @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); box-shadow: 0 0 10px var(--cyan); } }
+                    .navbar { width: 100%; height: 75px; background: rgba(0,0,0,0.8); backdrop-filter: blur(30px); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; }
                     .main-layout { display: grid; grid-template-columns: 280px 1fr 320px; gap: 25px; padding: 100px 30px 20px; max-width: 1600px; margin: auto; }
-                    
-                    /* Card Styles */
                     .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 30px; padding: 25px; backdrop-filter: blur(25px); transition: 0.3s ease; }
                     .glass-card:hover { border-color: rgba(0, 255, 255, 0.3); transform: translateY(-3px); }
-
-                    /* Typing Box */
                     textarea { width: 100%; height: 110px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: #fff; padding: 20px; font-size: 16px; outline: none; resize: none; box-sizing: border-box; }
                     .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 12px 35px; border-radius: 18px; cursor: pointer; font-weight: 900; box-shadow: 0 0 20px rgba(255,0,127,0.4); transition: 0.3s; }
                     .transmit-btn:hover { box-shadow: 0 0 40px var(--glow); transform: scale(1.05); }
-
-                    /* Post Elements */
                     .post { margin-bottom: 25px; border-left: 4px solid transparent; }
                     .post:hover { border-left-color: var(--cyan); }
                     .avatar-glow { width: 50px; height: 50px; border-radius: 15px; background: linear-gradient(45deg, var(--glow), var(--purple)); display: flex; align-items: center; justify-content: center; font-weight: bold; }
                     .bluetick { color: var(--cyan); margin-left: 5px; filter: drop-shadow(0 0 5px var(--cyan)); }
-                    
-                    /* Buttons */
                     .luxury-action-group { display: flex; background: rgba(255,255,255,0.07); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; }
                     .lux-btn { background: none; border: none; color: #aaa; padding: 12px 20px; cursor: pointer; }
                     .lux-btn:hover { color: var(--cyan); background: rgba(0,255,255,0.1); }
                     .lux-btn-single { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #aaa; padding: 12px 22px; cursor: pointer; transition: 0.2s; }
                     .lux-btn-single:hover { color: var(--glow); border-color: var(--glow); }
-
-                    /* Feedback Pulse */
                     .pulse { width: 8px; height: 8px; background: #00ff00; border-radius: 50%; display: inline-block; margin-right: 10px; box-shadow: 0 0 10px #00ff00; animation: blink-pulse 2s infinite; }
                     @keyframes blink-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
                 </style>
@@ -170,7 +151,6 @@ app.get('/dashboard', async (req, res) => {
                 </div>
 
                 <script>
-                    // Star Field Gen
                     const field = document.getElementById('universe');
                     for (let i = 0; i < 130; i++) {
                         const s = document.createElement('div');
@@ -222,9 +202,11 @@ app.get('/dashboard', async (req, res) => {
 });
 
 app.post('/addpost', async (req, res) => {
-    const newPost = new Post({ content: req.body.content });
-    await newPost.save();
-    res.redirect('/dashboard');
+    try {
+        const newPost = new Post({ content: req.body.content });
+        await newPost.save();
+        res.redirect('/dashboard');
+    } catch (err) { res.status(500).send("Transmit Error"); }
 });
 
 app.get('/logout', (req, res) => res.send("<script>alert('Disconnected'); window.location='/dashboard';</script>"));
