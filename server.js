@@ -59,7 +59,7 @@ app.get('/login', (req, res) => {
                 <form action="/login" method="POST">
                     <input name="username" placeholder="Neural ID" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
                     <input name="password" type="password" placeholder="Access Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
-                    <button type="submit" style="width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(45deg, #ff007f, #7b61ff); color:white; font-weight:bold; cursor:pointer; transition:0.3s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">INITIALIZE LINK</button>
+                    <button type="submit" style="width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(45deg, #ff007f, #7b61ff); color:white; font-weight:bold; cursor:pointer; transition:0.3s;">INITIALIZE LINK</button>
                 </form>
                 <p style="font-size:12px; margin-top:15px; opacity:0.6;">New user? <a href="/signup" style="color:#00ffff; text-decoration:none;">Create ID</a></p>
             </div>
@@ -113,7 +113,10 @@ app.get('/dashboard', isAuth, async (req, res) => {
     try {
         const allPosts = await Post.find().sort({ date: -1 });
         const user = req.session.user;
-        const pUrl = user.portfolioUrl || 'https://xavirox.com';
+        
+        // Portfolio logic to prevent reload
+        let pUrl = user.portfolioUrl || 'https://xavirox.com';
+        if (!pUrl.startsWith('http')) pUrl = 'https://' + pUrl;
 
         let postHTML = allPosts.map(p => `
             <div class="glass-card post-card" id="post-${p._id}">
@@ -138,44 +141,50 @@ app.get('/dashboard', isAuth, async (req, res) => {
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
                 <style>
                     :root { --glow: #ff007f; --cyan: #00ffff; --purple: #7b61ff; --bg: #05050a; --glass: rgba(255, 255, 255, 0.03); }
-                    body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
+                    body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; width: 100%; }
                     .universe { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05050a 100%); }
                     
                     .navbar { width: 100%; height: 65px; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; }
                     .logo { font-size: 22px; font-weight: 900; color: var(--cyan); letter-spacing: 3px; text-shadow: 0 0 10px rgba(0,255,255,0.5); }
 
-                    .main-layout { display: flex; justify-content: center; gap: 30px; padding: 90px 20px 30px; max-width: 1300px; margin: auto; }
+                    .main-layout { display: flex; justify-content: center; gap: 30px; padding: 90px 20px 30px; max-width: 1300px; margin: auto; box-sizing: border-box; }
                     .left-sidebar, .right-sidebar { width: 280px; flex-shrink: 0; position: sticky; top: 90px; height: fit-content; }
-                    .feed-container { width: 620px; flex-grow: 1; }
+                    .feed-container { width: 620px; flex-grow: 1; max-width: 100%; }
 
-                    .glass-card { background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 20px; backdrop-filter: blur(15px); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; }
-                    .post-card:hover { transform: translateY(-5px); border-color: var(--cyan); box-shadow: 0 10px 30px rgba(0,255,255,0.05); }
+                    .glass-card { background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 20px; backdrop-filter: blur(15px); transition: 0.4s; position: relative; word-wrap: break-word; }
+                    .post-card:hover { border-color: var(--cyan); }
                     
                     .profile-card { text-align: center; border: 1px solid var(--cyan); }
                     .p-avatar { width: 85px; height: 85px; background: linear-gradient(45deg, var(--glow), var(--purple)); border-radius: 25px; display: flex; align-items: center; justify-content: center; font-size: 35px; margin: 0 auto 15px; }
                     
-                    .portfolio-link { background: var(--cyan); color: #000; padding: 14px; border-radius: 12px; text-decoration: none; display: block; margin-top: 20px; font-weight: bold; transition: 0.3s; }
+                    .portfolio-link { background: var(--cyan); color: #000; padding: 14px; border-radius: 12px; text-decoration: none; display: block; margin-top: 20px; font-weight: bold; transition: 0.3s; text-align: center; }
                     .portfolio-link:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--cyan); }
 
-                    .update-form input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--purple); color: white; padding: 10px; border-radius: 10px; font-size: 12px; margin-top: 10px; outline: none; }
+                    .update-form input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--purple); color: white; padding: 10px; border-radius: 10px; font-size: 12px; margin-top: 10px; outline: none; box-sizing: border-box; }
                     .update-form button { width: 100%; background: var(--purple); border: none; color: white; padding: 8px; border-radius: 10px; margin-top: 5px; cursor: pointer; font-size: 11px; font-weight: bold; }
 
                     .post-header { display: flex; align-items: center; margin-bottom: 15px; }
-                    .avatar-glow { width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(45deg, var(--glow), var(--purple)); display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; }
+                    .avatar-glow { width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(45deg, var(--glow), var(--purple)); display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; flex-shrink: 0; }
                     .author-name { color: var(--cyan); font-weight: bold; font-size: 15px; }
                     .post-body { color: #eee; line-height: 1.6; font-size: 15px; margin-bottom: 15px; }
                     
-                    .vote-btn { background: rgba(255,255,255,0.05); border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; transition: 0.2s; color: #aaa; }
-                    .vote-btn:hover { color: var(--cyan); background: rgba(0,255,255,0.1); }
+                    .vote-btn { background: rgba(255,255,255,0.05); border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; color: #aaa; }
 
                     textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 18px; box-sizing: border-box; outline: none; resize: none; }
                     .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
 
-                    @media (max-width: 850px) { .left-sidebar, .right-sidebar { display: none; } .feed-container { width: 100%; } }
+                    /* --- MOBILE STABILITY MEDIA QUERY --- */
+                    @media (max-width: 850px) {
+                        .left-sidebar, .right-sidebar { display: none !important; }
+                        .main-layout { display: block; padding: 80px 15px; }
+                        .feed-container { width: 100%; margin: 0; }
+                        .glass-card { padding: 15px; margin-bottom: 20px; }
+                        .logo { font-size: 18px; }
+                    }
                 </style>
             </head>
             <body>
@@ -190,12 +199,15 @@ app.get('/dashboard', isAuth, async (req, res) => {
                         <div class="glass-card profile-card">
                             <div class="p-avatar">${user.username[0].toUpperCase()}</div>
                             <div style="color:var(--cyan); font-weight:bold; font-size:18px;">@${user.username}</div>
-                            <a href="${pUrl}" target="_blank" class="portfolio-link"><i class="fas fa-external-link-alt"></i> Neural Portfolio</a>
+                            
+                            <a href="${pUrl}" target="_blank" class="portfolio-link">
+                                <i class="fas fa-external-link-alt"></i> Neural Portfolio
+                            </a>
                             
                             <div class="update-form" style="border-top:1px solid rgba(255,255,255,0.1); margin-top:20px; padding-top:10px;">
                                 <p style="font-size:10px; color:var(--glow); margin:0;">UPDATE LINK</p>
                                 <form action="/update-portfolio" method="POST">
-                                    <input name="portfolioUrl" placeholder="Paste link here..." required>
+                                    <input name="portfolioUrl" placeholder="https://..." required>
                                     <button type="submit">SAVE CHANGES</button>
                                 </form>
                             </div>
@@ -250,12 +262,20 @@ app.get('/dashboard', isAuth, async (req, res) => {
     } catch (err) { res.status(500).send("Core Sync Error"); }
 });
 
-// --- NEW PORTFOLIO UPDATE ROUTE ---
+// --- UPDATED PORTFOLIO ROUTE (Saves to DB & Session) ---
 app.post('/update-portfolio', isAuth, async (req, res) => {
     try {
-        const newUrl = req.body.portfolioUrl;
-        await User.findByIdAndUpdate(req.session.user._id, { portfolioUrl: newUrl });
-        req.session.user.portfolioUrl = newUrl; // Update session
+        let newUrl = req.body.portfolioUrl;
+        // Auto-fix URL if https is missing
+        if (!newUrl.startsWith('http')) newUrl = 'https://' + newUrl;
+        
+        const updatedUser = await User.findByIdAndUpdate(
+            req.session.user._id, 
+            { portfolioUrl: newUrl },
+            { new: true }
+        );
+        
+        req.session.user = updatedUser; // Session ko fresh data se update karein
         res.redirect('/dashboard');
     } catch (err) { res.status(500).send("Update Failed"); }
 });
