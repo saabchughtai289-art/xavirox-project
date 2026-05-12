@@ -114,7 +114,6 @@ app.get('/dashboard', isAuth, async (req, res) => {
         const allPosts = await Post.find().sort({ date: -1 });
         const user = req.session.user;
         
-        // Portfolio logic to prevent reload
         let pUrl = user.portfolioUrl || 'https://xavirox.com';
         if (!pUrl.startsWith('http')) pUrl = 'https://' + pUrl;
 
@@ -177,12 +176,13 @@ app.get('/dashboard', isAuth, async (req, res) => {
                     textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 18px; box-sizing: border-box; outline: none; resize: none; }
                     .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
 
-                    /* --- MOBILE STABILITY MEDIA QUERY --- */
+                    /* --- MOBILE STABILITY FIX (MERGED) --- */
                     @media (max-width: 850px) {
-                        .left-sidebar, .right-sidebar { display: none !important; }
-                        .main-layout { display: block; padding: 80px 15px; }
-                        .feed-container { width: 100%; margin: 0; }
-                        .glass-card { padding: 15px; margin-bottom: 20px; }
+                        .main-layout { display: flex; flex-direction: column; padding: 80px 15px 30px; gap: 20px; }
+                        .left-sidebar, .right-sidebar { width: 100%; position: relative; top: 0; display: block !important; }
+                        .feed-container { width: 100%; order: 2; }
+                        .left-sidebar { order: 1; } /* Profile/Portfolio stays on top */
+                        .right-sidebar { order: 3; }
                         .logo { font-size: 18px; }
                     }
                 </style>
@@ -201,7 +201,7 @@ app.get('/dashboard', isAuth, async (req, res) => {
                             <div style="color:var(--cyan); font-weight:bold; font-size:18px;">@${user.username}</div>
                             
                             <a href="${pUrl}" target="_blank" class="portfolio-link">
-                                <i class="fas fa-external-link-alt"></i> Neural Portfolio
+                                <i class="fas fa-id-badge"></i> NEURAL PORTFOLIO
                             </a>
                             
                             <div class="update-form" style="border-top:1px solid rgba(255,255,255,0.1); margin-top:20px; padding-top:10px;">
@@ -262,11 +262,9 @@ app.get('/dashboard', isAuth, async (req, res) => {
     } catch (err) { res.status(500).send("Core Sync Error"); }
 });
 
-// --- UPDATED PORTFOLIO ROUTE (Saves to DB & Session) ---
 app.post('/update-portfolio', isAuth, async (req, res) => {
     try {
         let newUrl = req.body.portfolioUrl;
-        // Auto-fix URL if https is missing
         if (!newUrl.startsWith('http')) newUrl = 'https://' + newUrl;
         
         const updatedUser = await User.findByIdAndUpdate(
@@ -275,12 +273,11 @@ app.post('/update-portfolio', isAuth, async (req, res) => {
             { new: true }
         );
         
-        req.session.user = updatedUser; // Session ko fresh data se update karein
+        req.session.user = updatedUser; 
         res.redirect('/dashboard');
     } catch (err) { res.status(500).send("Update Failed"); }
 });
 
-// 6. API & POST ROUTES
 app.post('/api/vote/:id', async (req, res) => {
     try {
         const post = await Post.findById(req.params.id);
