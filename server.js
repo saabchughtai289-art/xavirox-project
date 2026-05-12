@@ -3,15 +3,18 @@ const path = require('path');
 const mongoose = require('mongoose');
 const app = express();
 
-// 1. DATABASE CONNECTION (Merged with Standard Connection String for Stability)
+// 1. DATABASE CONNECTION (Final Super-Stable Connection)
+// Isme humne direct shard links aur 30s timeout use kiya hai
 const dbURI = "mongodb://xavirox_boss:noESvAPXb6tGrvqi@cluster0-shard-00-00.myxiyfk.mongodb.net:27017,cluster0-shard-00-01.myxiyfk.mongodb.net:27017,cluster0-shard-00-02.myxiyfk.mongodb.net:27017/xavirox_db?ssl=true&replicaSet=atlas-m9v391-shard-0&authSource=admin&retryWrites=true&w=majority";
 
-mongoose.connect(dbURI)
-    .then(() => console.log('✅ XAVIROX NEURAL CORE CONNECTED (CLOUD)'))
-    .catch(err => {
-        console.error('❌ CONNECTION FAILED. Check Atlas Network Access or restart your internet.');
-        console.error(err);
-    });
+mongoose.connect(dbURI, {
+    serverSelectionTimeoutMS: 30000 // 30 seconds tak connection ka wait karega
+})
+.then(() => console.log('✅ XAVIROX NEURAL CORE CONNECTED (CLOUD)'))
+.catch(err => {
+    console.error('❌ CONNECTION FAILED. Please check your internet or MongoDB Atlas password.');
+    console.error(err);
+});
 
 // 2. DATA SCHEMAS
 const Post = mongoose.model('Post', new mongoose.Schema({
@@ -36,7 +39,7 @@ app.use(express.static('public'));
 app.post('/api/vote/:id', async (req, res) => {
     try {
         const post = await Post.findById(req.params.id);
-        const user = "admin"; // Placeholder for current session
+        const user = "admin"; 
         if (post.votedBy.includes(user)) return res.json({ success: false, message: "Signal already locked!" });
         
         post.votes += (req.body.type === 'up' ? 1 : -1);
@@ -57,6 +60,11 @@ app.post('/api/feedback', async (req, res) => {
 // 4. MAIN DASHBOARD UI
 app.get('/dashboard', async (req, res) => {
     try {
+        // Find() ko execute karne se pehle check karein ke connection hai ya nahi
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(500).send("Core Error: Database is not connected yet. Please wait 10 seconds and refresh.");
+        }
+
         const allPosts = await Post.find().sort({ date: -1 });
         const placeholders = [
             "Drop your forbidden opinion...",
@@ -117,7 +125,6 @@ app.get('/dashboard', async (req, res) => {
                     .lux-btn-single { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #aaa; padding: 12px 22px; cursor: pointer; transition: 0.2s; }
                     .lux-btn-single:hover { color: var(--glow); border-color: var(--glow); }
                     .pulse { width: 8px; height: 8px; background: #00ff00; border-radius: 50%; display: inline-block; margin-right: 10px; box-shadow: 0 0 10px #00ff00; animation: blink-pulse 2s infinite; }
-                    @keyframes blink-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
                 </style>
             </head>
             <body>
