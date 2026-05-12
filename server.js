@@ -1,6 +1,8 @@
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
+const session = require('express-session');
+const bcrypt = require('bcryptjs');
 const app = express();
 
 // 1. DATABASE CONNECTION
@@ -14,11 +16,20 @@ mongoose.connect(dbURI, {
 .catch(err => console.error('❌ CONNECTION FAILED:', err));
 
 // 2. DATA SCHEMAS
+const UserSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    hasBlueTick: { type: Boolean, default: false },
+    isAdmin: { type: Boolean, default: false }
+});
+const User = mongoose.model('User', UserSchema);
+
 const Post = mongoose.model('Post', new mongoose.Schema({
-    author: { type: String, default: 'r/Xavirox_Official' },
+    author: { type: String, default: 'Anonymous' },
     content: String,
     votes: { type: Number, default: 0 },
     votedBy: { type: Array, default: [] }, 
+    hasBlueTick: { type: Boolean, default: false },
     date: { type: Date, default: Date.now }
 }));
 
@@ -27,52 +38,96 @@ const Feedback = mongoose.model('Feedback', new mongoose.Schema({
     date: { type: Date, default: Date.now }
 }));
 
-// Middlewares
+// 3. MIDDLEWARES
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.static('public')); 
+app.use(session({
+    secret: 'xavirox_ultra_secret',
+    resave: false,
+    saveUninitialized: true
+}));
 
-// Redirect Root to Dashboard
-app.get('/', (req, res) => res.redirect('/dashboard'));
+// Auth Guard
+const isAuth = (req, res, next) => {
+    if (req.session.user) next();
+    else res.redirect('/login');
+};
 
-// 3. APIs
-app.post('/api/vote/:id', async (req, res) => {
-    try {
-        const post = await Post.findById(req.params.id);
-        const user = "admin"; 
-        if (post.votedBy.includes(user)) return res.json({ success: false, message: "Signal already locked!" });
-        post.votes += (req.body.type === 'up' ? 1 : -1);
-        post.votedBy.push(user);
-        await post.save();
-        res.json({ success: true, newVotes: post.votes });
-    } catch (err) { res.status(500).json({ success: false }); }
+// 4. AUTH ROUTES (UI Merge)
+app.get('/login', (req, res) => {
+    res.send(`
+        <body style="background:#05050a; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
+            <div style="background:rgba(255,255,255,0.03); padding:40px; border-radius:25px; border:1px solid rgba(0,255,255,0.2); width:320px; backdrop-filter:blur(20px);">
+                <h2 style="color:#00ffff; text-align:center; letter-spacing:3px;">XAVIROX LOGIN</h2>
+                <form action="/login" method="POST">
+                    <input name="username" placeholder="Neural ID" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
+                    <input name="password" type="password" placeholder="Access Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
+                    <button type="submit" style="width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(45deg, #ff007f, #7b61ff); color:white; font-weight:bold; cursor:pointer;">INITIALIZE LINK</button>
+                </form>
+                <p style="font-size:12px; text-align:center; margin-top:20px; opacity:0.6;">New user? <a href="/signup" style="color:#00ffff; text-decoration:none;">Create ID</a></p>
+            </div>
+        </body>
+    `);
 });
 
-app.post('/api/feedback', async (req, res) => {
-    try {
-        const newFB = new Feedback({ msg: req.body.feedback });
-        await newFB.save();
-        res.json({ success: true });
-    } catch (err) { res.status(500).json({ success: false }); }
+app.get('/signup', (req, res) => {
+    res.send(`
+        <body style="background:#05050a; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
+            <div style="background:rgba(255,255,255,0.03); padding:40px; border-radius:25px; border:1px solid rgba(255,0,127,0.2); width:320px; backdrop-filter:blur(20px);">
+                <h2 style="color:#ff007f; text-align:center; letter-spacing:3px;">NEW NEURAL ID</h2>
+                <form action="/signup" method="POST">
+                    <input name="username" placeholder="Choose ID" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
+                    <input name="password" type="password" placeholder="Set Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
+                    <button type="submit" style="width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(45deg, #00ffff, #7b61ff); color:white; font-weight:bold; cursor:pointer;">REGISTER ID</button>
+                </form>
+                <p style="font-size:12px; text-align:center; margin-top:20px; opacity:0.6;"><a href="/login" style="color:#ff007f; text-decoration:none;">Back to Login</a></p>
+            </div>
+        </body>
+    `);
 });
 
-// 4. MAIN DASHBOARD UI (Mobile Optimized Merge)
-app.get('/dashboard', async (req, res) => {
+app.post('/signup', async (req, res) => {
     try {
-        if (mongoose.connection.readyState !== 1) {
-            return res.status(500).send("<h1 style='color:white; background:#05050a; height:100vh; display:flex; align-items:center; justify-content:center; font-family:sans-serif;'>📡 Connecting...</h1>");
-        }
+        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+        const isXavi = req.body.username.toLowerCase() === 'xavi';
+        const newUser = new User({ 
+            username: req.body.username, 
+            password: hashedPassword,
+            isAdmin: isXavi,
+            hasBlueTick: isXavi 
+        });
+        await newUser.save();
+        res.redirect('/login');
+    } catch (err) { res.send("Username taken!"); }
+});
 
+app.post('/login', async (req, res) => {
+    const user = await User.findOne({ username: req.body.username });
+    if (user && await bcrypt.compare(req.body.password, user.password)) {
+        req.session.user = user;
+        res.redirect('/dashboard');
+    } else {
+        res.send("<script>alert('Access Denied'); window.location='/login';</script>");
+    }
+});
+
+// 5. PROTECTED DASHBOARD
+app.get('/dashboard', isAuth, async (req, res) => {
+    try {
         const allPosts = await Post.find().sort({ date: -1 });
+        const user = req.session.user;
         const placeholders = ["Broadcast to the network...", "Drop a forbidden opinion...", "Type your thoughts..."];
         const randomLine = placeholders[Math.floor(Math.random() * placeholders.length)];
 
         let postHTML = allPosts.map(p => `
             <div class="glass-card post" id="post-${p._id}">
                 <div class="post-header">
-                    <div class="avatar-glow">X</div>
+                    <div class="avatar-glow">${p.author[0].toUpperCase()}</div>
                     <div class="post-meta">
-                        <span class="author-name" style="color:var(--cyan); font-weight:bold;">Xavirox User <i class="fas fa-check-circle bluetick"></i></span>
+                        <span class="author-name" style="color:var(--cyan); font-weight:bold;">
+                            ${p.author} ${p.hasBlueTick ? '<i class="fas fa-check-circle" style="font-size:11px; color:var(--cyan);"></i>' : ''}
+                        </span>
                         <div class="post-time" style="font-size:10px; opacity:0.5;">${new Date(p.date).toLocaleTimeString()}</div>
                     </div>
                 </div>
@@ -97,44 +152,35 @@ app.get('/dashboard', async (req, res) => {
                     :root { --glow: #ff007f; --cyan: #00ffff; --purple: #7b61ff; --bg: #05050a; }
                     body { margin: 0; background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
                     .universe { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05050a 100%); }
-                    
                     .navbar { width: 100%; height: 65px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; }
                     .logo { font-size: 22px; font-weight: 900; color: var(--cyan); letter-spacing: 3px; }
-
                     .main-layout { display: grid; grid-template-columns: 280px 1fr 320px; gap: 20px; padding: 85px 20px 20px; max-width: 1400px; margin: auto; }
-                    
                     .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 20px; backdrop-filter: blur(20px); }
-                    
                     @media (max-width: 1100px) { .main-layout { grid-template-columns: 250px 1fr; } .right-sidebar { display: none; } }
-                    @media (max-width: 768px) { 
-                        .main-layout { display: block; padding: 80px 15px 100px; } 
-                        .left-sidebar { display: none; }
-                    }
-
+                    @media (max-width: 768px) { .main-layout { display: block; padding: 80px 15px 100px; } .left-sidebar { display: none; } }
                     textarea { width: 100%; height: 100px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 15px; font-size: 15px; outline: none; resize: none; box-sizing: border-box; }
-                    .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 12px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; box-shadow: 0 0 15px rgba(255,0,127,0.3); }
-                    
+                    .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 12px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
                     .post-header { display: flex; align-items: center; }
                     .avatar-glow { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(45deg, var(--glow), var(--purple)); display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; }
-                    
                     .luxury-action-group { display: flex; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
                     .lux-btn { background: none; border: none; color: #aaa; padding: 10px 15px; cursor: pointer; }
                     .lux-btn-single { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #aaa; padding: 10px 18px; cursor: pointer; }
-
                     .mobile-nav { display: none; position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.9); border-top: 1px solid rgba(255,255,255,0.1); padding: 15px 0; justify-content: space-around; z-index: 1000; }
                     @media (max-width: 768px) { .mobile-nav { display: flex; } }
                 </style>
             </head>
             <body>
                 <div class="universe"></div>
-                <nav class="navbar"><div class="logo">XAVIROX</div></nav>
-
+                <nav class="navbar">
+                    <div class="logo">XAVIROX</div>
+                    <a href="/logout" style="color:var(--glow); text-decoration:none; font-size:12px;">LOGOUT</a>
+                </nav>
                 <div class="main-layout">
                     <div class="left-sidebar glass-card">
-                        <div style="color:var(--cyan); margin-bottom:15px;"><i class="fas fa-brain"></i> Neural Feed</div>
+                        <div style="color:var(--cyan); margin-bottom:15px;"><i class="fas fa-user"></i> @${user.username}</div>
+                        <div style="opacity:0.5; margin-bottom:15px;"><i class="fas fa-brain"></i> Neural Feed</div>
                         <div style="opacity:0.5;"><i class="fas fa-fire"></i> Trending</div>
                     </div>
-
                     <div class="feed-container">
                         <div class="input-area glass-card" style="margin-bottom: 20px;">
                             <form action="/addpost" method="POST">
@@ -144,14 +190,12 @@ app.get('/dashboard', async (req, res) => {
                         </div>
                         <div id="posts-container">${postHTML}</div>
                     </div>
-
                     <div class="right-sidebar glass-card" style="height:fit-content;">
                         <h3 style="color:var(--glow); font-size:12px;">FEEDBACK</h3>
                         <textarea id="fbContent" style="height:60px;" placeholder="Message..."></textarea>
                         <button onclick="sendFeedback()" class="transmit-btn">SEND</button>
                     </div>
                 </div>
-
                 <div class="mobile-nav">
                     <i class="fas fa-home" style="color:var(--cyan)"></i>
                     <i class="fas fa-search"></i>
@@ -159,7 +203,6 @@ app.get('/dashboard', async (req, res) => {
                     <i class="fas fa-bell"></i>
                     <i class="fas fa-user"></i>
                 </div>
-
                 <script>
                     async function handleVote(postId, type) {
                         const res = await fetch('/api/vote/' + postId, {
@@ -170,36 +213,41 @@ app.get('/dashboard', async (req, res) => {
                         const data = await res.json();
                         if(data.success) { document.querySelector('#post-'+postId+' .v-count').innerText = data.newVotes; }
                     }
-
                     async function sendFeedback() {
                         const fb = document.getElementById('fbContent').value;
                         if(!fb) return;
                         const res = await fetch('/api/feedback', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ feedback: fb })
                         });
                         if(res.ok) { alert("Signal Sent!"); document.getElementById('fbContent').value = ""; }
-                    }
-
-                    function copyLink(id) {
-                        navigator.clipboard.writeText(window.location.origin + '/post/' + id);
-                        alert('Link Copied!');
                     }
                 </script>
             </body>
             </html>
         `);
-    } catch (err) { res.status(500).send("Core Error"); }
+    } catch (err) { res.status(500).send("Core Sync Error"); }
 });
 
-app.post('/addpost', async (req, res) => {
+app.post('/addpost', isAuth, async (req, res) => {
     try {
-        const newPost = new Post({ content: req.body.content });
+        const newPost = new Post({ 
+            content: req.body.content,
+            author: req.session.user.username,
+            hasBlueTick: req.session.user.hasBlueTick
+        });
         await newPost.save();
         res.redirect('/dashboard');
     } catch (err) { res.status(500).send("Error"); }
 });
+
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/login');
+});
+
+// Redirect Root to Dashboard
+app.get('/', (req, res) => res.redirect('/dashboard'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 XAVIROX LIVE ON PORT ${PORT}`));
