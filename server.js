@@ -18,7 +18,7 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true },
     hasBlueTick: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
-    portfolioUrl: { type: String, default: 'https://google.com' } 
+    portfolioUrl: { type: String, default: 'https://xavirox.com' } 
 });
 const User = mongoose.model('User', UserSchema);
 
@@ -108,12 +108,12 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD (ANIMATION & PORTFOLIO FULL FIX)
+// 5. DASHBOARD
 app.get('/dashboard', isAuth, async (req, res) => {
     try {
         const allPosts = await Post.find().sort({ date: -1 });
         const user = req.session.user;
-        const pUrl = user.portfolioUrl || 'https://google.com';
+        const pUrl = user.portfolioUrl || 'https://xavirox.com';
 
         let postHTML = allPosts.map(p => `
             <div class="glass-card post-card" id="post-${p._id}">
@@ -145,81 +145,67 @@ app.get('/dashboard', isAuth, async (req, res) => {
                     body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
                     .universe { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05050a 100%); }
                     
-                    /* NAVBAR */
                     .navbar { width: 100%; height: 65px; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; }
                     .logo { font-size: 22px; font-weight: 900; color: var(--cyan); letter-spacing: 3px; text-shadow: 0 0 10px rgba(0,255,255,0.5); }
 
-                    /* LAYOUT */
                     .main-layout { display: flex; justify-content: center; gap: 30px; padding: 90px 20px 30px; max-width: 1300px; margin: auto; }
                     .left-sidebar, .right-sidebar { width: 280px; flex-shrink: 0; position: sticky; top: 90px; height: fit-content; }
                     .feed-container { width: 620px; flex-grow: 1; }
 
-                    /* CARDS & HOVER ANIMATIONS */
-                    .glass-card { background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 20px; backdrop-filter: blur(15px); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; overflow: hidden; }
+                    .glass-card { background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 20px; backdrop-filter: blur(15px); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; }
                     .post-card:hover { transform: translateY(-5px); border-color: var(--cyan); box-shadow: 0 10px 30px rgba(0,255,255,0.05); }
                     
                     .profile-card { text-align: center; border: 1px solid var(--cyan); }
-                    .profile-card:hover { box-shadow: 0 0 25px rgba(0,255,255,0.2); }
+                    .p-avatar { width: 85px; height: 85px; background: linear-gradient(45deg, var(--glow), var(--purple)); border-radius: 25px; display: flex; align-items: center; justify-content: center; font-size: 35px; margin: 0 auto 15px; }
                     
-                    .p-avatar { width: 85px; height: 85px; background: linear-gradient(45deg, var(--glow), var(--purple)); border-radius: 25px; display: flex; align-items: center; justify-content: center; font-size: 35px; margin: 0 auto 15px; box-shadow: 0 5px 15px rgba(255,0,127,0.3); }
-                    
-                    /* PORTFOLIO BUTTON HOVER */
-                    .portfolio-link { background: var(--cyan); color: #000; padding: 14px; border-radius: 12px; text-decoration: none; display: block; margin-top: 20px; font-weight: bold; transition: 0.3s; letter-spacing: 1px; }
-                    .portfolio-link:hover { transform: scale(1.05); background: #fff; box-shadow: 0 0 20px var(--cyan); }
+                    .portfolio-link { background: var(--cyan); color: #000; padding: 14px; border-radius: 12px; text-decoration: none; display: block; margin-top: 20px; font-weight: bold; transition: 0.3s; }
+                    .portfolio-link:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--cyan); }
 
-                    /* POST STYLING */
+                    .update-form input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--purple); color: white; padding: 10px; border-radius: 10px; font-size: 12px; margin-top: 10px; outline: none; }
+                    .update-form button { width: 100%; background: var(--purple); border: none; color: white; padding: 8px; border-radius: 10px; margin-top: 5px; cursor: pointer; font-size: 11px; font-weight: bold; }
+
                     .post-header { display: flex; align-items: center; margin-bottom: 15px; }
                     .avatar-glow { width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(45deg, var(--glow), var(--purple)); display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; }
                     .author-name { color: var(--cyan); font-weight: bold; font-size: 15px; }
-                    .blue-tick { color: var(--cyan); font-size: 12px; margin-left: 4px; }
-                    .post-time { font-size: 10px; opacity: 0.5; margin-top: 2px; }
                     .post-body { color: #eee; line-height: 1.6; font-size: 15px; margin-bottom: 15px; }
                     
-                    /* VOTE BUTTONS HOVER */
-                    .action-bar { display: flex; gap: 10px; }
                     .vote-btn { background: rgba(255,255,255,0.05); border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; transition: 0.2s; color: #aaa; }
-                    .vote-btn.up:hover { color: var(--cyan); background: rgba(0,255,255,0.1); transform: translateY(-2px); }
-                    .vote-btn.down:hover { color: var(--glow); background: rgba(255,0,127,0.1); transform: translateY(2px); }
+                    .vote-btn:hover { color: var(--cyan); background: rgba(0,255,255,0.1); }
 
-                    /* INPUT AREA */
-                    textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 18px; box-sizing: border-box; outline: none; resize: none; font-size: 15px; transition: 0.3s; }
-                    textarea:focus { border-color: var(--purple); background: rgba(0,0,0,0.6); }
-                    .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; transition: 0.3s; }
-                    .transmit-btn:hover { letter-spacing: 2px; box-shadow: 0 5px 15px rgba(255,0,127,0.4); }
+                    textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 18px; box-sizing: border-box; outline: none; resize: none; }
+                    .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
 
-                    /* RESPONSIVE */
-                    @media (max-width: 1150px) { .right-sidebar { display: none; } }
-                    @media (max-width: 850px) { 
-                        .left-sidebar { display: none; } 
-                        .feed-container { width: 100%; }
-                        .main-layout { padding: 80px 10px 100px; }
-                        .mobile-nav { display: flex; }
-                    }
-
-                    .mobile-nav { display: none; position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.95); border-top: 1px solid rgba(255,255,255,0.1); padding: 20px 0; justify-content: space-around; z-index: 1001; }
+                    @media (max-width: 850px) { .left-sidebar, .right-sidebar { display: none; } .feed-container { width: 100%; } }
                 </style>
             </head>
             <body>
                 <div class="universe"></div>
                 <nav class="navbar">
                     <div class="logo">XAVIROX</div>
-                    <a href="/logout" style="color:var(--glow); text-decoration:none; font-weight:bold; font-size:12px; letter-spacing:1px;">DISCONNECT</a>
+                    <a href="/logout" style="color:var(--glow); text-decoration:none; font-weight:bold; font-size:12px;">DISCONNECT</a>
                 </nav>
 
                 <div class="main-layout">
                     <div class="left-sidebar">
                         <div class="glass-card profile-card">
                             <div class="p-avatar">${user.username[0].toUpperCase()}</div>
-                            <div style="color:var(--cyan); font-weight:bold; font-size:18px; text-shadow: 0 0 10px rgba(0,255,255,0.3);">@${user.username} ${user.hasBlueTick ? '<i class="fas fa-check-circle"></i>' : ''}</div>
-                            <div style="font-size:10px; opacity:0.4; margin-top:5px;">CORE ACCESS GRANTED</div>
+                            <div style="color:var(--cyan); font-weight:bold; font-size:18px;">@${user.username}</div>
                             <a href="${pUrl}" target="_blank" class="portfolio-link"><i class="fas fa-external-link-alt"></i> Neural Portfolio</a>
+                            
+                            <div class="update-form" style="border-top:1px solid rgba(255,255,255,0.1); margin-top:20px; padding-top:10px;">
+                                <p style="font-size:10px; color:var(--glow); margin:0;">UPDATE LINK</p>
+                                <form action="/update-portfolio" method="POST">
+                                    <input name="portfolioUrl" placeholder="Paste link here..." required>
+                                    <button type="submit">SAVE CHANGES</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
 
                     <div class="feed-container">
                         <div class="input-area glass-card" style="margin-bottom: 30px;">
                             <form action="/addpost" method="POST">
-                                <textarea name="content" rows="3" placeholder="Broadcast your signal to the network..." required></textarea>
+                                <textarea name="content" rows="3" placeholder="Broadcast your signal..." required></textarea>
                                 <button type="submit" class="transmit-btn">TRANSMIT SIGNAL</button>
                             </form>
                         </div>
@@ -228,52 +214,50 @@ app.get('/dashboard', isAuth, async (req, res) => {
 
                     <div class="right-sidebar">
                         <div class="glass-card">
-                            <h3 style="color:var(--glow); font-size:12px; letter-spacing:2px; margin-bottom:15px; border-bottom: 1px solid rgba(255,0,127,0.2); padding-bottom:10px;">CORE FEEDBACK</h3>
-                            <textarea id="fbContent" rows="2" placeholder="Message to Xavirox..."></textarea>
+                            <h3 style="color:var(--glow); font-size:12px; letter-spacing:2px; margin-bottom:15px;">CORE FEEDBACK</h3>
+                            <textarea id="fbContent" rows="2" placeholder="Message..."></textarea>
                             <button onclick="sendFeedback()" class="transmit-btn" style="padding:10px; font-size:12px;">SEND</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="mobile-nav">
-                    <i class="fas fa-home" style="color:var(--cyan); font-size:22px;"></i>
-                    <i class="fas fa-plus-circle" style="font-size:22px;" onclick="window.scrollTo({top:0, behavior:'smooth'})"></i>
-                    <a href="${pUrl}" target="_blank" style="color:inherit;"><i class="fas fa-user-astronaut" style="font-size:22px;"></i></a>
-                    <i class="fas fa-power-off" style="font-size:22px; color:var(--glow);" onclick="window.location='/logout'"></i>
-                </div>
-
                 <script>
                     window.handleVote = async function(postId, type) {
-                        try {
-                            const res = await fetch('/api/vote/' + postId, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ type })
-                            });
-                            const data = await res.json();
-                            if(data.success) { 
-                                const countSpan = document.querySelector('#post-'+postId+' .v-count');
-                                if(countSpan) countSpan.innerText = data.newVotes; 
-                            }
-                        } catch(e) {}
+                        const res = await fetch('/api/vote/' + postId, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ type })
+                        });
+                        const data = await res.json();
+                        if(data.success) { 
+                            document.querySelector('#post-'+postId+' .v-count').innerText = data.newVotes; 
+                        }
                     };
 
                     window.sendFeedback = async function() {
                         const fb = document.getElementById('fbContent').value;
                         if(!fb) return;
-                        try {
-                            const res = await fetch('/api/feedback', {
-                                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ feedback: fb })
-                            });
-                            if(res.ok) { alert("Signal Received!"); document.getElementById('fbContent').value = ""; }
-                        } catch(e) {}
+                        const res = await fetch('/api/feedback', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ feedback: fb })
+                        });
+                        if(res.ok) { alert("Sent!"); document.getElementById('fbContent').value = ""; }
                     };
                 </script>
             </body>
             </html>
         `);
     } catch (err) { res.status(500).send("Core Sync Error"); }
+});
+
+// --- NEW PORTFOLIO UPDATE ROUTE ---
+app.post('/update-portfolio', isAuth, async (req, res) => {
+    try {
+        const newUrl = req.body.portfolioUrl;
+        await User.findByIdAndUpdate(req.session.user._id, { portfolioUrl: newUrl });
+        req.session.user.portfolioUrl = newUrl; // Update session
+        res.redirect('/dashboard');
+    } catch (err) { res.status(500).send("Update Failed"); }
 });
 
 // 6. API & POST ROUTES
