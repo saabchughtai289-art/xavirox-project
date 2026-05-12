@@ -65,7 +65,6 @@ app.get('/login', (req, res) => {
                     <input name="password" type="password" placeholder="Access Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
                     <button type="submit" style="width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(45deg, #ff007f, #7b61ff); color:white; font-weight:bold; cursor:pointer;">INITIALIZE LINK</button>
                 </form>
-                <p style="font-size:12px; text-align:center; margin-top:20px; opacity:0.6;">New user? <a href="/signup" style="color:#00ffff; text-decoration:none;">Create ID</a></p>
             </div>
         </body>
     `);
@@ -111,7 +110,7 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD (FIXED)
+// 5. DASHBOARD (FULL MERGED & FIXED)
 app.get('/dashboard', isAuth, async (req, res) => {
     try {
         const allPosts = await Post.find().sort({ date: -1 });
@@ -120,9 +119,9 @@ app.get('/dashboard', isAuth, async (req, res) => {
         const randomLine = placeholders[Math.floor(Math.random() * placeholders.length)];
 
         let postHTML = allPosts.map(p => `
-            <div class="glass-card post" id="post-${p._id}">
-                <div class="post-header">
-                    <div class="avatar-glow">${p.author[0].toUpperCase()}</div>
+            <div class="glass-card post" id="post-${p._id}" style="margin-bottom:20px;">
+                <div class="post-header" style="display:flex; align-items:center;">
+                    <div class="avatar-glow" style="width:40px; height:40px; border-radius:10px; background:linear-gradient(45deg, var(--glow), var(--purple)); display:flex; align-items:center; justify-content:center; font-weight:bold; margin-right:12px;">${p.author[0].toUpperCase()}</div>
                     <div class="post-meta">
                         <span class="author-name" style="color:var(--cyan); font-weight:bold;">
                             ${p.author} ${p.hasBlueTick ? '<i class="fas fa-check-circle" style="font-size:11px; color:var(--cyan);"></i>' : ''}
@@ -131,10 +130,10 @@ app.get('/dashboard', isAuth, async (req, res) => {
                     </div>
                 </div>
                 <div class="post-body" style="margin: 15px 0; line-height:1.5;">${p.content}</div>
-                <div class="post-actions" style="display:flex; gap:10px;">
-                    <div class="luxury-action-group">
-                        <button class="lux-btn" onclick="handleVote('${p._id}', 'up')"><i class="fas fa-caret-up"></i> <span class="v-count">${p.votes}</span></button>
-                        <button class="lux-btn" onclick="handleVote('${p._id}', 'down')"><i class="fas fa-caret-down"></i></button>
+                <div class="post-actions">
+                    <div class="luxury-action-group" style="display:flex; background:rgba(255,255,255,0.05); border-radius:12px; width:fit-content;">
+                        <button class="lux-btn" onclick="handleVote('${p._id}', 'up')" style="color:#00ffff;"><i class="fas fa-caret-up"></i> <span class="v-count">${p.votes}</span></button>
+                        <button class="lux-btn" onclick="handleVote('${p._id}', 'down')" style="color:#ff007f;"><i class="fas fa-caret-down"></i></button>
                     </div>
                 </div>
             </div>`).join('');
@@ -150,38 +149,39 @@ app.get('/dashboard', isAuth, async (req, res) => {
                     :root { --glow: #ff007f; --cyan: #00ffff; --purple: #7b61ff; --bg: #05050a; }
                     body { margin: 0; background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
                     .universe { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05050a 100%); }
-                    .navbar { width: 100%; height: 65px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; }
+                    .navbar { width: 100%; height: 65px; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; }
                     .logo { font-size: 22px; font-weight: 900; color: var(--cyan); letter-spacing: 3px; }
                     
-                    .main-layout { display: grid; grid-template-columns: 320px 1fr 320px; gap: 20px; padding: 85px 20px 20px; max-width: 1400px; margin: auto; }
+                    /* Desktop Layout Fix */
+                    .main-layout { display: flex; justify-content: center; gap: 20px; padding: 85px 20px 20px; max-width: 1300px; margin: auto; }
+                    .left-sidebar { width: 300px; flex-shrink: 0; }
+                    .feed-container { flex-grow: 1; max-width: 650px; }
+                    .right-sidebar { width: 300px; flex-shrink: 0; }
+
                     .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 20px; backdrop-filter: blur(20px); }
-                    
                     .profile-card { text-align: center; border: 1px solid var(--cyan); }
-                    .p-avatar { width: 70px; height: 70px; background: linear-gradient(45deg, var(--glow), var(--purple)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 15px; }
-                    
-                    .portfolio-link { background: var(--cyan); color: #000; padding: 10px; border-radius: 10px; text-decoration: none; display: block; margin-top: 15px; font-weight: bold; }
+                    .p-avatar { width: 75px; height: 75px; background: linear-gradient(45deg, var(--glow), var(--purple)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 15px; }
+                    .portfolio-link { background: var(--cyan); color: #000; padding: 12px; border-radius: 12px; text-decoration: none; display: block; margin-top: 15px; font-weight: bold; }
 
-                    @media (max-width: 1100px) { .main-layout { grid-template-columns: 280px 1fr; } .right-sidebar { display: none; } }
-                    @media (max-width: 768px) { 
-                        .main-layout { display: block; padding: 80px 15px 100px; } 
+                    @media (max-width: 1100px) { .right-sidebar { display: none; } }
+                    @media (max-width: 800px) { 
                         .left-sidebar { display: none; } 
+                        .main-layout { padding: 80px 10px 100px; }
                     }
-                    
-                    textarea { width: 100%; height: 100px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 15px; box-sizing: border-box; outline: none; resize: none; }
-                    .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 12px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-                    .avatar-glow { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(45deg, var(--glow), var(--purple)); display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; }
-                    .luxury-action-group { display: flex; background: rgba(255,255,255,0.05); border-radius: 12px; }
-                    .lux-btn { background: none; border: none; color: #aaa; padding: 10px 15px; cursor: pointer; }
 
-                    .mobile-nav { display: none; position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.9); border-top: 1px solid rgba(255,255,255,0.1); padding: 15px 0; justify-content: space-around; z-index: 1000; }
-                    @media (max-width: 768px) { .mobile-nav { display: flex; } }
+                    textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 15px; box-sizing: border-box; outline: none; resize: none; }
+                    .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 12px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+                    .lux-btn { background: none; border: none; padding: 10px 15px; cursor: pointer; font-weight: bold; }
+
+                    .mobile-nav { display: none; position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.95); border-top: 1px solid rgba(255,255,255,0.1); padding: 15px 0; justify-content: space-around; z-index: 1000; }
+                    @media (max-width: 800px) { .mobile-nav { display: flex; } }
                 </style>
             </head>
             <body>
                 <div class="universe"></div>
                 <nav class="navbar">
                     <div class="logo">XAVIROX</div>
-                    <a href="/logout" style="color:var(--glow); text-decoration:none;">LOGOUT</a>
+                    <a href="/logout" style="color:var(--glow); text-decoration:none; font-size:12px;">LOGOUT</a>
                 </nav>
 
                 <div class="main-layout">
@@ -189,27 +189,26 @@ app.get('/dashboard', isAuth, async (req, res) => {
                         <div class="glass-card profile-card">
                             <div class="p-avatar">${user.username[0].toUpperCase()}</div>
                             <div style="color:var(--cyan); font-weight:bold;">@${user.username} ${user.hasBlueTick ? '<i class="fas fa-check-circle"></i>' : ''}</div>
-                            <a href="${user.portfolioUrl}" target="_blank" class="portfolio-link"><i class="fas fa-briefcase"></i> PORTFOLIO</a>
-                        </div>
-                        <div class="glass-card" style="margin-top:20px;">
-                            <div style="color:var(--cyan);"><i class="fas fa-brain"></i> Feed</div>
+                            <a href="${user.portfolioUrl}" target="_blank" class="portfolio-link">MY PORTFOLIO</a>
                         </div>
                     </div>
 
                     <div class="feed-container">
-                        <div class="input-area glass-card" style="margin-bottom: 20px;">
+                        <div class="input-area glass-card" style="margin-bottom: 25px;">
                             <form action="/addpost" method="POST">
                                 <textarea name="content" placeholder="${randomLine}" required></textarea>
-                                <button type="submit" class="transmit-btn">TRANSMIT</button>
+                                <button type="submit" class="transmit-btn">TRANSMIT SIGNAL</button>
                             </form>
                         </div>
                         <div id="posts-container">${postHTML}</div>
                     </div>
 
-                    <div class="right-sidebar glass-card" style="height:fit-content;">
-                        <h3 style="color:var(--glow); font-size:12px;">FEEDBACK</h3>
-                        <textarea id="fbContent" style="height:60px;" placeholder="Message..."></textarea>
-                        <button onclick="sendFeedback()" class="transmit-btn">SEND</button>
+                    <div class="right-sidebar">
+                        <div class="glass-card">
+                            <h3 style="color:var(--glow); font-size:12px;">FEEDBACK</h3>
+                            <textarea id="fbContent" style="height:60px;" placeholder="Message..."></textarea>
+                            <button onclick="sendFeedback()" class="transmit-btn">SEND</button>
+                        </div>
                     </div>
                 </div>
 
@@ -221,24 +220,27 @@ app.get('/dashboard', isAuth, async (req, res) => {
                 </div>
 
                 <script>
-                    async function handleVote(postId, type) {
+                    window.handleVote = async function(postId, type) {
                         const res = await fetch('/api/vote/' + postId, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ type })
                         });
                         const data = await res.json();
-                        if(data.success) { document.querySelector('#post-'+postId+' .v-count').innerText = data.newVotes; }
-                    }
-                    async function sendFeedback() {
+                        if(data.success) { 
+                            const postElem = document.querySelector('#post-'+postId+' .v-count');
+                            if(postElem) postElem.innerText = data.newVotes; 
+                        }
+                    };
+                    window.sendFeedback = async function() {
                         const fb = document.getElementById('fbContent').value;
                         if(!fb) return;
                         const res = await fetch('/api/feedback', {
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ feedback: fb })
                         });
-                        if(res.ok) { alert("Sent!"); document.getElementById('fbContent').value = ""; }
-                    }
+                        if(res.ok) { alert("Signal Sent!"); document.getElementById('fbContent').value = ""; }
+                    };
                 </script>
             </body>
             </html>
@@ -274,7 +276,7 @@ app.post('/addpost', isAuth, async (req, res) => {
             author: req.session.user.username,
             hasBlueTick: req.session.user.hasBlueTick
         });
-        await newPost.save();
+        await newUserPost = await newPost.save();
         res.redirect('/dashboard');
     } catch (err) { res.status(500).send("Error"); }
 });
