@@ -3,16 +3,16 @@ const path = require('path');
 const mongoose = require('mongoose');
 const app = express();
 
-// 1. DATABASE CONNECTION (Final Super-Stable Connection)
-// Isme humne direct shard links aur 30s timeout use kiya hai
-const dbURI = "mongodb://xavirox_boss:noESvAPXb6tGrvqi@cluster0-shard-00-00.myxiyfk.mongodb.net:27017,cluster0-shard-00-01.myxiyfk.mongodb.net:27017,cluster0-shard-00-02.myxiyfk.mongodb.net:27017/xavirox_db?ssl=true&replicaSet=atlas-m9v391-shard-0&authSource=admin&retryWrites=true&w=majority";
+// 1. DATABASE CONNECTION (Optimized for DNS & Local Network Issues)
+const dbURI = "mongodb+srv://xavirox_boss:noESvAPXb6tGrvqi@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority";
 
 mongoose.connect(dbURI, {
-    serverSelectionTimeoutMS: 30000 // 30 seconds tak connection ka wait karega
+    serverSelectionTimeoutMS: 30000, // 30 seconds wait for connection
+    connectTimeoutMS: 30000
 })
 .then(() => console.log('✅ XAVIROX NEURAL CORE CONNECTED (CLOUD)'))
 .catch(err => {
-    console.error('❌ CONNECTION FAILED. Please check your internet or MongoDB Atlas password.');
+    console.error('❌ CONNECTION FAILED. Try switching to Mobile Hotspot if using Wi-Fi.');
     console.error(err);
 });
 
@@ -60,9 +60,15 @@ app.post('/api/feedback', async (req, res) => {
 // 4. MAIN DASHBOARD UI
 app.get('/dashboard', async (req, res) => {
     try {
-        // Find() ko execute karne se pehle check karein ke connection hai ya nahi
+        // Checking if DB is actually connected before query
         if (mongoose.connection.readyState !== 1) {
-            return res.status(500).send("Core Error: Database is not connected yet. Please wait 10 seconds and refresh.");
+            return res.status(500).send(`
+                <div style="background:#05050a; color:#ff007f; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:sans-serif;">
+                    <h1>📡 NEURAL LINK PENDING</h1>
+                    <p>Database is connecting... Please refresh in 5 seconds.</p>
+                    <button onclick="location.reload()" style="background:#ff007f; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer;">RE-SYNC CORE</button>
+                </div>
+            `);
         }
 
         const allPosts = await Post.find().sort({ date: -1 });
@@ -125,6 +131,7 @@ app.get('/dashboard', async (req, res) => {
                     .lux-btn-single { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #aaa; padding: 12px 22px; cursor: pointer; transition: 0.2s; }
                     .lux-btn-single:hover { color: var(--glow); border-color: var(--glow); }
                     .pulse { width: 8px; height: 8px; background: #00ff00; border-radius: 50%; display: inline-block; margin-right: 10px; box-shadow: 0 0 10px #00ff00; animation: blink-pulse 2s infinite; }
+                    @keyframes blink-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
                 </style>
             </head>
             <body>
