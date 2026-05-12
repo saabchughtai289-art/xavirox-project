@@ -21,7 +21,7 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true },
     hasBlueTick: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
-    portfolioUrl: { type: String, default: '#' } // Portfolio Link Support
+    portfolioUrl: { type: String, default: 'https://your-portfolio.com' } 
 });
 const User = mongoose.model('User', UserSchema);
 
@@ -49,7 +49,6 @@ app.use(session({
     saveUninitialized: true
 }));
 
-// Auth Guard
 const isAuth = (req, res, next) => {
     if (req.session.user) next();
     else res.redirect('/login');
@@ -112,7 +111,7 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD WITH PROFILE FIX & PORTFOLIO
+// 5. DASHBOARD (FIXED)
 app.get('/dashboard', isAuth, async (req, res) => {
     try {
         const allPosts = await Post.find().sort({ date: -1 });
@@ -137,7 +136,6 @@ app.get('/dashboard', isAuth, async (req, res) => {
                         <button class="lux-btn" onclick="handleVote('${p._id}', 'up')"><i class="fas fa-caret-up"></i> <span class="v-count">${p.votes}</span></button>
                         <button class="lux-btn" onclick="handleVote('${p._id}', 'down')"><i class="fas fa-caret-down"></i></button>
                     </div>
-                    <button class="lux-btn-single" onclick="copyLink('${p._id}')"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>`).join('');
 
@@ -155,22 +153,26 @@ app.get('/dashboard', isAuth, async (req, res) => {
                     .navbar { width: 100%; height: 65px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; }
                     .logo { font-size: 22px; font-weight: 900; color: var(--cyan); letter-spacing: 3px; }
                     
-                    .main-layout { display: grid; grid-template-columns: 300px 1fr 320px; gap: 20px; padding: 85px 20px 20px; max-width: 1400px; margin: auto; }
+                    .main-layout { display: grid; grid-template-columns: 320px 1fr 320px; gap: 20px; padding: 85px 20px 20px; max-width: 1400px; margin: auto; }
                     .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 20px; backdrop-filter: blur(20px); }
                     
-                    /* PROFILE FIX FOR DESKTOP */
-                    .left-sidebar { display: flex; flex-direction: column; gap: 20px; }
-                    .profile-card { text-align: center; padding: 30px 20px; border: 1px solid rgba(0,255,255,0.2); }
-                    .p-avatar { width: 80px; height: 80px; background: linear-gradient(45deg, var(--glow), var(--purple)); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; margin: 0 auto 15px; box-shadow: 0 0 20px rgba(255,0,127,0.4); }
-                    .portfolio-btn { background: rgba(0,255,255,0.1); border: 1px solid var(--cyan); color: var(--cyan); padding: 10px; border-radius: 10px; text-decoration: none; display: block; margin-top: 15px; font-size: 13px; transition: 0.3s; }
-                    .portfolio-btn:hover { background: var(--cyan); color: #000; }
+                    .profile-card { text-align: center; border: 1px solid var(--cyan); }
+                    .p-avatar { width: 70px; height: 70px; background: linear-gradient(45deg, var(--glow), var(--purple)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 15px; }
+                    
+                    .portfolio-link { background: var(--cyan); color: #000; padding: 10px; border-radius: 10px; text-decoration: none; display: block; margin-top: 15px; font-weight: bold; }
 
                     @media (max-width: 1100px) { .main-layout { grid-template-columns: 280px 1fr; } .right-sidebar { display: none; } }
-                    @media (max-width: 768px) { .main-layout { display: block; padding: 80px 15px 100px; } .left-sidebar { display: none; } }
+                    @media (max-width: 768px) { 
+                        .main-layout { display: block; padding: 80px 15px 100px; } 
+                        .left-sidebar { display: none; } 
+                    }
                     
-                    textarea { width: 100%; height: 100px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 15px; font-size: 15px; outline: none; resize: none; box-sizing: border-box; }
+                    textarea { width: 100%; height: 100px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 15px; box-sizing: border-box; outline: none; resize: none; }
                     .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 12px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
                     .avatar-glow { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(45deg, var(--glow), var(--purple)); display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; }
+                    .luxury-action-group { display: flex; background: rgba(255,255,255,0.05); border-radius: 12px; }
+                    .lux-btn { background: none; border: none; color: #aaa; padding: 10px 15px; cursor: pointer; }
+
                     .mobile-nav { display: none; position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.9); border-top: 1px solid rgba(255,255,255,0.1); padding: 15px 0; justify-content: space-around; z-index: 1000; }
                     @media (max-width: 768px) { .mobile-nav { display: flex; } }
                 </style>
@@ -179,20 +181,18 @@ app.get('/dashboard', isAuth, async (req, res) => {
                 <div class="universe"></div>
                 <nav class="navbar">
                     <div class="logo">XAVIROX</div>
-                    <a href="/logout" style="color:var(--glow); text-decoration:none; font-size:12px;">LOGOUT</a>
+                    <a href="/logout" style="color:var(--glow); text-decoration:none;">LOGOUT</a>
                 </nav>
 
                 <div class="main-layout">
                     <div class="left-sidebar">
                         <div class="glass-card profile-card">
                             <div class="p-avatar">${user.username[0].toUpperCase()}</div>
-                            <div style="font-weight:bold; font-size:20px; color:var(--cyan);">@${user.username} ${user.hasBlueTick ? '<i class="fas fa-check-circle"></i>' : ''}</div>
-                            <div style="font-size:11px; opacity:0.5; margin-top:5px;">NEURAL LEVEL: ${user.isAdmin ? 'MASTER ADMIN' : 'CITIZEN'}</div>
-                            <a href="#" class="portfolio-btn"><i class="fas fa-briefcase"></i> MY PORTFOLIO</a>
+                            <div style="color:var(--cyan); font-weight:bold;">@${user.username} ${user.hasBlueTick ? '<i class="fas fa-check-circle"></i>' : ''}</div>
+                            <a href="${user.portfolioUrl}" target="_blank" class="portfolio-link"><i class="fas fa-briefcase"></i> PORTFOLIO</a>
                         </div>
-                        <div class="glass-card" style="padding:15px;">
-                            <div style="color:var(--cyan); margin-bottom:10px;"><i class="fas fa-brain"></i> Neural Feed</div>
-                            <div style="opacity:0.5;"><i class="fas fa-fire"></i> Trending Signals</div>
+                        <div class="glass-card" style="margin-top:20px;">
+                            <div style="color:var(--cyan);"><i class="fas fa-brain"></i> Feed</div>
                         </div>
                     </div>
 
@@ -200,14 +200,14 @@ app.get('/dashboard', isAuth, async (req, res) => {
                         <div class="input-area glass-card" style="margin-bottom: 20px;">
                             <form action="/addpost" method="POST">
                                 <textarea name="content" placeholder="${randomLine}" required></textarea>
-                                <button type="submit" class="transmit-btn">TRANSMIT SIGNAL</button>
+                                <button type="submit" class="transmit-btn">TRANSMIT</button>
                             </form>
                         </div>
                         <div id="posts-container">${postHTML}</div>
                     </div>
 
                     <div class="right-sidebar glass-card" style="height:fit-content;">
-                        <h3 style="color:var(--glow); font-size:12px; letter-spacing:2px;">CORE FEEDBACK</h3>
+                        <h3 style="color:var(--glow); font-size:12px;">FEEDBACK</h3>
                         <textarea id="fbContent" style="height:60px;" placeholder="Message..."></textarea>
                         <button onclick="sendFeedback()" class="transmit-btn">SEND</button>
                     </div>
@@ -216,6 +216,7 @@ app.get('/dashboard', isAuth, async (req, res) => {
                 <div class="mobile-nav">
                     <i class="fas fa-home" style="color:var(--cyan)"></i>
                     <i class="fas fa-plus-circle" onclick="window.scrollTo(0,0)"></i>
+                    <a href="${user.portfolioUrl}" style="color:inherit;"><i class="fas fa-briefcase"></i></a>
                     <i class="fas fa-user"></i>
                 </div>
 
@@ -236,7 +237,7 @@ app.get('/dashboard', isAuth, async (req, res) => {
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ feedback: fb })
                         });
-                        if(res.ok) { alert("Signal Sent!"); document.getElementById('fbContent').value = ""; }
+                        if(res.ok) { alert("Sent!"); document.getElementById('fbContent').value = ""; }
                     }
                 </script>
             </body>
@@ -245,7 +246,7 @@ app.get('/dashboard', isAuth, async (req, res) => {
     } catch (err) { res.status(500).send("Core Sync Error"); }
 });
 
-// API Routes
+// 6. API & POST ROUTES
 app.post('/api/vote/:id', async (req, res) => {
     try {
         const post = await Post.findById(req.params.id);
