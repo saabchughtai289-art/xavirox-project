@@ -54,14 +54,14 @@ const isAuth = (req, res, next) => {
 app.get('/login', (req, res) => {
     res.send(`
         <body style="background:#05050a; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
-            <div style="background:rgba(255,255,255,0.03); padding:40px; border-radius:25px; border:1px solid rgba(0,255,255,0.2); width:320px; backdrop-filter:blur(20px);">
-                <h2 style="color:#00ffff; text-align:center; letter-spacing:3px;">XAVIROX LOGIN</h2>
+            <div style="background:rgba(255,255,255,0.03); padding:40px; border-radius:25px; border:1px solid rgba(0,255,255,0.2); width:320px; backdrop-filter:blur(20px); text-align:center;">
+                <h2 style="color:#00ffff; letter-spacing:3px; text-shadow: 0 0 10px #00ffff;">XAVIROX LOGIN</h2>
                 <form action="/login" method="POST">
                     <input name="username" placeholder="Neural ID" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
                     <input name="password" type="password" placeholder="Access Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
-                    <button type="submit" style="width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(45deg, #ff007f, #7b61ff); color:white; font-weight:bold; cursor:pointer;">INITIALIZE LINK</button>
+                    <button type="submit" style="width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(45deg, #ff007f, #7b61ff); color:white; font-weight:bold; cursor:pointer; transition:0.3s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">INITIALIZE LINK</button>
                 </form>
-                <p style="font-size:12px; text-align:center; margin-top:15px;">New? <a href="/signup" style="color:#00ffff;">Create ID</a></p>
+                <p style="font-size:12px; margin-top:15px; opacity:0.6;">New user? <a href="/signup" style="color:#00ffff; text-decoration:none;">Create ID</a></p>
             </div>
         </body>
     `);
@@ -70,8 +70,8 @@ app.get('/login', (req, res) => {
 app.get('/signup', (req, res) => {
     res.send(`
         <body style="background:#05050a; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
-            <div style="background:rgba(255,255,255,0.03); padding:40px; border-radius:25px; border:1px solid rgba(255,0,127,0.2); width:320px; backdrop-filter:blur(20px);">
-                <h2 style="color:#ff007f; text-align:center; letter-spacing:3px;">NEW NEURAL ID</h2>
+            <div style="background:rgba(255,255,255,0.03); padding:40px; border-radius:25px; border:1px solid rgba(255,0,127,0.2); width:320px; backdrop-filter:blur(20px); text-align:center;">
+                <h2 style="color:#ff007f; letter-spacing:3px; text-shadow: 0 0 10px #ff007f;">NEW NEURAL ID</h2>
                 <form action="/signup" method="POST">
                     <input name="username" placeholder="Choose ID" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
                     <input name="password" type="password" placeholder="Set Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
@@ -91,7 +91,7 @@ app.post('/signup', async (req, res) => {
             password: hashedPassword,
             isAdmin: isXavi,
             hasBlueTick: isXavi,
-            portfolioUrl: 'https://xavirox.com' // Default link set
+            portfolioUrl: 'https://xavirox.com'
         });
         await newUser.save();
         res.redirect('/login');
@@ -108,7 +108,7 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD (DESKTOP PORTFOLIO FIX)
+// 5. DASHBOARD (ANIMATION & PORTFOLIO FULL FIX)
 app.get('/dashboard', isAuth, async (req, res) => {
     try {
         const allPosts = await Post.find().sort({ date: -1 });
@@ -116,20 +116,20 @@ app.get('/dashboard', isAuth, async (req, res) => {
         const pUrl = user.portfolioUrl || 'https://google.com';
 
         let postHTML = allPosts.map(p => `
-            <div class="glass-card post" id="post-${p._id}" style="margin-bottom:20px;">
-                <div class="post-header" style="display:flex; align-items:center;">
-                    <div class="avatar-glow" style="width:40px; height:40px; border-radius:10px; background:linear-gradient(45deg, var(--glow), var(--purple)); display:flex; align-items:center; justify-content:center; font-weight:bold; margin-right:12px;">${p.author[0].toUpperCase()}</div>
+            <div class="glass-card post-card" id="post-${p._id}">
+                <div class="post-header">
+                    <div class="avatar-glow">${p.author[0].toUpperCase()}</div>
                     <div class="post-meta">
-                        <span class="author-name" style="color:var(--cyan); font-weight:bold;">
-                            @${p.author} ${p.hasBlueTick ? '<i class="fas fa-check-circle" style="font-size:11px; color:var(--cyan);"></i>' : ''}
+                        <span class="author-name">
+                            @${p.author} ${p.hasBlueTick ? '<i class="fas fa-check-circle blue-tick"></i>' : ''}
                         </span>
-                        <div class="post-time" style="font-size:10px; opacity:0.5;">${new Date(p.date).toLocaleTimeString()}</div>
+                        <div class="post-time">${new Date(p.date).toLocaleTimeString()}</div>
                     </div>
                 </div>
-                <div class="post-body" style="margin: 15px 0; color:#ddd;">${p.content}</div>
-                <div class="luxury-action-group" style="display:flex; background:rgba(255,255,255,0.05); border-radius:12px; width:fit-content;">
-                    <button class="lux-btn" onclick="handleVote('${p._id}', 'up')" style="color:var(--cyan); background:none; border:none; padding:10px 15px; cursor:pointer;"><i class="fas fa-caret-up"></i> <span class="v-count">${p.votes}</span></button>
-                    <button class="lux-btn" onclick="handleVote('${p._id}', 'down')" style="color:var(--glow); background:none; border:none; padding:10px 15px; cursor:pointer;"><i class="fas fa-caret-down"></i></button>
+                <div class="post-body">${p.content}</div>
+                <div class="action-bar">
+                    <button class="vote-btn up" onclick="handleVote('${p._id}', 'up')"><i class="fas fa-caret-up"></i> <span class="v-count">${p.votes}</span></button>
+                    <button class="vote-btn down" onclick="handleVote('${p._id}', 'down')"><i class="fas fa-caret-down"></i></button>
                 </div>
             </div>`).join('');
 
@@ -141,63 +141,85 @@ app.get('/dashboard', isAuth, async (req, res) => {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
                 <style>
-                    :root { --glow: #ff007f; --cyan: #00ffff; --purple: #7b61ff; --bg: #05050a; }
-                    body { margin: 0; background: var(--bg); color: #fff; font-family: sans-serif; }
+                    :root { --glow: #ff007f; --cyan: #00ffff; --purple: #7b61ff; --bg: #05050a; --glass: rgba(255, 255, 255, 0.03); }
+                    body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
                     .universe { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05050a 100%); }
                     
-                    /* FIXED NAVBAR */
-                    .navbar { width: 100%; height: 60px; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; }
-                    .logo { font-size: 20px; font-weight: 900; color: var(--cyan); letter-spacing: 2px; }
+                    /* NAVBAR */
+                    .navbar { width: 100%; height: 65px; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; }
+                    .logo { font-size: 22px; font-weight: 900; color: var(--cyan); letter-spacing: 3px; text-shadow: 0 0 10px rgba(0,255,255,0.5); }
 
-                    /* MAIN LAYOUT - FLEX IS BETTER */
-                    .main-layout { display: flex; justify-content: center; gap: 30px; padding: 80px 20px 20px; max-width: 1200px; margin: auto; }
+                    /* LAYOUT */
+                    .main-layout { display: flex; justify-content: center; gap: 30px; padding: 90px 20px 30px; max-width: 1300px; margin: auto; }
+                    .left-sidebar, .right-sidebar { width: 280px; flex-shrink: 0; position: sticky; top: 90px; height: fit-content; }
+                    .feed-container { width: 620px; flex-grow: 1; }
+
+                    /* CARDS & HOVER ANIMATIONS */
+                    .glass-card { background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 20px; backdrop-filter: blur(15px); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; overflow: hidden; }
+                    .post-card:hover { transform: translateY(-5px); border-color: var(--cyan); box-shadow: 0 10px 30px rgba(0,255,255,0.05); }
                     
-                    .left-sidebar { width: 280px; display: block; }
-                    .feed-container { width: 600px; }
-                    .right-sidebar { width: 280px; display: block; }
-
-                    .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 20px; backdrop-filter: blur(20px); }
-                    .profile-card { text-align: center; border: 1px solid var(--cyan); box-shadow: 0 0 20px rgba(0,255,255,0.1); }
-                    .p-avatar { width: 80px; height: 80px; background: linear-gradient(45deg, var(--glow), var(--purple)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 15px; }
+                    .profile-card { text-align: center; border: 1px solid var(--cyan); }
+                    .profile-card:hover { box-shadow: 0 0 25px rgba(0,255,255,0.2); }
                     
-                    /* PORTFOLIO BUTTON */
-                    .portfolio-link { background: var(--cyan); color: #000; padding: 12px; border-radius: 12px; text-decoration: none; display: block; margin-top: 15px; font-weight: bold; transition: 0.3s; text-transform: uppercase; font-size: 13px; }
-                    .portfolio-link:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--cyan); }
+                    .p-avatar { width: 85px; height: 85px; background: linear-gradient(45deg, var(--glow), var(--purple)); border-radius: 25px; display: flex; align-items: center; justify-content: center; font-size: 35px; margin: 0 auto 15px; box-shadow: 0 5px 15px rgba(255,0,127,0.3); }
+                    
+                    /* PORTFOLIO BUTTON HOVER */
+                    .portfolio-link { background: var(--cyan); color: #000; padding: 14px; border-radius: 12px; text-decoration: none; display: block; margin-top: 20px; font-weight: bold; transition: 0.3s; letter-spacing: 1px; }
+                    .portfolio-link:hover { transform: scale(1.05); background: #fff; box-shadow: 0 0 20px var(--cyan); }
 
-                    @media (max-width: 1100px) { .right-sidebar { display: none; } }
+                    /* POST STYLING */
+                    .post-header { display: flex; align-items: center; margin-bottom: 15px; }
+                    .avatar-glow { width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(45deg, var(--glow), var(--purple)); display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; }
+                    .author-name { color: var(--cyan); font-weight: bold; font-size: 15px; }
+                    .blue-tick { color: var(--cyan); font-size: 12px; margin-left: 4px; }
+                    .post-time { font-size: 10px; opacity: 0.5; margin-top: 2px; }
+                    .post-body { color: #eee; line-height: 1.6; font-size: 15px; margin-bottom: 15px; }
+                    
+                    /* VOTE BUTTONS HOVER */
+                    .action-bar { display: flex; gap: 10px; }
+                    .vote-btn { background: rgba(255,255,255,0.05); border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; transition: 0.2s; color: #aaa; }
+                    .vote-btn.up:hover { color: var(--cyan); background: rgba(0,255,255,0.1); transform: translateY(-2px); }
+                    .vote-btn.down:hover { color: var(--glow); background: rgba(255,0,127,0.1); transform: translateY(2px); }
+
+                    /* INPUT AREA */
+                    textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 18px; box-sizing: border-box; outline: none; resize: none; font-size: 15px; transition: 0.3s; }
+                    textarea:focus { border-color: var(--purple); background: rgba(0,0,0,0.6); }
+                    .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; transition: 0.3s; }
+                    .transmit-btn:hover { letter-spacing: 2px; box-shadow: 0 5px 15px rgba(255,0,127,0.4); }
+
+                    /* RESPONSIVE */
+                    @media (max-width: 1150px) { .right-sidebar { display: none; } }
                     @media (max-width: 850px) { 
                         .left-sidebar { display: none; } 
                         .feed-container { width: 100%; }
-                        .main-layout { padding: 70px 10px 100px; }
+                        .main-layout { padding: 80px 10px 100px; }
+                        .mobile-nav { display: flex; }
                     }
 
-                    textarea { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 15px; box-sizing: border-box; outline: none; resize: none; font-family: inherit; }
-                    .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-
                     .mobile-nav { display: none; position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.95); border-top: 1px solid rgba(255,255,255,0.1); padding: 20px 0; justify-content: space-around; z-index: 1001; }
-                    @media (max-width: 850px) { .mobile-nav { display: flex; } }
                 </style>
             </head>
             <body>
                 <div class="universe"></div>
                 <nav class="navbar">
                     <div class="logo">XAVIROX</div>
-                    <a href="/logout" style="color:var(--glow); text-decoration:none; font-weight:bold; font-size:12px;">DISCONNECT</a>
+                    <a href="/logout" style="color:var(--glow); text-decoration:none; font-weight:bold; font-size:12px; letter-spacing:1px;">DISCONNECT</a>
                 </nav>
 
                 <div class="main-layout">
                     <div class="left-sidebar">
                         <div class="glass-card profile-card">
                             <div class="p-avatar">${user.username[0].toUpperCase()}</div>
-                            <div style="color:var(--cyan); font-weight:bold; font-size:18px;">@${user.username} ${user.hasBlueTick ? '<i class="fas fa-check-circle"></i>' : ''}</div>
-                            <a href="${pUrl}" target="_blank" class="portfolio-link"><i class="fas fa-external-link-alt"></i> Open Portfolio</a>
+                            <div style="color:var(--cyan); font-weight:bold; font-size:18px; text-shadow: 0 0 10px rgba(0,255,255,0.3);">@${user.username} ${user.hasBlueTick ? '<i class="fas fa-check-circle"></i>' : ''}</div>
+                            <div style="font-size:10px; opacity:0.4; margin-top:5px;">CORE ACCESS GRANTED</div>
+                            <a href="${pUrl}" target="_blank" class="portfolio-link"><i class="fas fa-external-link-alt"></i> Neural Portfolio</a>
                         </div>
                     </div>
 
                     <div class="feed-container">
-                        <div class="input-area glass-card" style="margin-bottom: 25px;">
+                        <div class="input-area glass-card" style="margin-bottom: 30px;">
                             <form action="/addpost" method="POST">
-                                <textarea name="content" rows="3" placeholder="Broadcast to the network..." required></textarea>
+                                <textarea name="content" rows="3" placeholder="Broadcast your signal to the network..." required></textarea>
                                 <button type="submit" class="transmit-btn">TRANSMIT SIGNAL</button>
                             </form>
                         </div>
@@ -206,42 +228,46 @@ app.get('/dashboard', isAuth, async (req, res) => {
 
                     <div class="right-sidebar">
                         <div class="glass-card">
-                            <h3 style="color:var(--glow); font-size:12px; letter-spacing:1px; margin-bottom:15px;">SYSTEM FEEDBACK</h3>
-                            <textarea id="fbContent" rows="2" placeholder="Send message..."></textarea>
-                            <button onclick="sendFeedback()" class="transmit-btn" style="padding:10px;">SEND</button>
+                            <h3 style="color:var(--glow); font-size:12px; letter-spacing:2px; margin-bottom:15px; border-bottom: 1px solid rgba(255,0,127,0.2); padding-bottom:10px;">CORE FEEDBACK</h3>
+                            <textarea id="fbContent" rows="2" placeholder="Message to Xavirox..."></textarea>
+                            <button onclick="sendFeedback()" class="transmit-btn" style="padding:10px; font-size:12px;">SEND</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="mobile-nav">
-                    <i class="fas fa-home" style="color:var(--cyan); font-size:20px;"></i>
-                    <i class="fas fa-plus-circle" style="font-size:20px;" onclick="window.scrollTo(0,0)"></i>
-                    <a href="${pUrl}" target="_blank" style="color:inherit;"><i class="fas fa-user-circle" style="font-size:20px;"></i></a>
-                    <i class="fas fa-sign-out-alt" style="font-size:20px;" onclick="window.location='/logout'"></i>
+                    <i class="fas fa-home" style="color:var(--cyan); font-size:22px;"></i>
+                    <i class="fas fa-plus-circle" style="font-size:22px;" onclick="window.scrollTo({top:0, behavior:'smooth'})"></i>
+                    <a href="${pUrl}" target="_blank" style="color:inherit;"><i class="fas fa-user-astronaut" style="font-size:22px;"></i></a>
+                    <i class="fas fa-power-off" style="font-size:22px; color:var(--glow);" onclick="window.location='/logout'"></i>
                 </div>
 
                 <script>
                     window.handleVote = async function(postId, type) {
-                        const res = await fetch('/api/vote/' + postId, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ type })
-                        });
-                        const data = await res.json();
-                        if(data.success) { 
-                            const countSpan = document.querySelector('#post-'+postId+' .v-count');
-                            if(countSpan) countSpan.innerText = data.newVotes; 
-                        }
+                        try {
+                            const res = await fetch('/api/vote/' + postId, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ type })
+                            });
+                            const data = await res.json();
+                            if(data.success) { 
+                                const countSpan = document.querySelector('#post-'+postId+' .v-count');
+                                if(countSpan) countSpan.innerText = data.newVotes; 
+                            }
+                        } catch(e) {}
                     };
 
                     window.sendFeedback = async function() {
                         const fb = document.getElementById('fbContent').value;
                         if(!fb) return;
-                        const res = await fetch('/api/feedback', {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ feedback: fb })
-                        });
-                        if(res.ok) { alert("Signal Received!"); document.getElementById('fbContent').value = ""; }
+                        try {
+                            const res = await fetch('/api/feedback', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ feedback: fb })
+                            });
+                            if(res.ok) { alert("Signal Received!"); document.getElementById('fbContent').value = ""; }
+                        } catch(e) {}
                     };
                 </script>
             </body>
