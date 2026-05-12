@@ -12,7 +12,7 @@ mongoose.connect(dbURI, {
     serverSelectionTimeoutMS: 30000,
     connectTimeoutMS: 30000
 })
-.then(() => console.log('✅ XAVIROX NEURAL CORE CONNECTED (CLOUD)'))
+.then(() => console.log('✅ XAVIROX NEURAL CORE CONNECTED'))
 .catch(err => console.error('❌ CONNECTION FAILED:', err));
 
 // 2. DATA SCHEMAS
@@ -20,7 +20,8 @@ const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     hasBlueTick: { type: Boolean, default: false },
-    isAdmin: { type: Boolean, default: false }
+    isAdmin: { type: Boolean, default: false },
+    portfolioUrl: { type: String, default: '#' } // Portfolio Link Support
 });
 const User = mongoose.model('User', UserSchema);
 
@@ -54,7 +55,7 @@ const isAuth = (req, res, next) => {
     else res.redirect('/login');
 };
 
-// 4. AUTH ROUTES (UI Merge)
+// 4. AUTH ROUTES
 app.get('/login', (req, res) => {
     res.send(`
         <body style="background:#05050a; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
@@ -81,7 +82,6 @@ app.get('/signup', (req, res) => {
                     <input name="password" type="password" placeholder="Set Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
                     <button type="submit" style="width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(45deg, #00ffff, #7b61ff); color:white; font-weight:bold; cursor:pointer;">REGISTER ID</button>
                 </form>
-                <p style="font-size:12px; text-align:center; margin-top:20px; opacity:0.6;"><a href="/login" style="color:#ff007f; text-decoration:none;">Back to Login</a></p>
             </div>
         </body>
     `);
@@ -112,7 +112,7 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// 5. PROTECTED DASHBOARD
+// 5. DASHBOARD WITH PROFILE FIX & PORTFOLIO
 app.get('/dashboard', isAuth, async (req, res) => {
     try {
         const allPosts = await Post.find().sort({ date: -1 });
@@ -154,17 +154,23 @@ app.get('/dashboard', isAuth, async (req, res) => {
                     .universe { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05050a 100%); }
                     .navbar { width: 100%; height: 65px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; }
                     .logo { font-size: 22px; font-weight: 900; color: var(--cyan); letter-spacing: 3px; }
-                    .main-layout { display: grid; grid-template-columns: 280px 1fr 320px; gap: 20px; padding: 85px 20px 20px; max-width: 1400px; margin: auto; }
+                    
+                    .main-layout { display: grid; grid-template-columns: 300px 1fr 320px; gap: 20px; padding: 85px 20px 20px; max-width: 1400px; margin: auto; }
                     .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 20px; backdrop-filter: blur(20px); }
-                    @media (max-width: 1100px) { .main-layout { grid-template-columns: 250px 1fr; } .right-sidebar { display: none; } }
+                    
+                    /* PROFILE FIX FOR DESKTOP */
+                    .left-sidebar { display: flex; flex-direction: column; gap: 20px; }
+                    .profile-card { text-align: center; padding: 30px 20px; border: 1px solid rgba(0,255,255,0.2); }
+                    .p-avatar { width: 80px; height: 80px; background: linear-gradient(45deg, var(--glow), var(--purple)); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; margin: 0 auto 15px; box-shadow: 0 0 20px rgba(255,0,127,0.4); }
+                    .portfolio-btn { background: rgba(0,255,255,0.1); border: 1px solid var(--cyan); color: var(--cyan); padding: 10px; border-radius: 10px; text-decoration: none; display: block; margin-top: 15px; font-size: 13px; transition: 0.3s; }
+                    .portfolio-btn:hover { background: var(--cyan); color: #000; }
+
+                    @media (max-width: 1100px) { .main-layout { grid-template-columns: 280px 1fr; } .right-sidebar { display: none; } }
                     @media (max-width: 768px) { .main-layout { display: block; padding: 80px 15px 100px; } .left-sidebar { display: none; } }
+                    
                     textarea { width: 100%; height: 100px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 15px; font-size: 15px; outline: none; resize: none; box-sizing: border-box; }
                     .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 12px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-                    .post-header { display: flex; align-items: center; }
                     .avatar-glow { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(45deg, var(--glow), var(--purple)); display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; }
-                    .luxury-action-group { display: flex; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
-                    .lux-btn { background: none; border: none; color: #aaa; padding: 10px 15px; cursor: pointer; }
-                    .lux-btn-single { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #aaa; padding: 10px 18px; cursor: pointer; }
                     .mobile-nav { display: none; position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.9); border-top: 1px solid rgba(255,255,255,0.1); padding: 15px 0; justify-content: space-around; z-index: 1000; }
                     @media (max-width: 768px) { .mobile-nav { display: flex; } }
                 </style>
@@ -175,12 +181,21 @@ app.get('/dashboard', isAuth, async (req, res) => {
                     <div class="logo">XAVIROX</div>
                     <a href="/logout" style="color:var(--glow); text-decoration:none; font-size:12px;">LOGOUT</a>
                 </nav>
+
                 <div class="main-layout">
-                    <div class="left-sidebar glass-card">
-                        <div style="color:var(--cyan); margin-bottom:15px;"><i class="fas fa-user"></i> @${user.username}</div>
-                        <div style="opacity:0.5; margin-bottom:15px;"><i class="fas fa-brain"></i> Neural Feed</div>
-                        <div style="opacity:0.5;"><i class="fas fa-fire"></i> Trending</div>
+                    <div class="left-sidebar">
+                        <div class="glass-card profile-card">
+                            <div class="p-avatar">${user.username[0].toUpperCase()}</div>
+                            <div style="font-weight:bold; font-size:20px; color:var(--cyan);">@${user.username} ${user.hasBlueTick ? '<i class="fas fa-check-circle"></i>' : ''}</div>
+                            <div style="font-size:11px; opacity:0.5; margin-top:5px;">NEURAL LEVEL: ${user.isAdmin ? 'MASTER ADMIN' : 'CITIZEN'}</div>
+                            <a href="#" class="portfolio-btn"><i class="fas fa-briefcase"></i> MY PORTFOLIO</a>
+                        </div>
+                        <div class="glass-card" style="padding:15px;">
+                            <div style="color:var(--cyan); margin-bottom:10px;"><i class="fas fa-brain"></i> Neural Feed</div>
+                            <div style="opacity:0.5;"><i class="fas fa-fire"></i> Trending Signals</div>
+                        </div>
                     </div>
+
                     <div class="feed-container">
                         <div class="input-area glass-card" style="margin-bottom: 20px;">
                             <form action="/addpost" method="POST">
@@ -190,19 +205,20 @@ app.get('/dashboard', isAuth, async (req, res) => {
                         </div>
                         <div id="posts-container">${postHTML}</div>
                     </div>
+
                     <div class="right-sidebar glass-card" style="height:fit-content;">
-                        <h3 style="color:var(--glow); font-size:12px;">FEEDBACK</h3>
+                        <h3 style="color:var(--glow); font-size:12px; letter-spacing:2px;">CORE FEEDBACK</h3>
                         <textarea id="fbContent" style="height:60px;" placeholder="Message..."></textarea>
                         <button onclick="sendFeedback()" class="transmit-btn">SEND</button>
                     </div>
                 </div>
+
                 <div class="mobile-nav">
                     <i class="fas fa-home" style="color:var(--cyan)"></i>
-                    <i class="fas fa-search"></i>
                     <i class="fas fa-plus-circle" onclick="window.scrollTo(0,0)"></i>
-                    <i class="fas fa-bell"></i>
                     <i class="fas fa-user"></i>
                 </div>
+
                 <script>
                     async function handleVote(postId, type) {
                         const res = await fetch('/api/vote/' + postId, {
@@ -229,6 +245,27 @@ app.get('/dashboard', isAuth, async (req, res) => {
     } catch (err) { res.status(500).send("Core Sync Error"); }
 });
 
+// API Routes
+app.post('/api/vote/:id', async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        const user = req.session.user ? req.session.user.username : "guest"; 
+        if (post.votedBy.includes(user)) return res.json({ success: false });
+        post.votes += (req.body.type === 'up' ? 1 : -1);
+        post.votedBy.push(user);
+        await post.save();
+        res.json({ success: true, newVotes: post.votes });
+    } catch (err) { res.status(500).json({ success: false }); }
+});
+
+app.post('/api/feedback', async (req, res) => {
+    try {
+        const newFB = new Feedback({ msg: req.body.feedback });
+        await newFB.save();
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ success: false }); }
+});
+
 app.post('/addpost', isAuth, async (req, res) => {
     try {
         const newPost = new Post({ 
@@ -246,7 +283,6 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
-// Redirect Root to Dashboard
 app.get('/', (req, res) => res.redirect('/dashboard'));
 
 const PORT = process.env.PORT || 3000;
