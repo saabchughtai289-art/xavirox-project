@@ -112,7 +112,7 @@ app.post('/login', async (req, res) => {
 app.get('/dashboard', isAuth, async (req, res) => {
     try {
         const allPosts = await Post.find().sort({ date: -1 });
-        const user = req.session.user;
+        const user = await User.findById(req.session.user._id); // Fetch fresh user data from DB
         
         let pUrl = user.portfolioUrl || 'https://xavirox.com';
         if (!pUrl.startsWith('http')) pUrl = 'https://' + pUrl;
@@ -154,7 +154,7 @@ app.get('/dashboard', isAuth, async (req, res) => {
                     .left-sidebar, .right-sidebar { width: 280px; flex-shrink: 0; position: sticky; top: 90px; height: fit-content; }
                     .feed-container { width: 620px; flex-grow: 1; max-width: 100%; }
 
-                    .glass-card { background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 20px; backdrop-filter: blur(15px); transition: 0.4s; position: relative; word-wrap: break-word; }
+                    .glass-card { background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 20px; backdrop-filter: blur(15px); transition: 0.4s; position: relative; word-wrap: break-word; margin-bottom: 20px; }
                     .post-card:hover { border-color: var(--cyan); }
                     
                     .profile-card { text-align: center; border: 1px solid var(--cyan); }
@@ -176,12 +176,11 @@ app.get('/dashboard', isAuth, async (req, res) => {
                     textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 18px; box-sizing: border-box; outline: none; resize: none; }
                     .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
 
-                    /* --- MOBILE STABILITY FIX (MERGED) --- */
                     @media (max-width: 850px) {
-                        .main-layout { display: flex; flex-direction: column; padding: 80px 15px 30px; gap: 20px; }
-                        .left-sidebar, .right-sidebar { width: 100%; position: relative; top: 0; display: block !important; }
+                        .main-layout { display: flex; flex-direction: column; padding: 80px 15px 30px; gap: 0; }
+                        .left-sidebar, .right-sidebar { width: 100%; position: relative; top: 0; display: block !important; margin-bottom: 20px; }
                         .feed-container { width: 100%; order: 2; }
-                        .left-sidebar { order: 1; } /* Profile/Portfolio stays on top */
+                        .left-sidebar { order: 1; }
                         .right-sidebar { order: 3; }
                         .logo { font-size: 18px; }
                     }
@@ -201,24 +200,24 @@ app.get('/dashboard', isAuth, async (req, res) => {
                             <div style="color:var(--cyan); font-weight:bold; font-size:18px;">@${user.username}</div>
                             
                             <a href="${pUrl}" target="_blank" class="portfolio-link">
-                                <i class="fas fa-id-badge"></i> NEURAL PORTFOLIO
+                                <i class="fas fa-id-badge"></i> VIEW PORTFOLIO
                             </a>
                             
                             <div class="update-form" style="border-top:1px solid rgba(255,255,255,0.1); margin-top:20px; padding-top:10px;">
-                                <p style="font-size:10px; color:var(--glow); margin:0;">UPDATE LINK</p>
+                                <p style="font-size:10px; color:var(--glow); margin:0;">LINK NEURAL PORTFOLIO</p>
                                 <form action="/update-portfolio" method="POST">
-                                    <input name="portfolioUrl" placeholder="https://..." required>
-                                    <button type="submit">SAVE CHANGES</button>
+                                    <input name="portfolioUrl" placeholder="https://yourlink.com" required>
+                                    <button type="submit">UPDATE SIGNAL</button>
                                 </form>
                             </div>
                         </div>
                     </div>
 
                     <div class="feed-container">
-                        <div class="input-area glass-card" style="margin-bottom: 30px;">
+                        <div class="input-area glass-card">
                             <form action="/addpost" method="POST">
-                                <textarea name="content" rows="3" placeholder="Broadcast your signal..." required></textarea>
-                                <button type="submit" class="transmit-btn">TRANSMIT SIGNAL</button>
+                                <textarea name="content" rows="3" placeholder="What's on your neural link?..." required></textarea>
+                                <button type="submit" class="transmit-btn">TRANSMIT</button>
                             </form>
                         </div>
                         <div id="posts-container">${postHTML}</div>
@@ -226,9 +225,9 @@ app.get('/dashboard', isAuth, async (req, res) => {
 
                     <div class="right-sidebar">
                         <div class="glass-card">
-                            <h3 style="color:var(--glow); font-size:12px; letter-spacing:2px; margin-bottom:15px;">CORE FEEDBACK</h3>
-                            <textarea id="fbContent" rows="2" placeholder="Message..."></textarea>
-                            <button onclick="sendFeedback()" class="transmit-btn" style="padding:10px; font-size:12px;">SEND</button>
+                            <h3 style="color:var(--glow); font-size:12px; letter-spacing:2px; margin-bottom:15px;">FEEDBACK HUB</h3>
+                            <textarea id="fbContent" rows="2" placeholder="Send message..."></textarea>
+                            <button onclick="sendFeedback()" class="transmit-btn" style="padding:10px; font-size:12px;">SEND SIGNAL</button>
                         </div>
                     </div>
                 </div>
@@ -253,7 +252,7 @@ app.get('/dashboard', isAuth, async (req, res) => {
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ feedback: fb })
                         });
-                        if(res.ok) { alert("Sent!"); document.getElementById('fbContent').value = ""; }
+                        if(res.ok) { alert("Feedback Sent!"); document.getElementById('fbContent').value = ""; }
                     };
                 </script>
             </body>
@@ -262,18 +261,12 @@ app.get('/dashboard', isAuth, async (req, res) => {
     } catch (err) { res.status(500).send("Core Sync Error"); }
 });
 
+// 6. API & UPDATE ROUTES
 app.post('/update-portfolio', isAuth, async (req, res) => {
     try {
         let newUrl = req.body.portfolioUrl;
         if (!newUrl.startsWith('http')) newUrl = 'https://' + newUrl;
-        
-        const updatedUser = await User.findByIdAndUpdate(
-            req.session.user._id, 
-            { portfolioUrl: newUrl },
-            { new: true }
-        );
-        
-        req.session.user = updatedUser; 
+        await User.findByIdAndUpdate(req.session.user._id, { portfolioUrl: newUrl });
         res.redirect('/dashboard');
     } catch (err) { res.status(500).send("Update Failed"); }
 });
@@ -318,4 +311,4 @@ app.get('/logout', (req, res) => {
 app.get('/', (req, res) => res.redirect('/dashboard'));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 XAVIROX LIVE ON PORT ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 XAVIROX LIVE ON PORT ${PORT}`));
