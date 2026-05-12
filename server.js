@@ -8,14 +8,13 @@ const app = express();
 // 1. DATABASE CONNECTION
 const dbURI = "mongodb+srv://xavirox_boss:noESvAPXb6tGrvqi@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority";
 
-// Vercel par stable connection ke liye logic
 let isConnected = false;
 const connectDB = async () => {
     if (isConnected) return;
     try {
         await mongoose.connect(dbURI);
         isConnected = true;
-        console.log('✅ XAVIROX NEURAL CORE STABILIZED');
+        console.log('✅ NEURAL CORE CONNECTED');
     } catch (err) {
         console.error('❌ DB ERROR:', err);
     }
@@ -55,52 +54,162 @@ const Feedback = mongoose.models.Feedback || mongoose.model('Feedback', new mong
 
 // 3. MIDDLEWARES
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); 
+app.use(express.urlencoded({ extended: true }));
+app.set('trust proxy', 1);
 app.use(session({
-    secret: 'xavirox_ultra_secret_key_2026',
+    secret: 'xavirox_2026_super_secret',
     resave: false,
     saveUninitialized: true,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 }
+    cookie: { maxAge: 24 * 60 * 60 * 1000, secure: false }
 }));
 
 const isAuth = (req, res, next) => req.session.user ? next() : res.redirect('/login');
+app.use(async (req, res, next) => { await connectDB(); next(); });
 
-// DB Connection Middleware for Vercel
-app.use(async (req, res, next) => {
-    await connectDB();
-    next();
+// 4. FUNNY PLACEHOLDERS
+const funnyLines = [
+    "Duniya gol hai, lekin ye post square...",
+    "Neural network garam hai, kuch phenk ke maro!",
+    "Aliens are watching... make it interesting.",
+    "Elon Musk ko tag karun kya?",
+    "Shhh... secret message broadcast karein.",
+    "Mars par signal bhej rahe ho?"
+];
+
+// 5. MASTER DASHBOARD (iOS 26 + UNIVERSE UI)
+app.get('/dashboard', isAuth, async (req, res) => {
+    try {
+        const user = await User.findById(req.session.user._id).populate('savedPosts');
+        const allPosts = await Post.find().sort({ date: -1 });
+        const comms = await Community.find();
+        const randomLine = funnyLines[Math.floor(Math.random() * funnyLines.length)];
+
+        let postHTML = allPosts.map(p => `
+            <div class="ios-card animate-slide" id="post-${p._id}">
+                <div class="post-header">
+                    <div class="avatar-orbit">${p.author[0].toUpperCase()}</div>
+                    <div class="user-info">
+                        <span class="user-id">@${p.author} ${p.hasBlueTick ? '<i class="fas fa-check-circle" style="color:#007AFF;"></i>' : ''}</span>
+                        <div class="meta">${p.community} • ${new Date(p.date).toLocaleTimeString()}</div>
+                    </div>
+                    <button onclick="savePost('${p._id}')" class="save-icon"><i class="far fa-bookmark"></i></button>
+                </div>
+                <div class="post-content">${p.content}</div>
+                <div class="ios-actions">
+                    <button onclick="handleVote('${p._id}', 'up')"><i class="fas fa-chevron-up"></i> <span class="v-count">${p.votes}</span></button>
+                    <button onclick="handleVote('${p._id}', 'down')"><i class="fas fa-chevron-down"></i></button>
+                </div>
+            </div>`).join('');
+
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+                <style>
+                    :root { --ios-bg: #000; --ios-blue: #007AFF; --ios-pink: #FF2D55; --glass: rgba(255,255,255,0.06); }
+                    body { margin: 0; background: var(--ios-bg); color: white; font-family: -apple-system, system-ui; overflow-x: hidden; }
+                    body::before { content: ""; position: fixed; width: 200%; height: 200%; background: radial-gradient(circle at center, #1a1a2e 0%, #000 75%); z-index: -1; animation: rotateGalaxy 120s linear infinite; }
+                    @keyframes rotateGalaxy { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+                    .navbar { position: fixed; top: 0; width: 100%; height: 65px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border-bottom: 0.5px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 1000; box-sizing: border-box; }
+                    .logo { font-size: 22px; font-weight: 900; background: linear-gradient(to right, #ff007f, #007AFF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; }
+
+                    .main-layout { display: flex; justify-content: center; gap: 30px; padding: 85px 15px 30px; max-width: 1200px; margin: auto; }
+                    .sidebar { width: 280px; flex-shrink: 0; position: sticky; top: 85px; height: fit-content; display: block; }
+                    .feed { width: 100%; max-width: 600px; }
+
+                    .ios-card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 15px; backdrop-filter: blur(15px); }
+                    .avatar-orbit { width: 45px; height: 45px; background: linear-gradient(45deg, var(--ios-blue), var(--ios-pink)); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: #000; }
+                    
+                    .post-header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; position: relative; }
+                    .user-id { font-weight: 700; font-size: 15px; }
+                    .meta { font-size: 11px; opacity: 0.5; }
+                    .save-icon { position: absolute; right: 0; background: none; border: none; color: white; opacity: 0.6; }
+
+                    .ios-actions { display: flex; gap: 15px; padding-top: 15px; border-top: 0.5px solid rgba(255,255,255,0.05); }
+                    .ios-actions button { background: rgba(255,255,255,0.05); border: none; color: white; padding: 8px 15px; border-radius: 12px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+
+                    textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; color: white; padding: 15px; font-size: 16px; outline: none; resize: none; }
+                    .transmit-btn { background: #fff; color: #000; border: none; padding: 12px 25px; border-radius: 50px; font-weight: 700; float: right; margin-top: 10px; cursor: pointer; transition: 0.3s; }
+                    .transmit-btn:hover { background: var(--ios-blue); color: white; }
+
+                    .animate-slide { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+                    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+                    @media (max-width: 900px) { .sidebar { display: none; } .main-layout { padding-top: 75px; } }
+                </style>
+            </head>
+            <body>
+                <nav class="navbar"><div class="logo">XAVIROX</div><a href="/logout" style="color:var(--ios-pink); text-decoration:none; font-weight:bold; font-size:14px;">Disconnect</a></nav>
+                <div class="main-layout">
+                    <div class="sidebar">
+                        <div class="ios-card" style="text-align:center;">
+                            <div class="avatar-orbit" style="width:70px; height:70px; margin: 0 auto 15px; font-size:28px;">${user.username[0].toUpperCase()}</div>
+                            <div style="font-weight:bold; font-size:18px;">@${user.username}</div>
+                            <a href="${user.portfolioUrl}" target="_blank" style="color:var(--ios-blue); display:block; margin:15px 0; text-decoration:none; font-size:13px; font-weight:600;">VISIT PORTFOLIO</a>
+                            <form action="/update-portfolio" method="POST">
+                                <input name="url" placeholder="New Link..." style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid #333; color:white; border-radius:10px; font-size:11px;">
+                                <button class="transmit-btn" style="float:none; width:100%; font-size:10px; padding:8px;">UPDATE</button>
+                            </form>
+                        </div>
+                        <div class="ios-card">
+                            <h4 style="margin:0 0 10px 0; color:var(--ios-blue); font-size:12px;">COMMUNITIES</h4>
+                            <div style="font-size:13px; opacity:0.7;">${comms.map(c => `<div style="margin-bottom:5px;"># ${c.name}</div>`).join('')}</div>
+                        </div>
+                    </div>
+                    <div class="feed">
+                        <div class="ios-card">
+                            <form action="/addpost" method="POST">
+                                <textarea name="content" rows="2" placeholder="${randomLine}" required></textarea>
+                                <select name="community" style="width:100%; background:#000; color:#fff; border:1px solid #333; padding:8px; border-radius:12px; margin-top:10px; font-size:12px;">
+                                    <option value="Global">Global Channel</option>
+                                    ${comms.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}
+                                </select>
+                                <button type="submit" class="transmit-btn">Transmit</button>
+                            </form>
+                            <div style="clear:both;"></div>
+                        </div>
+                        <div id="feed-root">${postHTML}</div>
+                    </div>
+                </div>
+                <script>
+                    async function handleVote(id, type) {
+                        const res = await fetch('/api/vote/'+id, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type}) });
+                        const data = await res.json();
+                        if(data.success) document.querySelector('#post-'+id+' .v-count').innerText = data.newVotes;
+                    }
+                    async function savePost(id) { const res = await fetch('/api/save/'+id, {method: 'POST'}); if(res.ok) alert("Sync'd to Archive!"); }
+                </script>
+            </body></html>
+        `);
+    } catch (err) { res.status(500).send("Neural Link Error"); }
 });
 
-// 4. AUTH ROUTES
+// 6. ALL SYSTEM ROUTES
 app.get('/login', (req, res) => {
-    res.send(`
-        <body style="background:#05050a; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
-            <div style="background:rgba(255,255,255,0.03); padding:40px; border-radius:25px; border:1px solid #ff007f; width:320px; backdrop-filter:blur(20px); text-align:center; box-shadow: 0 0 20px rgba(255,0,127,0.2);">
-                <h2 style="color:#ff007f; letter-spacing:3px; text-shadow: 0 0 10px #ff007f;">XAVIROX LOGIN</h2>
-                <form action="/login" method="POST">
-                    <input name="username" placeholder="Neural ID" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
-                    <input name="password" type="password" placeholder="Access Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
-                    <button type="submit" style="width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(45deg, #ff007f, #7b61ff); color:white; font-weight:bold; cursor:pointer;">INITIALIZE</button>
-                </form>
-                <p style="font-size:12px; margin-top:15px; opacity:0.6;">New user? <a href="/signup" style="color:#ff007f; text-decoration:none;">Create ID</a></p>
-            </div>
-        </body>
-    `);
+    res.send(`<body style="background:#000; color:white; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;">
+        <form action="/login" method="POST" style="width:300px; text-align:center; background:rgba(255,255,255,0.05); padding:40px; border-radius:30px; border:1px solid rgba(255,255,255,0.1);">
+            <h2 style="letter-spacing:4px; color:white;">XAVIROX</h2>
+            <input name="username" placeholder="Neural ID" style="width:100%; padding:15px; margin-bottom:10px; border-radius:15px; background:rgba(255,255,255,0.1); border:none; color:white;" required>
+            <input name="password" type="password" placeholder="Key" style="width:100%; padding:15px; margin-bottom:20px; border-radius:15px; background:rgba(255,255,255,0.1); border:none; color:white;" required>
+            <button style="width:100%; padding:15px; border-radius:50px; border:none; background:white; font-weight:bold; cursor:pointer;">INITIALIZE</button>
+            <p style="font-size:12px; margin-top:20px; opacity:0.5;">New here? <a href="/signup" style="color:var(--ios-blue);">Create ID</a></p>
+        </form>
+    </body>`);
 });
 
 app.get('/signup', (req, res) => {
-    res.send(`
-        <body style="background:#05050a; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
-            <div style="background:rgba(255,255,255,0.03); padding:40px; border-radius:25px; border:1px solid #ff007f; width:320px; backdrop-filter:blur(20px); text-align:center;">
-                <h2 style="color:#ff007f; letter-spacing:3px;">NEW NEURAL ID</h2>
-                <form action="/signup" method="POST">
-                    <input name="username" placeholder="Choose ID" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
-                    <input name="password" type="password" placeholder="Set Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
-                    <button type="submit" style="width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(45deg, #ff007f, #7b61ff); color:white; font-weight:bold; cursor:pointer;">REGISTER</button>
-                </form>
-            </div>
-        </body>
-    `);
+    res.send(`<body style="background:#000; color:white; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;">
+        <form action="/signup" method="POST" style="width:300px; text-align:center; background:rgba(255,255,255,0.05); padding:40px; border-radius:30px; border:1px solid rgba(255,255,255,0.1);">
+            <h2>NEW IDENTITY</h2>
+            <input name="username" placeholder="Choose ID" style="width:100%; padding:15px; margin-bottom:10px; border-radius:15px; background:rgba(255,255,255,0.1); border:none; color:white;" required>
+            <input name="password" type="password" placeholder="Set Key" style="width:100%; padding:15px; margin-bottom:20px; border-radius:15px; background:rgba(255,255,255,0.1); border:none; color:white;" required>
+            <button style="width:100%; padding:15px; border-radius:50px; border:none; background:white; font-weight:bold;">REGISTER</button>
+        </form>
+    </body>`);
 });
 
 app.post('/signup', async (req, res) => {
@@ -120,109 +229,7 @@ app.post('/login', async (req, res) => {
     } else { res.send("<script>alert('Invalid Access'); window.location='/login';</script>"); }
 });
 
-// 5. THE MASTER DASHBOARD
-app.get('/dashboard', isAuth, async (req, res) => {
-    try {
-        const user = await User.findById(req.session.user._id).populate('savedPosts');
-        const allPosts = await Post.find().sort({ date: -1 });
-        const comms = await Community.find();
-
-        let postHTML = allPosts.map(p => `
-            <div class="glass-card post-card" id="post-${p._id}">
-                <div class="post-header">
-                    <div class="avatar-glow">${p.author[0].toUpperCase()}</div>
-                    <div class="post-meta">
-                        <span class="author-name">@${p.author} ${p.hasBlueTick ? '<i class="fas fa-check-circle" style="color:#ff007f;"></i>' : ''}</span>
-                        <div class="post-time">${p.community} • ${new Date(p.date).toLocaleTimeString()}</div>
-                    </div>
-                    <button onclick="savePost('${p._id}')" class="save-btn"><i class="far fa-bookmark"></i></button>
-                </div>
-                <div class="post-body">${p.content}</div>
-                <div class="action-bar">
-                    <button class="vote-btn" onclick="handleVote('${p._id}', 'up')"><i class="fas fa-chevron-up"></i> <span class="v-count">${p.votes}</span></button>
-                    <button class="vote-btn" onclick="handleVote('${p._id}', 'down')"><i class="fas fa-chevron-down"></i></button>
-                </div>
-            </div>`).join('');
-
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-                <style>
-                    :root { --pink: #ff007f; --glow: rgba(255, 0, 127, 0.5); --bg: #05050a; --glass: rgba(255, 255, 255, 0.04); }
-                    * { box-sizing: border-box; }
-                    body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
-                    .navbar { width: 100%; height: 65px; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid var(--pink); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; position: fixed; top: 0; z-index: 1000; }
-                    .logo { font-size: 22px; font-weight: 900; color: var(--pink); letter-spacing: 3px; text-shadow: 0 0 10px var(--pink); }
-                    .main-layout { display: flex; justify-content: center; gap: 30px; padding: 90px 20px 30px; max-width: 1300px; margin: auto; }
-                    .sidebar { width: 300px; flex-shrink: 0; position: sticky; top: 90px; height: fit-content; }
-                    .feed { width: 620px; flex-grow: 1; }
-                    .glass-card { background: var(--glass); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 22px; backdrop-filter: blur(15px); margin-bottom: 20px; }
-                    .p-avatar { width: 85px; height: 85px; background: linear-gradient(45deg, var(--pink), #7b61ff); border-radius: 25px; display: flex; align-items: center; justify-content: center; font-size: 35px; margin: 0 auto 15px; box-shadow: 0 0 20px var(--glow); }
-                    .portfolio-link { background: var(--pink); color: #000; padding: 14px; border-radius: 12px; text-decoration: none; display: block; margin-top: 15px; font-weight: bold; text-align: center; }
-                    .post-header { display: flex; align-items: center; margin-bottom: 15px; position: relative; }
-                    .avatar-glow { width: 40px; height: 40px; border-radius: 10px; background: var(--pink); color:#000; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; }
-                    .save-btn { position: absolute; right: 0; background: none; border: none; color: var(--pink); cursor: pointer; }
-                    .transmit-btn { background: linear-gradient(45deg, var(--pink), #7b61ff); border: none; color: #fff; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-                    textarea { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 15px; outline: none; resize: none; }
-                    .vote-btn { background: rgba(255,255,255,0.05); border: none; padding: 8px 15px; border-radius: 8px; color: #fff; cursor: pointer; margin-right: 10px; }
-                    @media (max-width: 900px) { .main-layout { flex-direction: column; align-items: center; padding-top: 80px; } .sidebar, .feed { width: 100%; position: relative; top: 0; } .sidebar { order: 1; } .feed { order: 2; } }
-                </style>
-            </head>
-            <body>
-                <nav class="navbar"><div class="logo">XAVIROX</div><a href="/logout" style="color:var(--pink); text-decoration:none; font-weight:bold;">DISCONNECT</a></nav>
-                <div class="main-layout">
-                    <div class="sidebar">
-                        <div class="glass-card" style="text-align:center;">
-                            <div class="p-avatar">${user.username[0].toUpperCase()}</div>
-                            <div style="color:var(--pink); font-weight:bold;">@${user.username}</div>
-                            <a href="${user.portfolioUrl}" target="_blank" class="portfolio-link">MY PORTFOLIO</a>
-                            <form action="/update-portfolio" method="POST" style="margin-top:15px;">
-                                <input name="url" placeholder="New URL..." style="width:100%; padding:8px; background:none; border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; font-size:11px;">
-                                <button class="transmit-btn" style="padding:8px; font-size:10px;">UPDATE</button>
-                            </form>
-                        </div>
-                        <div class="glass-card">
-                            <h4 style="color:var(--pink); margin-top:0;">COMMUNITIES</h4>
-                            <form action="/create-comm" method="POST"><input name="name" style="width:100%; background:none; border:1px solid #333; color:#fff; padding:5px; border-radius:5px;"><button class="transmit-btn" style="font-size:10px;">FOUND</button></form>
-                            <div style="margin-top:10px; font-size:12px; color:rgba(255,255,255,0.6);">${comms.map(c => `<div># ${c.name}</div>`).join('')}</div>
-                        </div>
-                        <div class="glass-card">
-                            <h4 style="color:var(--pink); margin-top:0;">SAVED (${user.savedPosts.length})</h4>
-                            <div style="font-size:10px; opacity:0.7;">${user.savedPosts.map(sp => `• ${sp.content.substring(0,25)}...<br>`).join('')}</div>
-                        </div>
-                    </div>
-                    <div class="feed">
-                        <div class="glass-card">
-                            <form action="/addpost" method="POST">
-                                <textarea name="content" rows="3" placeholder="Broadcast a neural signal..." required></textarea>
-                                <select name="community" style="width:100%; background:#000; color:#fff; border:1px solid #333; padding:10px; border-radius:10px; margin-top:10px;">
-                                    <option value="Global">Global Channel</option>${comms.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}
-                                </select>
-                                <button type="submit" class="transmit-btn">TRANSMIT</button>
-                            </form>
-                        </div>
-                        <div id="feed-root">${postHTML}</div>
-                    </div>
-                </div>
-                <script>
-                    async function handleVote(id, type) {
-                        const res = await fetch('/api/vote/'+id, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type}) });
-                        const data = await res.json();
-                        if(data.success) document.querySelector('#post-'+id+' .v-count').innerText = data.newVotes;
-                    }
-                    async function savePost(id) { const res = await fetch('/api/save/'+id, {method: 'POST'}); if(res.ok) { alert("Saved!"); location.reload(); } }
-                </script>
-            </body></html>
-        `);
-    } catch (err) { res.status(500).send("System Error"); }
-});
-
-// 6. LOGIC ROUTES
-app.post('/api/vote/:id', async (req, res) => {
+app.post('/api/vote/:id', isAuth, async (req, res) => {
     try {
         const post = await Post.findById(req.params.id);
         const user = req.session.user.username;
@@ -234,9 +241,9 @@ app.post('/api/vote/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-app.post('/api/save/:id', isAuth, async (req, res) => {
-    await User.findByIdAndUpdate(req.session.user._id, { $addToSet: { savedPosts: req.params.id } });
-    res.sendStatus(200);
+app.post('/addpost', isAuth, async (req, res) => {
+    await new Post({ content: req.body.content, author: req.session.user.username, community: req.body.community, hasBlueTick: req.session.user.hasBlueTick }).save();
+    res.redirect('/dashboard');
 });
 
 app.post('/update-portfolio', isAuth, async (req, res) => {
@@ -246,24 +253,7 @@ app.post('/update-portfolio', isAuth, async (req, res) => {
     res.redirect('/dashboard');
 });
 
-app.post('/create-comm', isAuth, async (req, res) => {
-    try { await new Community({ name: req.body.name, creator: req.session.user.username }).save(); res.redirect('/dashboard'); }
-    catch (e) { res.send("Taken!"); }
-});
-
-app.post('/addpost', isAuth, async (req, res) => {
-    await new Post({ content: req.body.content, author: req.session.user.username, community: req.body.community, hasBlueTick: req.session.user.hasBlueTick }).save();
-    res.redirect('/dashboard');
-});
-
 app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login'); });
 app.get('/', (req, res) => res.redirect('/dashboard'));
 
-// EXPORT FOR VERCEL
 module.exports = app;
-
-// Local Development
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = 3000;
-    app.listen(PORT, () => console.log(`🚀 NEURAL SYSTEM LIVE ON ${PORT}`));
-}
