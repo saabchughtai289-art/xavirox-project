@@ -3,12 +3,15 @@ const path = require('path');
 const mongoose = require('mongoose');
 const app = express();
 
-// 1. DATABASE CONNECTION (Cloud Atlas Integrated)
-const dbURI = "mongodb+srv://xavirox_boss:noESvAPXb6tGrvqi@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority&appName=Cluster0";
+// 1. DATABASE CONNECTION (Merged with Standard Connection String for Stability)
+const dbURI = "mongodb://xavirox_boss:noESvAPXb6tGrvqi@cluster0-shard-00-00.myxiyfk.mongodb.net:27017,cluster0-shard-00-01.myxiyfk.mongodb.net:27017,cluster0-shard-00-02.myxiyfk.mongodb.net:27017/xavirox_db?ssl=true&replicaSet=atlas-m9v391-shard-0&authSource=admin&retryWrites=true&w=majority";
 
 mongoose.connect(dbURI)
     .then(() => console.log('✅ XAVIROX NEURAL CORE CONNECTED (CLOUD)'))
-    .catch(err => console.error('❌ CONNECTION FAILED:', err));
+    .catch(err => {
+        console.error('❌ CONNECTION FAILED. Check Atlas Network Access or restart your internet.');
+        console.error(err);
+    });
 
 // 2. DATA SCHEMAS
 const Post = mongoose.model('Post', new mongoose.Schema({
