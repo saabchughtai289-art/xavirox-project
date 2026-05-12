@@ -8,10 +8,7 @@ const app = express();
 // 1. DATABASE CONNECTION
 const dbURI = "mongodb+srv://xavirox_boss:noESvAPXb6tGrvqi@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority";
 
-mongoose.connect(dbURI, {
-    serverSelectionTimeoutMS: 30000,
-    connectTimeoutMS: 30000
-})
+mongoose.connect(dbURI)
 .then(() => console.log('✅ XAVIROX NEURAL CORE CONNECTED'))
 .catch(err => console.error('❌ CONNECTION FAILED:', err));
 
@@ -21,7 +18,7 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true },
     hasBlueTick: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
-    portfolioUrl: { type: String, default: 'https://your-portfolio.com' } 
+    portfolioUrl: { type: String, default: 'https://google.com' } 
 });
 const User = mongoose.model('User', UserSchema);
 
@@ -42,7 +39,6 @@ const Feedback = mongoose.model('Feedback', new mongoose.Schema({
 // 3. MIDDLEWARES
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
-app.use(express.static('public')); 
 app.use(session({
     secret: 'xavirox_ultra_secret',
     resave: false,
@@ -65,6 +61,7 @@ app.get('/login', (req, res) => {
                     <input name="password" type="password" placeholder="Access Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:white; box-sizing:border-box;" required>
                     <button type="submit" style="width:100%; padding:15px; border-radius:12px; border:none; background:linear-gradient(45deg, #ff007f, #7b61ff); color:white; font-weight:bold; cursor:pointer;">INITIALIZE LINK</button>
                 </form>
+                <p style="font-size:12px; text-align:center; margin-top:15px;">New? <a href="/signup" style="color:#00ffff;">Create ID</a></p>
             </div>
         </body>
     `);
@@ -93,7 +90,8 @@ app.post('/signup', async (req, res) => {
             username: req.body.username, 
             password: hashedPassword,
             isAdmin: isXavi,
-            hasBlueTick: isXavi 
+            hasBlueTick: isXavi,
+            portfolioUrl: 'https://xavirox.com' // Default link set
         });
         await newUser.save();
         res.redirect('/login');
@@ -110,13 +108,12 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD (FULL MERGED & FIXED)
+// 5. DASHBOARD (DESKTOP PORTFOLIO FIX)
 app.get('/dashboard', isAuth, async (req, res) => {
     try {
         const allPosts = await Post.find().sort({ date: -1 });
         const user = req.session.user;
-        const placeholders = ["Broadcast to the network...", "Drop a forbidden opinion...", "Type your thoughts..."];
-        const randomLine = placeholders[Math.floor(Math.random() * placeholders.length)];
+        const pUrl = user.portfolioUrl || 'https://google.com';
 
         let postHTML = allPosts.map(p => `
             <div class="glass-card post" id="post-${p._id}" style="margin-bottom:20px;">
@@ -124,17 +121,15 @@ app.get('/dashboard', isAuth, async (req, res) => {
                     <div class="avatar-glow" style="width:40px; height:40px; border-radius:10px; background:linear-gradient(45deg, var(--glow), var(--purple)); display:flex; align-items:center; justify-content:center; font-weight:bold; margin-right:12px;">${p.author[0].toUpperCase()}</div>
                     <div class="post-meta">
                         <span class="author-name" style="color:var(--cyan); font-weight:bold;">
-                            ${p.author} ${p.hasBlueTick ? '<i class="fas fa-check-circle" style="font-size:11px; color:var(--cyan);"></i>' : ''}
+                            @${p.author} ${p.hasBlueTick ? '<i class="fas fa-check-circle" style="font-size:11px; color:var(--cyan);"></i>' : ''}
                         </span>
                         <div class="post-time" style="font-size:10px; opacity:0.5;">${new Date(p.date).toLocaleTimeString()}</div>
                     </div>
                 </div>
-                <div class="post-body" style="margin: 15px 0; line-height:1.5;">${p.content}</div>
-                <div class="post-actions">
-                    <div class="luxury-action-group" style="display:flex; background:rgba(255,255,255,0.05); border-radius:12px; width:fit-content;">
-                        <button class="lux-btn" onclick="handleVote('${p._id}', 'up')" style="color:#00ffff;"><i class="fas fa-caret-up"></i> <span class="v-count">${p.votes}</span></button>
-                        <button class="lux-btn" onclick="handleVote('${p._id}', 'down')" style="color:#ff007f;"><i class="fas fa-caret-down"></i></button>
-                    </div>
+                <div class="post-body" style="margin: 15px 0; color:#ddd;">${p.content}</div>
+                <div class="luxury-action-group" style="display:flex; background:rgba(255,255,255,0.05); border-radius:12px; width:fit-content;">
+                    <button class="lux-btn" onclick="handleVote('${p._id}', 'up')" style="color:var(--cyan); background:none; border:none; padding:10px 15px; cursor:pointer;"><i class="fas fa-caret-up"></i> <span class="v-count">${p.votes}</span></button>
+                    <button class="lux-btn" onclick="handleVote('${p._id}', 'down')" style="color:var(--glow); background:none; border:none; padding:10px 15px; cursor:pointer;"><i class="fas fa-caret-down"></i></button>
                 </div>
             </div>`).join('');
 
@@ -143,60 +138,66 @@ app.get('/dashboard', isAuth, async (req, res) => {
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
                 <style>
                     :root { --glow: #ff007f; --cyan: #00ffff; --purple: #7b61ff; --bg: #05050a; }
-                    body { margin: 0; background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+                    body { margin: 0; background: var(--bg); color: #fff; font-family: sans-serif; }
                     .universe { position: fixed; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05050a 100%); }
-                    .navbar { width: 100%; height: 65px; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; }
-                    .logo { font-size: 22px; font-weight: 900; color: var(--cyan); letter-spacing: 3px; }
                     
-                    /* Desktop Layout Fix */
-                    .main-layout { display: flex; justify-content: center; gap: 20px; padding: 85px 20px 20px; max-width: 1300px; margin: auto; }
-                    .left-sidebar { width: 300px; flex-shrink: 0; }
-                    .feed-container { flex-grow: 1; max-width: 650px; }
-                    .right-sidebar { width: 300px; flex-shrink: 0; }
+                    /* FIXED NAVBAR */
+                    .navbar { width: 100%; height: 60px; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: fixed; top: 0; z-index: 1000; box-sizing: border-box; }
+                    .logo { font-size: 20px; font-weight: 900; color: var(--cyan); letter-spacing: 2px; }
+
+                    /* MAIN LAYOUT - FLEX IS BETTER */
+                    .main-layout { display: flex; justify-content: center; gap: 30px; padding: 80px 20px 20px; max-width: 1200px; margin: auto; }
+                    
+                    .left-sidebar { width: 280px; display: block; }
+                    .feed-container { width: 600px; }
+                    .right-sidebar { width: 280px; display: block; }
 
                     .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 20px; backdrop-filter: blur(20px); }
-                    .profile-card { text-align: center; border: 1px solid var(--cyan); }
-                    .p-avatar { width: 75px; height: 75px; background: linear-gradient(45deg, var(--glow), var(--purple)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 15px; }
-                    .portfolio-link { background: var(--cyan); color: #000; padding: 12px; border-radius: 12px; text-decoration: none; display: block; margin-top: 15px; font-weight: bold; }
+                    .profile-card { text-align: center; border: 1px solid var(--cyan); box-shadow: 0 0 20px rgba(0,255,255,0.1); }
+                    .p-avatar { width: 80px; height: 80px; background: linear-gradient(45deg, var(--glow), var(--purple)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 15px; }
+                    
+                    /* PORTFOLIO BUTTON */
+                    .portfolio-link { background: var(--cyan); color: #000; padding: 12px; border-radius: 12px; text-decoration: none; display: block; margin-top: 15px; font-weight: bold; transition: 0.3s; text-transform: uppercase; font-size: 13px; }
+                    .portfolio-link:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--cyan); }
 
                     @media (max-width: 1100px) { .right-sidebar { display: none; } }
-                    @media (max-width: 800px) { 
+                    @media (max-width: 850px) { 
                         .left-sidebar { display: none; } 
-                        .main-layout { padding: 80px 10px 100px; }
+                        .feed-container { width: 100%; }
+                        .main-layout { padding: 70px 10px 100px; }
                     }
 
-                    textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 15px; box-sizing: border-box; outline: none; resize: none; }
-                    .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 12px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-                    .lux-btn { background: none; border: none; padding: 10px 15px; cursor: pointer; font-weight: bold; }
+                    textarea { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; color: #fff; padding: 15px; box-sizing: border-box; outline: none; resize: none; font-family: inherit; }
+                    .transmit-btn { background: linear-gradient(45deg, var(--glow), var(--purple)); border: none; color: #fff; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
 
-                    .mobile-nav { display: none; position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.95); border-top: 1px solid rgba(255,255,255,0.1); padding: 15px 0; justify-content: space-around; z-index: 1000; }
-                    @media (max-width: 800px) { .mobile-nav { display: flex; } }
+                    .mobile-nav { display: none; position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.95); border-top: 1px solid rgba(255,255,255,0.1); padding: 20px 0; justify-content: space-around; z-index: 1001; }
+                    @media (max-width: 850px) { .mobile-nav { display: flex; } }
                 </style>
             </head>
             <body>
                 <div class="universe"></div>
                 <nav class="navbar">
                     <div class="logo">XAVIROX</div>
-                    <a href="/logout" style="color:var(--glow); text-decoration:none; font-size:12px;">LOGOUT</a>
+                    <a href="/logout" style="color:var(--glow); text-decoration:none; font-weight:bold; font-size:12px;">DISCONNECT</a>
                 </nav>
 
                 <div class="main-layout">
                     <div class="left-sidebar">
                         <div class="glass-card profile-card">
                             <div class="p-avatar">${user.username[0].toUpperCase()}</div>
-                            <div style="color:var(--cyan); font-weight:bold;">@${user.username} ${user.hasBlueTick ? '<i class="fas fa-check-circle"></i>' : ''}</div>
-                            <a href="${user.portfolioUrl}" target="_blank" class="portfolio-link">MY PORTFOLIO</a>
+                            <div style="color:var(--cyan); font-weight:bold; font-size:18px;">@${user.username} ${user.hasBlueTick ? '<i class="fas fa-check-circle"></i>' : ''}</div>
+                            <a href="${pUrl}" target="_blank" class="portfolio-link"><i class="fas fa-external-link-alt"></i> Open Portfolio</a>
                         </div>
                     </div>
 
                     <div class="feed-container">
                         <div class="input-area glass-card" style="margin-bottom: 25px;">
                             <form action="/addpost" method="POST">
-                                <textarea name="content" placeholder="${randomLine}" required></textarea>
+                                <textarea name="content" rows="3" placeholder="Broadcast to the network..." required></textarea>
                                 <button type="submit" class="transmit-btn">TRANSMIT SIGNAL</button>
                             </form>
                         </div>
@@ -205,18 +206,18 @@ app.get('/dashboard', isAuth, async (req, res) => {
 
                     <div class="right-sidebar">
                         <div class="glass-card">
-                            <h3 style="color:var(--glow); font-size:12px;">FEEDBACK</h3>
-                            <textarea id="fbContent" style="height:60px;" placeholder="Message..."></textarea>
-                            <button onclick="sendFeedback()" class="transmit-btn">SEND</button>
+                            <h3 style="color:var(--glow); font-size:12px; letter-spacing:1px; margin-bottom:15px;">SYSTEM FEEDBACK</h3>
+                            <textarea id="fbContent" rows="2" placeholder="Send message..."></textarea>
+                            <button onclick="sendFeedback()" class="transmit-btn" style="padding:10px;">SEND</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="mobile-nav">
-                    <i class="fas fa-home" style="color:var(--cyan)"></i>
-                    <i class="fas fa-plus-circle" onclick="window.scrollTo(0,0)"></i>
-                    <a href="${user.portfolioUrl}" style="color:inherit;"><i class="fas fa-briefcase"></i></a>
-                    <i class="fas fa-user"></i>
+                    <i class="fas fa-home" style="color:var(--cyan); font-size:20px;"></i>
+                    <i class="fas fa-plus-circle" style="font-size:20px;" onclick="window.scrollTo(0,0)"></i>
+                    <a href="${pUrl}" target="_blank" style="color:inherit;"><i class="fas fa-user-circle" style="font-size:20px;"></i></a>
+                    <i class="fas fa-sign-out-alt" style="font-size:20px;" onclick="window.location='/logout'"></i>
                 </div>
 
                 <script>
@@ -228,10 +229,11 @@ app.get('/dashboard', isAuth, async (req, res) => {
                         });
                         const data = await res.json();
                         if(data.success) { 
-                            const postElem = document.querySelector('#post-'+postId+' .v-count');
-                            if(postElem) postElem.innerText = data.newVotes; 
+                            const countSpan = document.querySelector('#post-'+postId+' .v-count');
+                            if(countSpan) countSpan.innerText = data.newVotes; 
                         }
                     };
+
                     window.sendFeedback = async function() {
                         const fb = document.getElementById('fbContent').value;
                         if(!fb) return;
@@ -239,7 +241,7 @@ app.get('/dashboard', isAuth, async (req, res) => {
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ feedback: fb })
                         });
-                        if(res.ok) { alert("Signal Sent!"); document.getElementById('fbContent').value = ""; }
+                        if(res.ok) { alert("Signal Received!"); document.getElementById('fbContent').value = ""; }
                     };
                 </script>
             </body>
@@ -276,7 +278,7 @@ app.post('/addpost', isAuth, async (req, res) => {
             author: req.session.user.username,
             hasBlueTick: req.session.user.hasBlueTick
         });
-        await newUserPost = await newPost.save();
+        await newPost.save();
         res.redirect('/dashboard');
     } catch (err) { res.status(500).send("Error"); }
 });
