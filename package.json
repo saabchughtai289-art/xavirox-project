@@ -1,7 +1,18 @@
-"dependencies": {
+{
+  "name": "reddit-pakistan",
+  "version": "1.0.0",
+  "description": "Xavirox Neural Core",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
     "bcryptjs": "^2.4.3",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "mongoose": "^7.6.3",
     "multer": "^1.4.5-lts.1"
+  },
+  "type": "commonjs"
 }
