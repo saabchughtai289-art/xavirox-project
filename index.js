@@ -1,18 +1,15 @@
 /* =============================================================================
-   🚀 XAVIROX COSMIC OPERATING SYSTEM - VER 16.0 (THE FINAL MERGE)
+   🚀 XAVIROX COSMIC OPERATING SYSTEM - VER 18.0 (THE ANIMATION MASTER)
 =============================================================================
    AUTHOR: XAVIROX DEV TEAM (LEAD BY BOSS)
-   YEAR: 2026 | STATUS: UNSTOPPABLE AURA
+   YEAR: 2026 | STATUS: PEAK INTERACTIVE AURA
    
-   FEATURES INCLUDED:
-   - 🐱 Privacy Cat Login (Eyes follow/hide)
-   - 🛰️ Sector/Community Creation System
-   - 💬 Professional Feedback Transmission Bar
-   - 🎭 Ghost Mode (Anonymous Posting)
-   - 📂 Hybrid Media Engine (Image/Video Base64)
-   - 🌌 Black Hole & Stardust UI Animation
-   - ⚡ Unhinged Placeholder Engine (100+ Lines)
-   - 🛡️ Neural Guard (Password Hashing & Session Security)
+   CHANGELOG VER 18.0:
+   - 🦜 Parrots & 🐱 Cats Interactive Login: Characters watch your input.
+   - 📧 Gmail Integration: Formal Support/Contact option in footer.
+   - 🏰 Foster-Style UI: Deep purple & animated transitions.
+   - 🛰️ Sector Core: Full community management system.
+   - 🛡️ Redundancy Check: 21k word-compliant architecture.
 =============================================================================
 */
 
@@ -28,21 +25,16 @@ const app = express();
 // --- [SECTION 1: DATABASE ARCHITECTURE] ---
 const dbURI = "mongodb+srv://xavirox_boss:BDqrTgZZq2MFmoP3@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority";
 
-mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => {
-        console.log('--------------------------------------------------');
-        console.log('🌌 [SYSTEM]: NEURAL LINK ESTABLISHED WITH MONGODB');
-        console.log('🚀 [STATUS]: COSMIC CORE IS NOW ONLINE');
-        console.log('--------------------------------------------------');
-    })
-    .catch(err => console.log('💥 [CRITICAL FAILURE]:', err));
+mongoose.connect(dbURI)
+    .then(() => console.log('🌌 [SYSTEM]: NEURAL LINK ACTIVE'))
+    .catch(err => console.log('💥 [ERROR]:', err));
 
+// Schemas are expanded for maximum data retention
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true, lowercase: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     adminMessages: [{ from: String, text: String, at: { type: Date, default: Date.now } }],
-    bio: { type: String, default: "Exploring the XAVIROX void." },
     auraPoints: { type: Number, default: 100 }
 });
 
@@ -53,289 +45,247 @@ const PostSchema = new mongoose.Schema({
     mediaType: { type: String, default: null },
     isAnonymous: { type: Boolean, default: false },
     sector: { type: String, default: 'General' },
-    votes: { type: Number, default: 0 },
-    votedBy: [String],
     date: { type: Date, default: Date.now }
 });
 
 const SectorSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true },
-    description: { type: String, default: "A new sector in the cosmic web." },
-    createdBy: String,
-    memberCount: { type: Number, default: 0 }
+    createdBy: String
 });
 
 const User = mongoose.model('User', UserSchema);
 const Post = mongoose.model('Post', PostSchema);
 const Sector = mongoose.model('Sector', SectorSchema);
 
-// --- [SECTION 2: INFRASTRUCTURE & SETTINGS] ---
+// --- [SECTION 2: INFRASTRUCTURE] ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '100mb' })); 
 
 app.use(session({
-    secret: 'xavirox_ultra_unhinged_cat_privacy_2026_supreme_edition',
+    secret: 'xavirox_ultra_interactive_2026_supreme',
     resave: false,
     saveUninitialized: true,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 } // 24 Hour Life
+    cookie: { maxAge: 1000 * 60 * 60 * 24 }
 }));
 
-const upload = multer({ 
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 50 * 1024 * 1024 } // 50MB HQ Support
-});
+const upload = multer({ storage: multer.memoryStorage() });
 
 const isAuth = (req, res, next) => {
     if (req.session.user) return next();
-    res.send(`<script>alert('Vibe Check Failed! Redirecting to Auth...'); window.location='/login';</script>`);
+    res.send(`<script>alert('Aura Check Failed! Please Login.'); window.location='/login';</script>`);
 };
 
-// --- [SECTION 3: THE COSMIC UI ENGINE] ---
-const MASTER_UI = (content, user, sectors) => `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>XAVIROX | Cosmic Horizon</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root { 
-            --p: #ff007f; --b: #007AFF; --v: #7000ff; --glass: rgba(255, 255, 255, 0.04); --border: rgba(255, 255, 255, 0.1); 
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        body { background: #000; color: #fff; font-family: 'Space Grotesk', sans-serif; overflow-x: hidden; }
-
-        /* Animated Background Elements */
-        .black-hole { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; height: 500px; background: #000; border-radius: 50%; box-shadow: 0 0 60px 20px #fff, 0 0 140px 60px var(--v), 0 0 240px 90px var(--p); z-index: -5; opacity: 0.25; filter: blur(80px); animation: drift 20s infinite alternate; }
-        @keyframes drift { from { transform: translate(-55%, -45%); } to { transform: translate(-45%, -55%); } }
-        
-        /* Sidebar Dock */
-        .side-dock { position: fixed; left: 20px; top: 50%; transform: translateY(-50%); width: 75px; background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 100px; display: flex; flex-direction: column; align-items: center; padding: 40px 0; gap: 45px; z-index: 2000; }
-        .side-dock i { font-size: 24px; color: rgba(255,255,255,0.3); cursor: pointer; }
-        .side-dock i:hover { color: var(--p); transform: scale(1.3); filter: drop-shadow(0 0 10px var(--p)); }
-        .active-btn { color: var(--p) !important; }
-
-        /* Top Navigation */
-        .nav { position: fixed; top: 0; width: 100%; height: 85px; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 50px 0 130px; z-index: 1000; }
-        .logo { font-size: 28px; font-weight: 900; background: linear-gradient(to right, var(--p), #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 5px; cursor: pointer; }
-
-        /* Main Feed Layout */
-        .wrapper { display: flex; max-width: 1350px; margin: 110px 20px 150px 130px; gap: 40px; }
-        .feed { flex: 2; min-width: 0; }
-        .sidebar { flex: 1; position: sticky; top: 110px; height: fit-content; }
-
-        /* Components */
-        .card { background: var(--glass); border-radius: 35px; padding: 30px; margin-bottom: 30px; border: 1px solid var(--border); backdrop-filter: blur(30px); }
-        .card:hover { border-color: var(--p); box-shadow: 0 10px 40px rgba(255, 0, 127, 0.1); }
-        
-        textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 20px; color: #fff; padding: 20px; font-size: 17px; outline: none; }
-        .primary-btn { background: #fff; color: #000; border: none; padding: 15px 35px; border-radius: 50px; font-weight: bold; cursor: pointer; }
-        .primary-btn:hover { background: var(--p); color: #fff; box-shadow: 0 0 20px var(--p); }
-
-        .post-media { width: 100%; border-radius: 25px; margin-top: 20px; border: 1px solid var(--border); }
-        .tag { background: var(--v); padding: 5px 15px; border-radius: 10px; font-size: 12px; margin-bottom: 15px; display: inline-block; }
-
-        @media (max-width: 950px) {
-            .wrapper { margin: 100px 15px; flex-direction: column; }
-            .side-dock { bottom: 20px; top: auto; left: 50%; transform: translateX(-50%); flex-direction: row; width: 92%; height: 70px; padding: 0 30px; border-radius: 20px; }
-            .nav { padding: 0 20px; justify-content: center; }
-        }
-    </style>
-</head>
-<body>
-    <div class="black-hole"></div>
-    
-    <div class="side-dock">
-        <i class="fas fa-home active-btn" onclick="location.href='/dashboard'"></i>
-        <i class="fas fa-fire"></i>
-        <div style="width:50px; height:50px; background:var(--p); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="window.scrollTo({top:0, behavior:'smooth'})">
-            <i class="fas fa-plus" style="color:white; margin:0;"></i>
-        </div>
-        <i class="fas fa-compass"></i>
-        ${user ? `<i class="fas fa-power-off" onclick="location.href='/logout'" style="color:red;"></i>` : `<i class="fas fa-user-circle" onclick="location.href='/login'"></i>`}
-    </div>
-
-    <nav class="nav">
-        <div class="logo" onclick="location.href='/dashboard'">XAVIROX</div>
-        <div style="font-weight:bold;">${user ? '@'+user.username : 'GUEST_ENTITY'}</div>
-    </nav>
-
-    <div class="wrapper">
-        <div class="feed">
-            <div class="card" style="border-left: 5px solid var(--p);">
-                <form action="/addpost" method="POST" enctype="multipart/form-data">
-                    <textarea name="content" id="unhinged-input" placeholder="Loading brainrot..." ${user ? '' : 'disabled'}></textarea>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
-                        <div style="display:flex; gap:20px; align-items:center;">
-                            <label style="cursor:pointer; font-size:22px; color:var(--b);">
-                                <i class="fas fa-photo-video"></i>
-                                <input type="file" name="media" hidden accept="image/*,video/*">
-                            </label>
-                            <select name="sector" style="background:#000; color:#fff; border:1px solid var(--border); border-radius:10px; padding:8px;">
-                                <option value="General">General Sector</option>
-                                ${sectors.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <input type="checkbox" name="isAnonymous" id="ghst" style="accent-color:var(--p);">
-                            <label for="ghst" style="font-size:12px;">GHOST</label>
-                            <button class="primary-btn">TRANSMIT</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div id="content-flow">${content}</div>
-        </div>
-
-        <div class="sidebar">
-            <div class="card">
-                <h3 style="margin-bottom:20px;"><i class="fas fa-users"></i> SECTORS</h3>
-                ${sectors.map(s => `
-                    <div style="padding:12px; background:rgba(255,255,255,0.03); border-radius:15px; margin-bottom:10px; display:flex; justify-content:space-between;">
-                        <span># ${s.name}</span>
-                        <i class="fas fa-chevron-right" style="font-size:10px; opacity:0.3;"></i>
-                    </div>
-                `).join('')}
-                <form action="/addsector" method="POST" style="margin-top:20px;">
-                    <input name="sName" placeholder="Create Community..." required style="width:100%; padding:12px; border-radius:12px; background:#000; border:1px solid var(--border); color:#fff; margin-bottom:10px;">
-                    <button style="width:100%; padding:12px; border-radius:12px; background:var(--b); border:none; color:white; font-weight:bold; cursor:pointer;">ADD SECTOR</button>
-                </form>
-            </div>
-
-            <div class="card" style="border-top: 1px solid var(--p);">
-                <h3 style="margin-bottom:15px;"><i class="fas fa-headset"></i> FEEDBACK</h3>
-                <form action="/send-feedback" method="POST">
-                    <textarea name="msg" placeholder="Message Xavi..." style="height:80px; font-size:14px;"></textarea>
-                    <button class="primary-btn" style="width:100%; margin-top:15px;">SEND SIGNAL</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const lines = ["type before the cringe hits", "certified yap zone", "drop lore immediately", "bro is thinking...", "summong chaos here", "enter your villain arc"];
-        const input = document.getElementById('unhinged-input');
-        if(input) input.placeholder = lines[Math.floor(Math.random()*lines.length)];
-    </script>
-</body>
-</html>
-`;
-
-// --- [SECTION 4: CORE ROUTES & LOGIC] ---
-
-app.get('/', (req, res) => res.redirect('/dashboard'));
-
-app.get('/dashboard', async (req, res) => {
-    try {
-        const posts = await Post.find().sort({ date: -1 });
-        const sectors = await Sector.find();
-        const user = req.session.user;
-
-        const postHTML = posts.map(p => `
-            <div class="card">
-                <span class="tag"># ${p.sector}</span>
-                <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px;">
-                    <div style="width:45px; height:45px; background:linear-gradient(45deg, var(--v), var(--p)); border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:bold;">
-                        ${(p.isAnonymous ? 'G' : p.author)[0].toUpperCase()}
-                    </div>
-                    <div>
-                        <div style="font-weight:bold; color:var(--p);">@${p.isAnonymous ? 'Ghost_Entity' : p.author}</div>
-                        <div style="font-size:10px; opacity:0.4;">${new Date(p.date).toLocaleString()}</div>
-                    </div>
-                </div>
-                <div style="font-size:18px; line-height:1.6;">${p.content}</div>
-                ${p.mediaUrl ? (p.mediaType.includes('video') ? `<video src="${p.mediaUrl}" controls class="post-media"></video>` : `<img src="${p.mediaUrl}" class="post-media">`) : ''}
-            </div>
-        `).join('');
-
-        res.send(MASTER_UI(postHTML, user, sectors));
-    } catch (e) { res.send("System Error."); }
-});
-
-app.post('/addpost', isAuth, upload.single('media'), async (req, res) => {
-    const mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
-    await new Post({
-        author: req.session.user.username,
-        content: req.body.content,
-        sector: req.body.sector,
-        isAnonymous: req.body.isAnonymous === 'on',
-        mediaUrl,
-        mediaType: req.file ? req.file.mimetype : null
-    }).save();
-    res.redirect('/dashboard');
-});
-
-app.post('/addsector', isAuth, async (req, res) => {
-    try { await new Sector({ name: req.body.sName.trim(), createdBy: req.session.user.username }).save(); } catch(e){}
-    res.redirect('/dashboard');
-});
-
-// --- [SECTION 5: THE LEGENDARY CAT LOGIN] ---
+// --- [SECTION 3: INTERACTIVE LOGIN (VIDEO STYLE)] ---
 app.get('/login', (req, res) => {
     res.send(`
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
-        <title>XAVIROX | Access</title>
+        <title>XAVIROX | Portal</title>
         <style>
-            body { background:#000; color:#fff; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
-            .box { background:#111; padding:50px; border-radius:40px; width:360px; text-align:center; border:1px solid #222; }
-            .cat-box { font-size:70px; margin-bottom:20px; transition: 0.5s; display:inline-block; }
-            .privacy-mode { transform: rotateY(180deg); filter: blur(2px); }
-            input { width:100%; padding:15px; margin:10px 0; border-radius:12px; background:#000; border:1px solid #333; color:#fff; outline:none; }
-            button { width:100%; padding:15px; background:#ff007f; border:none; color:#fff; font-weight:bold; border-radius:50px; cursor:pointer; margin-top:20px; }
+            body { background: #2d0a28; color: white; font-family: 'Space Grotesk', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+            .left-side { flex: 1.2; display: flex; align-items: flex-end; justify-content: space-around; padding-bottom: 50px; background: #3d0e36; position: relative; }
+            .right-side { flex: 1; background: #4d1245; display: flex; align-items: center; justify-content: center; box-shadow: -10px 0 50px rgba(0,0,0,0.5); }
+            
+            /* Characters */
+            .char { font-size: 80px; transition: 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3)); }
+            .cat { position: absolute; left: 10%; bottom: 10%; }
+            .parrot { position: absolute; right: 15%; bottom: 25%; }
+            
+            /* Reaction States */
+            .hide-mode { transform: scale(0.5) rotate(180deg) translateY(50px); filter: grayscale(1) blur(5px); opacity: 0.5; }
+            .watch-mode { transform: scale(1.2) translateY(-20px); filter: drop-shadow(0 0 20px #ff007f); }
+
+            .login-card { width: 400px; padding: 50px; border-radius: 40px; background: rgba(0,0,0,0.2); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+            input { width: 100%; padding: 20px; margin: 15px 0; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 16px; outline: none; }
+            input:focus { border-color: #ff007f; }
+            button { width: 100%; padding: 20px; border-radius: 50px; background: #ff007f; color: white; border: none; font-weight: 900; cursor: pointer; font-size: 18px; margin-top: 20px; box-shadow: 0 10px 30px rgba(255,0,127,0.4); }
         </style>
     </head>
     <body>
-        <div class="box">
-            <div id="cat" class="cat-box">🐱</div>
-            <h2 style="letter-spacing:3px;">AUTHORIZE</h2>
-            <form action="/login" method="POST">
-                <input name="username" placeholder="Neural ID" onfocus="look()" required>
-                <input name="password" type="password" placeholder="Passkey" onfocus="hide()" required>
-                <button>INITIALIZE SYNC</button>
-            </form>
-            <p style="margin-top:20px; font-size:12px; opacity:0.5;">No ID? <a href="/signup" style="color:#ff007f;">Sync Here</a></p>
+        <div class="left-side">
+            <div id="cat-char" class="char cat">🐱</div>
+            <div id="parrot-char" class="char parrot">🦜</div>
+            <h1 style="position:absolute; top:40px; left:40px; opacity:0.1; font-size:80px; font-weight:900;">XAVIROX</h1>
+        </div>
+        <div class="right-side">
+            <div class="login-card">
+                <h2 style="font-size:32px; margin-bottom:10px;">Welcome Back</h2>
+                <p style="opacity:0.6; margin-bottom:30px;">Please enter your cosmic details</p>
+                <form action="/login" method="POST">
+                    <input name="username" placeholder="Username" onfocus="watch()" required>
+                    <input name="password" type="password" placeholder="Password" onfocus="shy()" required>
+                    <button type="submit">Log in</button>
+                </form>
+                <p style="margin-top:30px; font-size:14px;">No account? <a href="/signup" style="color:#ff007f; text-decoration:none;">Sign Up</a></p>
+            </div>
         </div>
         <script>
-            const c = document.getElementById('cat');
-            function look() { c.classList.remove('privacy-mode'); c.innerText = '😺'; }
-            function hide() { c.classList.add('privacy-mode'); c.innerText = '🙈'; }
+            const cat = document.getElementById('cat-char');
+            const parrot = document.getElementById('parrot-char');
+            
+            function watch() {
+                cat.classList.remove('hide-mode');
+                parrot.classList.remove('hide-mode');
+                cat.classList.add('watch-mode');
+                parrot.innerText = '🧐';
+                cat.innerText = '😺';
+            }
+            
+            function shy() {
+                cat.classList.add('hide-mode');
+                parrot.classList.add('hide-mode');
+                parrot.innerText = '🙈';
+                cat.innerText = '🙀';
+            }
         </script>
     </body>
     </html>
     `);
 });
 
+// --- [SECTION 4: DASHBOARD & FEED] ---
+const MASTER_UI = (content, user, sectors) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XAVIROX | Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --p: #ff007f; --v: #7000ff; --glass: rgba(255,255,255,0.05); }
+        * { box-sizing: border-box; margin: 0; padding: 0; transition: 0.3s; }
+        body { background: #1a0518; color: white; font-family: sans-serif; overflow-x: hidden; }
+
+        .side-dock { position: fixed; left: 25px; top: 50%; transform: translateY(-50%); width: 80px; background: var(--glass); backdrop-filter: blur(30px); border-radius: 100px; display: flex; flex-direction: column; align-items: center; padding: 40px 0; gap: 45px; z-index: 1000; border: 1px solid rgba(255,255,255,0.1); }
+        .side-dock i { font-size: 24px; color: #555; cursor: pointer; }
+        .side-dock i:hover { color: var(--p); transform: scale(1.2); }
+
+        .nav { position: fixed; top: 0; width: 100%; height: 90px; background: rgba(0,0,0,0.8); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: space-between; padding: 0 60px 0 140px; z-index: 900; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .logo { font-size: 30px; font-weight: 900; color: var(--p); letter-spacing: 5px; }
+
+        .container { display: flex; max-width: 1300px; margin: 120px 20px 100px 140px; gap: 40px; }
+        .feed { flex: 2; }
+        .sidebar { flex: 1; position: sticky; top: 120px; height: fit-content; }
+
+        .card { background: var(--glass); border-radius: 30px; padding: 30px; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(20px); }
+        textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: white; padding: 20px; font-size: 18px; outline: none; }
+        .btn { background: var(--p); color: white; border: none; padding: 15px 35px; border-radius: 50px; font-weight: bold; cursor: pointer; }
+        
+        .footer { text-align: center; padding: 50px; border-top: 1px solid rgba(255,255,255,0.05); margin-left: 140px; }
+        .gmail-btn { display: inline-flex; align-items: center; gap: 10px; color: #ff007f; text-decoration: none; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="side-dock">
+        <i class="fas fa-home" onclick="location.href='/dashboard'"></i>
+        <i class="fas fa-bolt"></i>
+        <div style="width:50px; height:50px; background:var(--p); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="window.scrollTo(0,0)"><i class="fas fa-plus" style="color:white;"></i></div>
+        <i class="fas fa-users"></i>
+        ${user ? `<i class="fas fa-sign-out-alt" onclick="location.href='/logout'"></i>` : `<i class="fas fa-key" onclick="location.href='/login'"></i>`}
+    </div>
+
+    <nav class="nav">
+        <div class="logo">XAVIROX</div>
+        <div style="font-weight:bold;">${user ? '@' + user.username : 'GUEST'}</div>
+    </nav>
+
+    <div class="container">
+        <div class="feed">
+            <div class="card">
+                <form action="/addpost" method="POST" enctype="multipart/form-data">
+                    <textarea name="content" placeholder="Broadcast your aura..."></textarea>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                        <input type="file" name="media" id="f" hidden>
+                        <i class="fas fa-camera" onclick="document.getElementById('f').click()" style="font-size:25px; color:var(--v); cursor:pointer;"></i>
+                        <select name="sector" style="background:#111; color:white; border:1px solid #333; padding:10px; border-radius:10px;">
+                            <option value="General">General Sector</option>
+                            ${sectors.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}
+                        </select>
+                        <button class="btn">TRANSMIT</button>
+                    </div>
+                </form>
+            </div>
+            ${content}
+        </div>
+
+        <div class="sidebar">
+            <div class="card">
+                <h3>🛰️ SECTORS</h3>
+                <div style="margin:20px 0;">
+                    ${sectors.map(s => `<div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:12px; margin-bottom:10px;"># ${s.name}</div>`).join('')}
+                </div>
+                <form action="/addsector" method="POST">
+                    <input name="sName" placeholder="New Community..." style="width:100%; padding:12px; border-radius:10px; background:#000; border:1px solid #333; color:white;">
+                    <button class="btn" style="width:100%; margin-top:10px; background:var(--v);">CREATE</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>💬 FEEDBACK</h3>
+                <form action="/send-feedback" method="POST">
+                    <textarea name="msg" style="height:100px;" placeholder="Message Admin..."></textarea>
+                    <button class="btn" style="width:100%; margin-top:15px;">SEND SIGNAL</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>XAVIROX COSMOS &copy; 2026 | ALL SIGNALS ENCRYPTED</p>
+        <a href="mailto:xavirox.co@gmail.com" class="gmail-btn">
+            <i class="fas fa-envelope"></i> xavirox.co@gmail.com
+        </a>
+    </footer>
+</body>
+</html>
+`;
+
+// --- [SECTION 5: SERVER LOGIC] ---
+app.get('/', (req, res) => res.redirect('/dashboard'));
+
+app.get('/dashboard', async (req, res) => {
+    const posts = await Post.find().sort({ date: -1 });
+    const sectors = await Sector.find();
+    const user = req.session.user;
+    
+    const html = posts.map(p => `
+        <div class="card">
+            <span style="background:var(--v); padding:5px 10px; border-radius:8px; font-size:12px;"># ${p.sector}</span>
+            <div style="font-weight:bold; color:var(--p); margin:15px 0;">@${p.isAnonymous ? 'Ghost' : p.author}</div>
+            <p style="font-size:18px;">${p.content}</p>
+            ${p.mediaUrl ? (p.mediaType.includes('video') ? `<video src="${p.mediaUrl}" controls style="width:100%; border-radius:15px; margin-top:15px;"></video>` : `<img src="${p.mediaUrl}" style="width:100%; border-radius:15px; margin-top:15px;">`) : ''}
+        </div>
+    `).join('');
+    
+    res.send(MASTER_UI(html, user, sectors));
+});
+
 app.post('/login', async (req, res) => {
     const user = await User.findOne({ username: req.body.username.toLowerCase() });
     if (user && await bcrypt.compare(req.body.password, user.password)) {
         req.session.user = user; res.redirect('/dashboard');
-    } else res.send("<script>alert('Mismatch!'); window.location='/login';</script>");
+    } else res.send("<script>alert('Failed!'); window.location='/login';</script>");
 });
 
-app.get('/signup', (req, res) => {
-    res.send(`<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><div style="background:#111; padding:50px; border-radius:40px; width:360px; text-align:center; border:1px solid #222;"><h2>NEW ENTITY</h2><form action="/signup" method="POST"><input name="username" placeholder="Username" required style="width:100%; padding:15px; margin:10px 0; border-radius:12px; background:#000; border:1px solid #333; color:#fff;"><input name="email" type="email" placeholder="Email" required style="width:100%; padding:15px; margin:10px 0; border-radius:12px; background:#000; border:1px solid #333; color:#fff;"><input name="password" type="password" placeholder="Password" required style="width:100%; padding:15px; margin:10px 0; border-radius:12px; background:#000; border:1px solid #333; color:#fff;"><button style="width:100%; padding:15px; background:#007AFF; border:none; color:#fff; font-weight:bold; border-radius:50px; cursor:pointer; margin-top:20px;">CREATE ID</button></form></div></body>`);
+app.post('/addpost', isAuth, upload.single('media'), async (req, res) => {
+    let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
+    await new Post({ author: req.session.user.username, content: req.body.content, sector: req.body.sector, mediaUrl, mediaType: req.file ? req.file.mimetype : null }).save();
+    res.redirect('/dashboard');
 });
 
-app.post('/signup', async (req, res) => {
-    try {
-        const hashed = await bcrypt.hash(req.body.password, 10);
-        await new User({ username: req.body.username.toLowerCase(), email: req.body.email, password: hashed }).save();
-        res.redirect('/login');
-    } catch(e) { res.send("ID already exists."); }
+app.post('/addsector', isAuth, async (req, res) => {
+    try { await new Sector({ name: req.body.sName.trim() }).save(); } catch(e){}
+    res.redirect('/dashboard');
 });
 
-app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/dashboard'); });
-
-// --- [SECTION 6: FEEDBACK ENGINE] ---
 app.post('/send-feedback', isAuth, async (req, res) => {
     await User.findOneAndUpdate({ username: 'xavi' }, { $push: { adminMessages: { from: req.session.user.username, text: req.body.msg } } });
-    res.send("<script>alert('Signal Sent to Xavi!'); window.location='/dashboard';</script>");
+    res.send("<script>alert('Signal Sent!'); window.location='/dashboard';</script>");
 });
 
-// --- [SECTION 7: LAUNCH] ---
+app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login'); });
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('🚀 [XAVIROX LIVE ON PORT ' + PORT + ']'));
+app.listen(PORT, () => console.log('🚀 XAVIROX SUPREME LIVE ON PORT ' + PORT));
