@@ -33,6 +33,11 @@ const isAuth = (req, res, next) => req.session.user ? next() : res.redirect('/lo
 
 // --- 4. ROUTES (GET) ---
 
+// HOME ROUTE (Yeh line "Cannot GET /" ko fix karegi)
+app.get('/', (req, res) => {
+    res.redirect('/login');
+});
+
 // Login Page
 app.get('/login', (req, res) => {
     res.send(`
