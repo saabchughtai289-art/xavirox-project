@@ -5,8 +5,14 @@ const bcrypt = require('bcryptjs');
 const app = express();
 
 // --- 1. DATABASE CONNECTION ---
-const dbURI = "mongodb+srv://xavirox_boss:noESvAPXb6tGrvqi@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority";
-mongoose.connect(dbURI).then(() => console.log("Connected to MongoDB"));
+// Naya Password update kar diya gaya hai
+const dbURI = "mongodb+srv://xavirox_boss:BDqrTgZZq2MFmoP3@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority";
+
+mongoose.connect(dbURI, {
+    serverSelectionTimeoutMS: 5000 // 5 seconds timeout fix
+})
+.then(() => console.log("Connected to MongoDB"))
+.catch(err => console.log("MongoDB Connection Error: ", err));
 
 // --- 2. MODELS ---
 const User = mongoose.model('User', new mongoose.Schema({
@@ -27,13 +33,18 @@ const Post = mongoose.model('Post', new mongoose.Schema({
 // --- 3. MIDDLEWARES ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(session({ secret: 'xavirox_secret_key', resave: false, saveUninitialized: true }));
+app.use(session({ 
+    secret: 'xavirox_secret_key', 
+    resave: false, 
+    saveUninitialized: true,
+    cookie: { secure: false } // Vercel HTTPs ke liye baad mein true kar sakte hain
+}));
 
 const isAuth = (req, res, next) => req.session.user ? next() : res.redirect('/login');
 
 // --- 4. ROUTES (GET) ---
 
-// HOME ROUTE (Yeh line "Cannot GET /" ko fix karegi)
+// HOME ROUTE
 app.get('/', (req, res) => {
     res.redirect('/login');
 });
@@ -72,21 +83,25 @@ app.get('/signup', (req, res) => {
 
 // Dashboard
 app.get('/dashboard', isAuth, async (req, res) => {
-    const user = await User.findById(req.session.user._id);
-    res.send(`
-        <body style="background:#000; color:white; font-family:sans-serif; padding:50px;">
-            <h1>Welcome @${user.username}</h1>
-            <div style="border:1px solid #ff007f; padding:20px; border-radius:15px; width:300px;">
-                <h3>Command Center</h3>
-                <p>Support: xavirox.co@gmail.com</p>
-                <form action="/send-feedback" method="POST">
-                    <textarea name="msg" placeholder="Feedback..." style="width:100%; height:80px;"></textarea><br>
-                    <button type="submit" style="background:#ff007f; color:white; border:none; padding:10px 20px; margin-top:10px;">Send</button>
-                </form>
-            </div>
-            <br><a href="/logout" style="color:#ff007f;">Logout</a>
-        </body>
-    `);
+    try {
+        const user = await User.findById(req.session.user._id);
+        res.send(`
+            <body style="background:#000; color:white; font-family:sans-serif; padding:50px;">
+                <h1>Welcome @${user.username}</h1>
+                <div style="border:1px solid #ff007f; padding:20px; border-radius:15px; width:300px;">
+                    <h3>Command Center</h3>
+                    <p>Support: xavirox.co@gmail.com</p>
+                    <form action="/send-feedback" method="POST">
+                        <textarea name="msg" placeholder="Feedback..." style="width:100%; height:80px;"></textarea><br>
+                        <button type="submit" style="background:#ff007f; color:white; border:none; padding:10px 20px; margin-top:10px;">Send</button>
+                    </form>
+                </div>
+                <br><a href="/logout" style="color:#ff007f;">Logout</a>
+            </body>
+        `);
+    } catch (err) {
+        res.redirect('/logout');
+    }
 });
 
 // --- 5. ROUTES (POST) ---
@@ -99,15 +114,17 @@ app.post('/signup', async (req, res) => {
         const hashed = await bcrypt.hash(password, 10);
         await new User({ username: username.toLowerCase(), password: hashed }).save();
         res.send("<script>alert('Account Created!'); window.location='/login';</script>");
-    } catch(e) { res.send(e.message); }
+    } catch(e) { res.send("DB Error: " + e.message); }
 });
 
 app.post('/login', async (req, res) => {
-    const user = await User.findOne({ username: req.body.username.toLowerCase() });
-    if (user && await bcrypt.compare(req.body.password, user.password)) {
-        req.session.user = user;
-        res.redirect('/dashboard');
-    } else { res.send("<script>alert('Invalid!'); window.location='/login';</script>"); }
+    try {
+        const user = await User.findOne({ username: req.body.username.toLowerCase() });
+        if (user && await bcrypt.compare(req.body.password, user.password)) {
+            req.session.user = user;
+            res.redirect('/dashboard');
+        } else { res.send("<script>alert('Invalid!'); window.location='/login';</script>"); }
+    } catch(e) { res.send("Login Error: " + e.message); }
 });
 
 app.post('/send-feedback', isAuth, async (req, res) => {
