@@ -1,6 +1,6 @@
 /* ====================================================================================================
-   🚀 XAVIROX COSMIC OS - VERSION 38.5 [OMNI-STABLE MERGE]
-   DEVELOPER: GEMINI COLLABORATION | YEAR: 2026 | STATUS: PRODUCTION READY
+   🚀 XAVIROX COSMIC OS - VERSION 38.6 [PRODUCTION ULTIMATE]
+   DEVELOPER: GEMINI COLLABORATION | YEAR: 2026 | STATUS: FEATURE-COMPLETE & STABLE
 ==================================================================================================== */
 
 const express = require('express');
@@ -11,7 +11,7 @@ const multer = require('multer');
 
 const app = express();
 
-// --- [DATABASE ARCHITECTURE - OPTIMIZED FOR CLOUD] ---
+// --- [DATABASE ARCHITECTURE - SERVERLESS OPTIMIZED] ---
 const dbURI = "mongodb+srv://xavirox_boss:BDqrTgZZq2MFmoP3@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority";
 
 let cachedDb = null;
@@ -19,7 +19,7 @@ async function connectDB() {
     if (cachedDb) return cachedDb;
     const db = await mongoose.connect(dbURI);
     cachedDb = db;
-    console.log('✅ [XAVIROX]: OMNI-LINK 38.5 STABLE');
+    console.log('✅ [XAVIROX]: OMNI-LINK 38.6 STABLE');
     return db;
 }
 
@@ -42,7 +42,6 @@ const PostSchema = new mongoose.Schema({
 
 const SectorSchema = new mongoose.Schema({ name: { type: String, required: true, unique: true } });
 
-// Model initialization fix for Serverless
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
 const Post = mongoose.models.Post || mongoose.model('Post', PostSchema);
 const Sector = mongoose.models.Sector || mongoose.model('Sector', SectorSchema);
@@ -54,15 +53,14 @@ app.use(session({
     secret: 'xavirox_neural_2026_pro', 
     resave: false, 
     saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 Hours
+    cookie: { maxAge: 24 * 60 * 60 * 1000 } 
 }));
 
 const upload = multer({ 
     storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+    limits: { fileSize: 10 * 1024 * 1024 } 
 });
 
-// Middleware to ensure DB connection
 app.use(async (req, res, next) => {
     await connectDB();
     next();
@@ -71,9 +69,7 @@ app.use(async (req, res, next) => {
 // --- [MASTER UI FRAMEWORK] ---
 const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', isPortfolio = false) => {
     const isGuest = !user;
-    const lurkerSlangs = [
-        "xavirox :still lurking? 💀", "sign up lil bro", "guest mode final boss", "rawdogging the app 😭", "stop stalking, join in", "one signup = aura", "bro fears accounts", "unlock your username", "lurking goes crazy", "create account coward", "npc guest mode", "anonymous menace 👁️", "join the chaos", "gang still unsigned 😭", "stop lurking in 4k", "internet side character", "username loading...", "accountless behavior 🚨", "signup arc starts now", "still in demo mode", "become chronically online properly", "bro skipped signup again", "join before the drama starts", "no account is wild 😭", "make history. sign up.", "guest energy detected", "enter your villain arc", "lurking championship winner 🏆", "bro spectating life", "sign up and lock in", "your aura needs an account", "create account for lore", "stop watching. start posting.", "unc still not registered 💔", "anonymous but invested", "your username awaits", "free account btw 👀", "click signup gang", "lurking professionally", "account creation jumpscare", "just sign up already 😭", "internet gremlin detected", "join the timeline", "bro allergic to signup", "your future fame starts here", "guest mode premium edition", "unlock main character mode", "lurking since ancient times", "create account = instant upgrade", "join the internet properly", "still hiding huh?", "stop being mysterious", "no login, pure vibes", "bro got trust issues with signup", "join the madness", "stop hovering 😭", "signup speedrun when?", "one click away from chaos", "the app misses you", "make your mark gang", "bro farming guest hours", "stop lurking and cook", "login screen undefeated", "your account arc starts today", "type less, signup more", "bro living anonymously", "unlock elite commenting", "lurking level maxed", "internet ghost detected", "guest mode demon 👹", "stop spectating bro", "signup before it’s too late", "your username getting stolen rn", "make the account already 💀", "still accountless is crazy", "your villain arc needs signup", "zero posts, maximum lurking", "account creation fears you", "just one tiny signup 👀", "bro moving undercover", "lurking with passion", "sign up for character development", "become part of the lore", "bro avoiding responsibility digitally", "enter the timeline properly", "signup and cause chaos", "your aura feels guest mode", "stop being a background character", "anonymous scrolling champion", "internet citizen application pending", "stop peeking and join", "one signup changes everything", "bro still testing the waters", "create account. become legend.", "the lurk ends here", "signup before the tea spills ☕", "no account? bold strategy", "guest mode warrior", "this app knows you already", "bro really said “continue as guest” 😭"
-    ];
+    const lurkerSlangs = ["xavirox :still lurking? 💀", "sign up lil bro", "guest mode final boss", "rawdogging the app 😭", "stop stalking, join in", "one signup = aura", "bro fears accounts", "unlock your username", "lurking goes crazy", "create account coward", "npc guest mode", "anonymous menace 👁️", "join the chaos", "gang still unsigned 😭", "stop lurking in 4k", "internet side character", "username loading...", "accountless behavior 🚨", "signup arc starts now", "still in demo mode", "become chronically online properly", "bro skipped signup again", "join before the drama starts", "no account is wild 😭", "make history. sign up.", "guest energy detected", "enter your villain arc", "lurking championship winner 🏆", "bro spectating life", "sign up and lock in", "your aura needs an account", "create account for lore", "stop watching. start posting.", "unc still not registered 💔", "anonymous but invested", "your username awaits", "free account btw 👀", "click signup gang", "lurking professionally", "account creation jumpscare", "just sign up already 😭", "internet gremlin detected", "join the timeline", "bro allergic to signup", "your future fame starts here", "guest mode premium edition", "unlock main character mode", "lurking since ancient times", "create account = instant upgrade", "join the internet properly", "still hiding huh?", "stop being mysterious", "no login, pure vibes", "bro got trust issues with signup", "join the madness", "stop hovering 😭", "signup speedrun when?", "one click away from chaos", "the app misses you", "make your mark gang", "bro farming guest hours", "stop lurking and cook", "login screen undefeated", "your account arc starts today", "type less, signup more", "bro living anonymously", "unlock elite commenting", "lurking level maxed", "internet ghost detected", "guest mode demon 👹", "stop spectating bro", "signup before it’s too late", "your username getting stolen rn", "make the account already 💀", "still accountless is crazy", "your villain arc needs signup", "zero posts, maximum lurking", "account creation fears you", "just one tiny signup 👀", "bro moving undercover", "lurking with passion", "sign up for character development", "become part of the lore", "bro avoiding responsibility digitally", "enter the timeline properly", "signup and cause chaos", "your aura feels guest mode", "stop being a background character", "anonymous scrolling champion", "internet citizen application pending", "stop peeking and join", "one signup changes everything", "bro still testing the waters", "create account. become legend.", "the lurk ends here", "signup before the tea spills ☕", "no account? bold strategy", "guest mode warrior", "this app knows you already", "bro really said “continue as guest” 😭"];
 
     return `
 <!DOCTYPE html>
@@ -86,45 +82,27 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         :root { --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --glass: rgba(255, 255, 255, 0.05); }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
         body { background: #000; color: #fff; overflow-x: hidden; min-height: 100vh; }
-        
         .stars { position: fixed; width: 2px; height: 2px; background: #fff; border-radius: 50%; opacity: 0; animation: twinkle 4s infinite; z-index: -10; }
         @keyframes twinkle { 0%, 100% { opacity: 0; } 50% { opacity: 0.8; } }
         .black-hole { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; height: 800px; border-radius: 50%; background: radial-gradient(circle, var(--v), transparent 75%); z-index: -5; opacity: 0.12; filter: blur(120px); }
-
         .island-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; transition: 0.5s; }
-        .dynamic-island {
-            width: ${isGuest ? '420px' : '320px'}; height: 55px; background: rgba(0,0,0,0.9); backdrop-filter: blur(40px);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 50px; display: flex; align-items: center; 
-            justify-content: center; padding: 0 30px; border-top: 2px solid ${isGuest ? 'var(--v)' : 'var(--p)'};
-            cursor: pointer; overflow: hidden;
-        }
+        .dynamic-island { width: ${isGuest ? '420px' : '320px'}; height: 55px; background: rgba(0,0,0,0.9); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.1); border-radius: 50px; display: flex; align-items: center; justify-content: center; padding: 0 30px; border-top: 2px solid ${isGuest ? 'var(--v)' : 'var(--p)'}; cursor: pointer; overflow: hidden; }
         .dynamic-island:hover { width: 580px; height: 80px; border-color: var(--cyan); }
         .island-label { font-weight: 900; letter-spacing: 1px; font-size: 13px; text-transform: uppercase; text-align: center; }
-
-        .left-dock {
-            position: fixed; left: 30px; top: 50%; transform: translateY(-50%); width: 85px; 
-            background: rgba(255,255,255,0.06); backdrop-filter: blur(50px); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 100px; display: flex; flex-direction: column; align-items: center; padding: 45px 0; gap: 40px; z-index: 5000;
-        }
+        .left-dock { position: fixed; left: 30px; top: 50%; transform: translateY(-50%); width: 85px; background: rgba(255,255,255,0.06); backdrop-filter: blur(50px); border: 1px solid rgba(255,255,255,0.1); border-radius: 100px; display: flex; flex-direction: column; align-items: center; padding: 45px 0; gap: 40px; z-index: 5000; }
         .left-dock i { font-size: 24px; color: rgba(255,255,255,0.3); cursor: pointer; }
         .left-dock i:hover, .nav-active { color: var(--p) !important; transform: scale(1.3); text-shadow: 0 0 15px var(--p); }
-
         .wrapper { display: flex; max-width: 1250px; margin: 160px auto 50px 160px; gap: 40px; }
         .feed-area { flex: 2.3; }
         .side-area { flex: 1; position: sticky; top: 160px; height: fit-content; }
-
         .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.08); border-radius: 40px; padding: 35px; margin-bottom: 35px; backdrop-filter: blur(100px); position: relative; }
         .card:hover { border-color: var(--p); }
-        
         textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: #fff; padding: 20px; outline: none; resize: none; }
         .btn-x { background: #fff; color: #000; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 900; cursor: pointer; }
         .btn-x:hover { background: var(--p); color: #fff; box-shadow: 0 0 20px var(--p); }
-        
         .pfp-main { width: 110px; height: 110px; border-radius: 35px; object-fit: cover; margin-bottom: 20px; border: 2px solid var(--p); }
         .del-btn { position: absolute; top: 30px; right: 30px; color: #ff4444; cursor: pointer; opacity: 0.4; }
-        
         .guest-lock { filter: blur(6px); pointer-events: none; opacity: 0.4; user-select: none; }
-        
         footer { margin-left: 160px; padding: 60px 40px; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.4; display: flex; justify-content: space-between; }
     </style>
 </head>
@@ -187,11 +165,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         </div>
     </div>
 
-    <footer>
-        <div><strong>XAVIROX COSMOS</strong><br><span style="font-size:10px;">SYNCED @ 2026</span></div>
-        <a href="mailto:xavirox.co@gmail.com" style="color:var(--p); text-decoration:none; font-weight:bold;">xavirox.co@gmail.com</a>
-    </footer>
-
     <script>
         ${isGuest ? `
             const slangs = ${JSON.stringify(lurkerSlangs)};
@@ -223,7 +196,10 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
 </html>`;
 };
 
-// --- [CORE LOGIC & ROUTES] ---
+// --- [CORE ROUTES] ---
+
+// Root Fix: Redirect to dashboard
+app.get('/', (req, res) => res.redirect('/dashboard'));
 
 app.get('/dashboard', async (req, res) => {
     try {
@@ -267,6 +243,23 @@ app.get('/login', (req, res) => {
     <button>SYNC CORE</button></form></div></div></body></html>`);
 });
 
+app.get('/portfolio', async (req, res) => {
+    if(!req.session.user) return res.redirect('/login');
+    const u = await User.findOne({ username: req.session.user.username });
+    const sectors = await Sector.find();
+    const html = `
+        <div class="card" style="text-align:center; border-bottom: 4px solid var(--v);">
+            <img src="${u.pfp || 'https://via.placeholder.com/150'}" class="pfp-main">
+            <h1 style="font-size:40px; margin-top:20px;">@${u.username}</h1>
+            <p style="margin:20px 0; opacity:0.7; font-size:18px;">${u.bio}</p>
+            <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+                ${u.skills.map(s => `<span style="background:var(--v); padding:8px 20px; border-radius:50px; font-size:11px; font-weight:bold;">${s}</span>`).join('')}
+            </div>
+        </div>`;
+    res.send(MASTER_UI(html, u, sectors, 'Global', true));
+});
+
+// --- [HANDLERS] ---
 app.post('/login', async (req, res) => {
     try {
         const user = await User.findOne({ username: req.body.username.toLowerCase() });
@@ -283,12 +276,26 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
     res.redirect('back');
 });
 
+app.post('/send-feedback', async (req, res) => {
+    if(!req.session.user) return res.redirect('/login');
+    await User.findOneAndUpdate({ username: 'xavi' }, { $push: { feedback: { msg: req.body.msg, from: req.session.user.username } } });
+    res.send("<script>alert('SIGNAL RECEIVED'); window.location='/dashboard';</script>");
+});
+
+app.get('/delete-post/:id', async (req, res) => {
+    if(!req.session.user) return res.redirect('/login');
+    const p = await Post.findById(req.params.id);
+    if(p && (p.author === req.session.user.username || req.session.user.username === 'xavi')) {
+        await Post.findByIdAndDelete(req.params.id);
+    }
+    res.redirect('back');
+});
+
 app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/dashboard'); });
 
 // Vercel export
 module.exports = app;
 
-// Local dev support
 if (process.env.NODE_ENV !== 'production') {
-    app.listen(3000, () => console.log('🚀 XAVIROX 38.5 LIVE ON PORT 3000'));
+    app.listen(3000, () => console.log('🚀 XAVIROX 38.6 LIVE ON PORT 3000'));
 }
