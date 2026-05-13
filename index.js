@@ -1,6 +1,6 @@
-/* ====================================================================================================
-   🚀 XAVIROX COSMIC OS - VERSION 37.0 [THE LURKER'S RECKONING]
-   DEVELOPER: GEMINI COLLABORATION | YEAR: 2026 | STATUS: SUPREME MERGE
+=/* ====================================================================================================
+   🚀 XAVIROX COSMIC OS - VERSION 38.0 [THE NEURAL OVERHAUL]
+   DEVELOPER: GEMINI COLLABORATION | YEAR: 2026 | STATUS: FEATURE-COMPLETE
 ==================================================================================================== */
 
 const express = require('express');
@@ -13,13 +13,13 @@ const app = express();
 
 // --- [DATABASE ARCHITECTURE] ---
 const dbURI = "mongodb+srv://xavirox_boss:BDqrTgZZq2MFmoP3@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority";
-mongoose.connect(dbURI).then(() => console.log('✅ [XAVIROX]: OMNI-LINK 37.0 STABLE'));
+mongoose.connect(dbURI).then(() => console.log('✅ [XAVIROX]: OMNI-LINK 38.0 STABLE'));
 
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     pfp: { type: String, default: "" },
-    bio: { type: String, default: "Vibing in the Xavirox Void." },
+    bio: { type: String, default: "Inhabitant of the Xavirox Cosmos." },
     skills: { type: [String], default: ["Gen-Z", "Xaviroxian"] },
     feedback: [{ msg: String, from: String, date: { type: Date, default: Date.now } }],
     savedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
@@ -41,7 +41,7 @@ const Sector = mongoose.model('Sector', SectorSchema);
 // --- [SYSTEM MIDDLEWARE] ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
-app.use(session({ secret: 'xavirox_lurker_final_boss', resave: false, saveUninitialized: true }));
+app.use(session({ secret: 'xavirox_neural_2026', resave: false, saveUninitialized: true }));
 const upload = multer({ storage: multer.memoryStorage() });
 
 // --- [MASTER UI FRAMEWORK] ---
@@ -60,42 +60,48 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --glass: rgba(255, 255, 255, 0.05); }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
         body { background: #000; color: #fff; overflow-x: hidden; min-height: 100vh; }
+        
         .stars { position: fixed; width: 2px; height: 2px; background: #fff; border-radius: 50%; opacity: 0; animation: twinkle 4s infinite; z-index: -10; }
         @keyframes twinkle { 0%, 100% { opacity: 0; } 50% { opacity: 0.8; } }
         .black-hole { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; height: 800px; border-radius: 50%; background: radial-gradient(circle, var(--v), transparent 75%); z-index: -5; opacity: 0.12; filter: blur(120px); }
 
-        .island-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; }
+        /* 🏝️ DYNAMIC ISLAND FIX */
+        .island-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; transition: 0.5s; }
         .dynamic-island {
-            width: ${isGuest ? '400px' : '320px'}; height: 52px; background: rgba(0,0,0,0.95); backdrop-filter: blur(30px);
+            width: ${isGuest ? '420px' : '320px'}; height: 55px; background: rgba(0,0,0,0.9); backdrop-filter: blur(40px);
             border: 1px solid rgba(255,255,255,0.1); border-radius: 50px; display: flex; align-items: center; 
             justify-content: center; padding: 0 30px; border-top: 2px solid ${isGuest ? 'var(--v)' : 'var(--p)'};
+            cursor: pointer; overflow: hidden;
         }
+        .dynamic-island:hover { width: 580px; height: 80px; border-color: var(--cyan); }
         .island-label { font-weight: 900; letter-spacing: 1px; font-size: 13px; text-transform: uppercase; text-align: center; }
 
         .left-dock {
             position: fixed; left: 30px; top: 50%; transform: translateY(-50%); width: 85px; 
             background: rgba(255,255,255,0.06); backdrop-filter: blur(50px); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 100px; display: flex; flex-direction: column; align-items: center; padding: 45px 0; gap: 45px; z-index: 5000;
+            border-radius: 100px; display: flex; flex-direction: column; align-items: center; padding: 45px 0; gap: 40px; z-index: 5000;
         }
-        .left-dock i { font-size: 26px; color: rgba(255,255,255,0.3); cursor: pointer; }
-        .left-dock i:hover, .nav-active { color: var(--p) !important; transform: scale(1.4); }
+        .left-dock i { font-size: 24px; color: rgba(255,255,255,0.3); cursor: pointer; }
+        .left-dock i:hover, .nav-active { color: var(--p) !important; transform: scale(1.3); text-shadow: 0 0 15px var(--p); }
 
         .wrapper { display: flex; max-width: 1250px; margin: 160px auto 50px 160px; gap: 40px; }
         .feed-area { flex: 2.3; }
         .side-area { flex: 1; position: sticky; top: 160px; height: fit-content; }
 
         .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.08); border-radius: 40px; padding: 35px; margin-bottom: 35px; backdrop-filter: blur(100px); position: relative; }
+        .card:hover { border-color: var(--p); }
+        
+        textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: #fff; padding: 20px; outline: none; resize: none; }
         .btn-x { background: #fff; color: #000; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 900; cursor: pointer; }
-        .btn-x:hover { background: var(--p); color: #fff; }
+        .btn-x:hover { background: var(--p); color: #fff; box-shadow: 0 0 20px var(--p); }
         
         .pfp-main { width: 110px; height: 110px; border-radius: 35px; object-fit: cover; margin-bottom: 20px; border: 2px solid var(--p); }
-        .del-btn { position: absolute; top: 30px; right: 30px; color: #ff4444; cursor: pointer; opacity: 0.5; }
-        .del-btn:hover { opacity: 1; }
+        .del-btn { position: absolute; top: 30px; right: 30px; color: #ff4444; cursor: pointer; opacity: 0.4; }
+        .del-btn:hover { opacity: 1; transform: scale(1.2); }
         
-        .guest-lock { filter: blur(4px); pointer-events: none; opacity: 0.5; }
-        .lock-overlay { position: absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; z-index:10; }
+        .guest-lock { filter: blur(6px); pointer-events: none; opacity: 0.4; user-select: none; }
         
         footer { margin-left: 160px; padding: 60px 40px; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.4; display: flex; justify-content: space-between; }
     </style>
@@ -116,24 +122,25 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         <i class="fas fa-home ${activeSector === 'Global' && !isPortfolio ? 'nav-active' : ''}" onclick="location.href='/dashboard'"></i>
         <i class="fas fa-user-circle ${isPortfolio ? 'nav-active' : ''}" onclick="location.href='/portfolio'"></i>
         <i class="fas fa-save" onclick="location.href='/saved-posts'"></i>
+        <i class="fas fa-ghost"></i>
         <i class="fas fa-power-off" onclick="location.href='${isGuest ? '/login' : '/logout'}'" style="color:var(--p)"></i>
     </div>
 
     <div class="wrapper">
         <div class="feed-area">
             ${isGuest ? `
-                <div class="card" style="text-align:center; border: 2px solid var(--v)">
-                    <h2 style="margin-bottom:10px;">GUEST MODE DETECTED</h2>
-                    <p style="opacity:0.6; margin-bottom:20px;">Unlock full aura by joining the chaos.</p>
+                <div class="card" style="text-align:center; border: 2px solid var(--v); animation: pulse 2s infinite;">
+                    <h2 style="margin-bottom:10px; letter-spacing:2px;">GUEST MODE: FINAL BOSS</h2>
+                    <p style="opacity:0.6; margin-bottom:20px;">Watching from the shadows? Join the void.</p>
                     <button class="btn-x" onclick="location.href='/login'">SIGN UP LIL BRO</button>
                 </div>
             ` : (isPortfolio ? content : `
-                <div class="card">
+                <div class="card" style="border-top: 3px solid var(--p);">
                     <form action="/addpost" method="POST" enctype="multipart/form-data">
-                        <textarea name="content" placeholder="Vibe check..." required id="slang-box"></textarea>
+                        <textarea name="content" placeholder="Vibe check..." required id="slang-box" style="height:100px;"></textarea>
                         <input type="hidden" name="sector" value="${activeSector}">
-                        <div style="display:flex; justify-content:space-between; margin-top:20px;">
-                            <label style="cursor:pointer;"><i class="fas fa-image"></i><input type="file" name="media" hidden></label>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                            <label style="cursor:pointer; font-size:20px; opacity:0.6;"><i class="fas fa-camera"></i><input type="file" name="media" hidden></label>
                             <button class="btn-x">TRANSMIT</button>
                         </div>
                     </form>
@@ -144,53 +151,70 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
 
         <div class="side-area">
             <div class="card ${isGuest ? 'guest-lock' : ''}">
-                <h4 style="color:var(--cyan); font-size:11px; margin-bottom:15px;">GHOST PROTOCOL</h4>
-                <form action="/send-anon" method="POST">
-                    <input name="target" placeholder="Target..." style="width:100%; background:#000; color:#fff; border:1px solid #333; padding:10px; border-radius:10px; margin-bottom:10px;">
-                    <textarea name="msg" style="height:50px;"></textarea>
-                    <button class="btn-x" style="width:100%; margin-top:10px; background:var(--cyan); color:#000;">SEND ANON</button>
+                <h4 style="color:var(--cyan); font-size:11px; margin-bottom:15px; letter-spacing:2px;">FEEDBACK SIGNAL</h4>
+                <form action="/send-feedback" method="POST">
+                    <textarea name="msg" placeholder="Message to Xavi..." style="height:70px; font-size:12px;"></textarea>
+                    <button class="btn-x" style="width:100%; margin-top:10px; background:var(--cyan); color:#000; font-size:11px;">SEND SIGNAL</button>
                 </form>
             </div>
+
+            <div class="card ${isGuest ? 'guest-lock' : ''}">
+                <h4 style="color:var(--p); font-size:11px; margin-bottom:15px; letter-spacing:2px;">GHOST PROTOCOL</h4>
+                <form action="/send-anon" method="POST">
+                    <input name="target" placeholder="Target user..." required style="width:100%; background:#000; color:#fff; border:1px solid #333; padding:12px; border-radius:15px; margin-bottom:10px; font-size:12px;">
+                    <textarea name="msg" placeholder="Anonymous msg..." style="height:60px; font-size:12px;"></textarea>
+                    <button class="btn-x" style="width:100%; margin-top:10px; font-size:11px;">SEND ANON</button>
+                </form>
+            </div>
+
             <div class="card">
                 <h4 style="opacity:0.4; font-size:11px; margin-bottom:15px;">COMMUNITIES</h4>
-                <a href="/dashboard" style="display:block; color:#fff; text-decoration:none; margin-bottom:10px; font-weight:800;">🌏 GLOBAL VOID</a>
-                ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:rgba(255,255,255,0.5); text-decoration:none; margin-bottom:10px;"># ${s.name}</a>`).join('')}
+                <a href="/dashboard" style="display:block; color:#fff; text-decoration:none; margin-bottom:12px; font-weight:800; font-size:14px;">🌏 GLOBAL VOID</a>
+                ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:rgba(255,255,255,0.4); text-decoration:none; margin-bottom:10px; font-size:13px;"># ${s.name.toUpperCase()}</a>`).join('')}
             </div>
         </div>
     </div>
 
     <footer>
-        <div>XAVIROX COSMOS 2026</div>
-        <a href="mailto:xavirox.co@gmail.com" style="color:var(--p); text-decoration:none;">xavirox.co@gmail.com</a>
+        <div><strong>XAVIROX COSMOS</strong><br><span style="font-size:10px;">SYNCED @ 2026</span></div>
+        <a href="mailto:xavirox.co@gmail.com" style="color:var(--p); text-decoration:none; font-weight:bold;">xavirox.co@gmail.com</a>
     </footer>
 
     <script>
         ${isGuest ? `
             const slangs = ${JSON.stringify(lurkerSlangs)};
-            let i = 0;
+            let slangIdx = 0;
+            // 45 Seconds Interval as requested
             setInterval(() => {
-                document.getElementById('island-txt').innerText = slangs[i % slangs.length];
-                i++;
-            }, 3000);
+                const txt = document.getElementById('island-txt');
+                txt.style.opacity = 0;
+                setTimeout(() => {
+                    slangIdx = (slangIdx + 1) % slangs.length;
+                    txt.innerText = slangs[slangIdx];
+                    txt.style.opacity = 1;
+                }, 500);
+            }, 45000);
         ` : `
-            const genzSlangs = ["No cap...", "What's the tea?", "Caught in 4K", "Ate and left no crumbs", "Main character energy", "Sheesh", "Bet", "Manifesting fire"];
+            const genzSlangs = ["No cap...", "What's the tea?", "Caught in 4K", "Ate and left no crumbs", "Main character energy", "Sheesh", "Bet", "Vibe check", "Sending it"];
             setInterval(() => {
                 const box = document.getElementById('slang-box');
                 if(box) box.placeholder = genzSlangs[Math.floor(Math.random()*genzSlangs.length)];
             }, 3000);
         `}
-        const l = document.getElementById('stars');
-        for(let j=0; j<150; j++) {
+        
+        const starsLayer = document.getElementById('stars');
+        for(let j=0; j<120; j++) {
             const s = document.createElement('div'); s.className='stars';
             s.style.left=Math.random()*100+'vw'; s.style.top=Math.random()*100+'vh';
-            l.appendChild(s);
+            s.style.animationDelay = Math.random()*4+'s';
+            starsLayer.appendChild(s);
         }
     </script>
 </body>
 </html>`;
 };
 
-// --- [CORE LOGIC] ---
+// --- [CORE LOGIC & ROUTES] ---
 
 app.get('/dashboard', async (req, res) => {
     const sec = req.query.sector || 'General';
@@ -200,43 +224,63 @@ app.get('/dashboard', async (req, res) => {
 
     const html = posts.map(p => `
         <div class="card">
-            ${(user && user.username === p.author) ? `<a href="/delete-post/${p._id}" class="del-btn"><i class="fas fa-trash"></i></a>` : ''}
-            <div style="font-weight:900; color:var(--cyan); font-size:12px; margin-bottom:10px;">@${p.author} • #${p.sector}</div>
-            <p style="font-size:17px; opacity:0.9;">${p.content}</p>
-            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid #222;">` : ''}
-            <div style="display:flex; gap:20px; margin-top:20px; opacity:0.5; font-size:13px;">
+            ${(user && (user.username === p.author || user.username === 'xavi')) ? `<a href="/delete-post/${p._id}" class="del-btn"><i class="fas fa-trash"></i></a>` : ''}
+            <div style="font-weight:900; color:var(--cyan); font-size:12px; margin-bottom:12px;">@${p.author} <span style="opacity:0.3; margin-left:5px;">• #${p.sector}</span></div>
+            <p style="font-size:17px; opacity:0.9; line-height:1.6;">${p.content}</p>
+            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:25px; margin-top:20px; border:1px solid rgba(255,255,255,0.1);">` : ''}
+            <div style="display:flex; gap:25px; margin-top:25px; opacity:0.5; font-size:14px;">
                 <a href="/like/${p._id}" style="color:#fff; text-decoration:none;"><i class="fas fa-heart"></i> ${p.likes}</a>
-                <a href="/save/${p._id}" style="color:#fff; text-decoration:none;"><i class="fas fa-bookmark"></i></a>
+                <a href="/save/${p._id}" style="color:#fff; text-decoration:none;"><i class="fas fa-bookmark"></i> ARCHIVE</a>
             </div>
         </div>
     `).join('');
     res.send(MASTER_UI(html, user, sectors, sec));
 });
 
+// --- [NEURAL LOGIN PAGE FIX] ---
+app.get('/login', (req, res) => {
+    res.send(`<!DOCTYPE html><html><head><title>XAVIROX | SYNC</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><style>
+    body { background:#000; color:#fff; display:flex; height:100vh; margin:0; font-family:sans-serif; overflow:hidden; }
+    .side-art { flex:1.2; background:#050105; display:flex; align-items:flex-end; justify-content:center; position:relative; border-right:1px solid #111; }
+    #c { font-size:120px; position:absolute; left:20%; bottom:10%; transition:0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+    #p { font-size:120px; position:absolute; right:20%; bottom:15%; transition:0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+    .form-side { flex:1; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, #110011, #000); }
+    .box { width:380px; padding:50px; background:rgba(255,255,255,0.02); border-radius:40px; border:1px solid rgba(255,255,255,0.08); backdrop-filter:blur(20px); }
+    input { width:100%; padding:20px; margin:12px 0; border-radius:15px; background:#000; color:#fff; border:1px solid #222; outline:none; }
+    input:focus { border-color: #ff007f; }
+    button { width:100%; padding:20px; border-radius:50px; background:#fff; border:none; font-weight:900; margin-top:20px; cursor:pointer; }
+    button:hover { background:#ff007f; color:#fff; transform:scale(1.02); }
+    </style></head><body>
+    <div class="side-art"><div id="c">🐱</div><div id="p">🦜</div></div>
+    <div class="form-side"><div class="box"><h1 style="letter-spacing:5px; margin-bottom:30px;">XAVIROX</h1>
+    <form action="/login" method="POST">
+    <input name="username" placeholder="NEURAL ID" required onfocus="document.getElementById('c').style.transform='translateY(0)';document.getElementById('p').style.transform='translateY(0)'">
+    <input name="password" type="password" placeholder="ACCESS KEY" required onfocus="document.getElementById('c').style.transform='translateY(450px)';document.getElementById('p').style.transform='translateY(450px)'">
+    <button>SYNC CORE</button></form>
+    <p style="text-align:center; margin-top:20px; font-size:12px; opacity:0.4;">AUTHENTICATION REQUIRED FOR UPLINK</p>
+    </div></div></body></html>`);
+});
+
+// --- [PORTFOLIO & PROFILE] ---
 app.get('/portfolio', async (req, res) => {
     if(!req.session.user) return res.redirect('/login');
     const u = await User.findOne({ username: req.session.user.username });
     const sectors = await Sector.find();
     const html = `
-        <div class="card" style="text-align:center;">
+        <div class="card" style="text-align:center; border-bottom: 4px solid var(--v);">
             <img src="${u.pfp || 'https://via.placeholder.com/150'}" class="pfp-main">
-            <form action="/upload-pfp" method="POST" enctype="multipart/form-data" style="margin-bottom:20px;">
+            <form action="/upload-pfp" method="POST" enctype="multipart/form-data">
                 <input type="file" name="pfp" onchange="this.form.submit()" id="pfp-in" hidden>
-                <label for="pfp-in" style="font-size:11px; color:var(--p); cursor:pointer;">CHANGE PFP</label>
+                <label for="pfp-in" style="font-size:11px; color:var(--cyan); cursor:pointer; font-weight:900;">[ UPDATE IDENTITY IMAGE ]</label>
             </form>
-            <h1>@${u.username}</h1>
-            <p style="margin:15px 0; opacity:0.6;">${u.bio}</p>
+            <h1 style="font-size:40px; margin-top:20px;">@${u.username}</h1>
+            <p style="margin:20px 0; opacity:0.7; font-size:18px;">${u.bio}</p>
+            <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+                ${u.skills.map(s => `<span style="background:var(--v); padding:8px 20px; border-radius:50px; font-size:11px; font-weight:bold;">${s}</span>`).join('')}
+            </div>
         </div>
     `;
     res.send(MASTER_UI(html, u, sectors, 'Global', true));
-});
-
-app.get('/saved-posts', async (req, res) => {
-    if(!req.session.user) return res.redirect('/login');
-    const u = await User.findOne({ username: req.session.user.username }).populate('savedPosts');
-    const sectors = await Sector.find();
-    const html = u.savedPosts.map(p => `<div class="card"><h4>@${p.author}</h4><p>${p.content}</p></div>`).join('');
-    res.send(MASTER_UI(`<h3>ARCHIVED MEMORIES</h3><br>${html}`, u, sectors, 'Global', true));
 });
 
 // --- [HANDLERS] ---
@@ -244,7 +288,13 @@ app.post('/login', async (req, res) => {
     const user = await User.findOne({ username: req.body.username.toLowerCase() });
     if(user && await bcrypt.compare(req.body.password, user.password)) {
         req.session.user = user; res.redirect('/dashboard');
-    } else res.send("<script>alert('Failed'); window.location='/login';</script>");
+    } else res.send("<script>alert('SYNC FAILED'); window.location='/login';</script>");
+});
+
+app.post('/send-feedback', async (req, res) => {
+    if(!req.session.user) return res.redirect('/login');
+    await User.findOneAndUpdate({ username: 'xavi' }, { $push: { feedback: { msg: req.body.msg, from: req.session.user.username } } });
+    res.send("<script>alert('SIGNAL RECEIVED'); window.location='/dashboard';</script>");
 });
 
 app.post('/addpost', upload.single('media'), async (req, res) => {
@@ -254,26 +304,14 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
     res.redirect('back');
 });
 
-app.post('/upload-pfp', upload.single('pfp'), async (req, res) => {
-    const pfpUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-    await User.findOneAndUpdate({ username: req.session.user.username }, { pfp: pfpUrl });
-    res.redirect('back');
-});
-
 app.get('/delete-post/:id', async (req, res) => {
     const p = await Post.findById(req.params.id);
-    if(p && p.author === req.session.user.username) await Post.findByIdAndDelete(req.params.id);
-    res.redirect('back');
-});
-
-app.get('/save/:id', async (req, res) => {
-    if(!req.session.user) return res.redirect('/login');
-    await User.findOneAndUpdate({ username: req.session.user.username }, { $addToSet: { savedPosts: req.params.id } });
+    if(p && (p.author === req.session.user.username || req.session.user.username === 'xavi')) {
+        await Post.findByIdAndDelete(req.params.id);
+    }
     res.redirect('back');
 });
 
 app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/dashboard'); });
-app.get('/', (req, res) => res.redirect('/dashboard'));
-app.get('/login', (req, res) => res.send('...login page here...')); // Previous cat/parrot login logic fits here
 
-app.listen(3000, () => console.log('🚀 XAVIROX 37.0 - GUEST MODE ENABLED'));
+app.listen(3000, () => console.log('🚀 XAVIROX 38.0 - NEURAL RENAISSANCE LIVE'));
