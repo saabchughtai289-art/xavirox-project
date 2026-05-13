@@ -1,6 +1,6 @@
 /* ====================================================================================================
-   🚀 XAVIROX COSMIC OS - VERSION 38.6 [PRODUCTION ULTIMATE]
-   DEVELOPER: GEMINI COLLABORATION | YEAR: 2026 | STATUS: FEATURE-COMPLETE & STABLE
+   🚀 XAVIROX COSMIC OS - VERSION 39.5 [FEEDBACK CONTROL UPDATE]
+   DEVELOPER: GEMINI COLLABORATION | YEAR: 2026 | STATUS: STABLE & SECURE
 ==================================================================================================== */
 
 const express = require('express');
@@ -11,7 +11,7 @@ const multer = require('multer');
 
 const app = express();
 
-// --- [DATABASE ARCHITECTURE - SERVERLESS OPTIMIZED] ---
+// --- [DATABASE ARCHITECTURE] ---
 const dbURI = "mongodb+srv://xavirox_boss:BDqrTgZZq2MFmoP3@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority";
 
 let cachedDb = null;
@@ -19,7 +19,7 @@ async function connectDB() {
     if (cachedDb) return cachedDb;
     const db = await mongoose.connect(dbURI);
     cachedDb = db;
-    console.log('✅ [XAVIROX]: OMNI-LINK 38.6 STABLE');
+    console.log('✅ [XAVIROX]: OMNI-LINK 39.5 STABLE');
     return db;
 }
 
@@ -103,7 +103,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .pfp-main { width: 110px; height: 110px; border-radius: 35px; object-fit: cover; margin-bottom: 20px; border: 2px solid var(--p); }
         .del-btn { position: absolute; top: 30px; right: 30px; color: #ff4444; cursor: pointer; opacity: 0.4; }
         .guest-lock { filter: blur(6px); pointer-events: none; opacity: 0.4; user-select: none; }
-        footer { margin-left: 160px; padding: 60px 40px; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.4; display: flex; justify-content: space-between; }
+        .dmca-footer { margin: 50px 40px 50px 160px; padding: 40px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; font-size: 11px; opacity: 0.4; }
+        .dmca-footer a { color: var(--cyan); text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -165,6 +166,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         </div>
     </div>
 
+    <footer class="dmca-footer">
+        <div>© 2026 XAVIROX COSMIC OS | ALL RIGHTS RESERVED</div>
+        <div>DMCA CONTENT REMOVAL: <a href="mailto:xavirox.co@gmail.com">xavirox.co@gmail.com</a></div>
+    </footer>
+
     <script>
         ${isGuest ? `
             const slangs = ${JSON.stringify(lurkerSlangs)};
@@ -185,20 +191,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                 if(box) box.placeholder = genzSlangs[Math.floor(Math.random()*genzSlangs.length)];
             }, 3000);
         `}
-        const starsLayer = document.getElementById('stars');
-        for(let j=0; j<120; j++) {
-            const s = document.createElement('div'); s.className='stars';
-            s.style.left=Math.random()*100+'vw'; s.style.top=Math.random()*100+'vh';
-            starsLayer.appendChild(s);
-        }
     </script>
 </body>
 </html>`;
 };
 
 // --- [CORE ROUTES] ---
-
-// Root Fix: Redirect to dashboard
 app.get('/', (req, res) => res.redirect('/dashboard'));
 
 app.get('/dashboard', async (req, res) => {
@@ -207,7 +205,6 @@ app.get('/dashboard', async (req, res) => {
         const posts = await Post.find(sec !== 'Global' && sec !== 'General' ? { sector: sec } : {}).sort({ date: -1 }).limit(50);
         const sectors = await Sector.find();
         const user = req.session.user;
-
         const html = posts.map(p => `
             <div class="card">
                 ${(user && (user.username === p.author || user.username === 'xavi')) ? `<a href="/delete-post/${p._id}" class="del-btn"><i class="fas fa-trash"></i></a>` : ''}
@@ -215,32 +212,59 @@ app.get('/dashboard', async (req, res) => {
                 <p style="font-size:17px; opacity:0.9; line-height:1.6;">${p.content}</p>
                 ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:25px; margin-top:20px; border:1px solid rgba(255,255,255,0.1);">` : ''}
                 <div style="display:flex; gap:25px; margin-top:25px; opacity:0.5; font-size:14px;">
-                    <a href="/like/${p._id}" style="color:#fff; text-decoration:none;"><i class="fas fa-heart"></i> ${p.likes}</a>
-                    <a href="/save/${p._id}" style="color:#fff; text-decoration:none;"><i class="fas fa-bookmark"></i> ARCHIVE</a>
+                    <i class="fas fa-heart"></i> ${p.likes}
+                    <i class="fas fa-bookmark"></i> ARCHIVE
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
         res.send(MASTER_UI(html, user, sectors, sec));
     } catch (err) { res.status(500).send("Dashboard Failed"); }
 });
 
+// Admin Route to View Feedbacks
+app.get('/feedback-signals', async (req, res) => {
+    if(!req.session.user || req.session.user.username !== 'xavi') return res.redirect('/dashboard');
+    const admin = await User.findOne({ username: 'xavi' });
+    const sectors = await Sector.find();
+    const html = `
+        <div class="card" style="border-left: 5px solid var(--cyan);">
+            <h2 style="margin-bottom:20px; color:var(--cyan);">📥 FEEDBACK SIGNALS RECEIVED</h2>
+            ${admin.feedback.length > 0 ? admin.feedback.reverse().map(f => `
+                <div style="padding:15px; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:10px;">
+                    <div style="color:var(--p); font-weight:bold; font-size:12px;">FROM: @${f.from} | DATE: ${f.date.toLocaleDateString()}</div>
+                    <p style="margin-top:5px; opacity:0.9;">${f.msg}</p>
+                </div>
+            `).join('') : '<p>Void is silent. No signals yet.</p>'}
+        </div>`;
+    res.send(MASTER_UI(html, admin, sectors, 'Admin', true));
+});
+
 app.get('/login', (req, res) => {
-    res.send(`<!DOCTYPE html><html><head><title>XAVIROX | SYNC</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><style>
+    res.send(`<!DOCTYPE html><html><head><title>XAVIROX | SYNC</title><style>
     body { background:#000; color:#fff; display:flex; height:100vh; margin:0; font-family:sans-serif; overflow:hidden; }
-    .side-art { flex:1.2; background:#050105; display:flex; align-items:flex-end; justify-content:center; position:relative; border-right:1px solid #111; }
-    #c, #p { font-size:120px; position:absolute; bottom:10%; transition:0.8s; }
-    #c { left:20%; } #p { right:20%; }
-    .form-side { flex:1; display:flex; align-items:center; justify-content:center; background:#000; }
+    .form-side { flex:1; display:flex; align-items:center; justify-content:center; }
     .box { width:380px; padding:40px; background:rgba(255,255,255,0.02); border-radius:40px; border:1px solid rgba(255,255,255,0.1); }
-    input { width:100%; padding:15px; margin:10px 0; border-radius:10px; background:#111; color:#fff; border:1px solid #333; }
-    button { width:100%; padding:15px; border-radius:50px; background:#fff; font-weight:bold; cursor:pointer; }
+    input { width:100%; padding:15px; margin:10px 0; border-radius:10px; background:#111; color:#fff; border:1px solid #333; outline:none; }
+    button { width:100%; padding:15px; border-radius:50px; background:#fff; font-weight:bold; cursor:pointer; border:none; }
     </style></head><body>
-    <div class="side-art"><div id="c">🐱</div><div id="p">🦜</div></div>
-    <div class="form-side"><div class="box"><h1>XAVIROX</h1>
+    <div class="form-side"><div class="box"><h1>XAVIROX SYNC</h1>
     <form action="/login" method="POST">
-    <input name="username" placeholder="NEURAL ID" required onfocus="document.getElementById('c').style.transform='translateY(0)'">
-    <input name="password" type="password" placeholder="ACCESS KEY" required onfocus="document.getElementById('c').style.transform='translateY(400px)'">
+    <input name="username" placeholder="NEURAL ID" required>
+    <input name="password" type="password" placeholder="ACCESS KEY" required>
     <button>SYNC CORE</button></form></div></div></body></html>`);
+});
+
+app.post('/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        let user = await User.findOne({ username: username.toLowerCase() });
+        if(!user) {
+            const hashed = await bcrypt.hash(password, 10);
+            user = await new User({ username: username.toLowerCase(), password: hashed }).save();
+        }
+        if(await bcrypt.compare(password, user.password)) {
+            req.session.user = user; res.redirect('/dashboard');
+        } else res.send("<script>alert('SYNC FAILED'); window.location='/login';</script>");
+    } catch (err) { res.status(500).send("Login Error"); }
 });
 
 app.get('/portfolio', async (req, res) => {
@@ -252,21 +276,12 @@ app.get('/portfolio', async (req, res) => {
             <img src="${u.pfp || 'https://via.placeholder.com/150'}" class="pfp-main">
             <h1 style="font-size:40px; margin-top:20px;">@${u.username}</h1>
             <p style="margin:20px 0; opacity:0.7; font-size:18px;">${u.bio}</p>
-            <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+            <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
                 ${u.skills.map(s => `<span style="background:var(--v); padding:8px 20px; border-radius:50px; font-size:11px; font-weight:bold;">${s}</span>`).join('')}
             </div>
+            ${u.username === 'xavi' ? `<button class="btn-x" onclick="location.href='/feedback-signals'" style="background:var(--cyan); color:#000;">VIEW FEEDBACK SIGNALS</button>` : ''}
         </div>`;
     res.send(MASTER_UI(html, u, sectors, 'Global', true));
-});
-
-// --- [HANDLERS] ---
-app.post('/login', async (req, res) => {
-    try {
-        const user = await User.findOne({ username: req.body.username.toLowerCase() });
-        if(user && await bcrypt.compare(req.body.password, user.password)) {
-            req.session.user = user; res.redirect('/dashboard');
-        } else res.send("<script>alert('SYNC FAILED'); window.location='/login';</script>");
-    } catch (err) { res.status(500).send("Login Error"); }
 });
 
 app.post('/addpost', upload.single('media'), async (req, res) => {
@@ -278,7 +293,12 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
 
 app.post('/send-feedback', async (req, res) => {
     if(!req.session.user) return res.redirect('/login');
-    await User.findOneAndUpdate({ username: 'xavi' }, { $push: { feedback: { msg: req.body.msg, from: req.session.user.username } } });
+    // Ensure 'xavi' admin exists to receive feedback
+    await User.findOneAndUpdate(
+        { username: 'xavi' }, 
+        { $push: { feedback: { msg: req.body.msg, from: req.session.user.username } } },
+        { upsert: true }
+    );
     res.send("<script>alert('SIGNAL RECEIVED'); window.location='/dashboard';</script>");
 });
 
@@ -293,9 +313,8 @@ app.get('/delete-post/:id', async (req, res) => {
 
 app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/dashboard'); });
 
-// Vercel export
 module.exports = app;
 
 if (process.env.NODE_ENV !== 'production') {
-    app.listen(3000, () => console.log('🚀 XAVIROX 38.6 LIVE ON PORT 3000'));
+    app.listen(3000, () => console.log('🚀 XAVIROX 39.5 LIVE ON PORT 3000'));
 }
