@@ -1,10 +1,10 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V52 [THE ULTIMATE SYNC]
-    STATUS: ALL SYSTEMS OPERATIONAL
-    - MERGED: Bento Portfolio + Cosmic Dashboard + Security Patch
-    - FIX: Guest Community Creation Blocked
-    - NEW: GenZ Tooltip Labels for Navigation Icons
-    - FIX: Enhanced Feedback Loop UI
+    🚀 XAVIROX COSMIC OS - V54 [THE MASTER SYNC]
+    STATUS: ALL SYSTEMS INTEGRATED
+    - MERGED: GenZ Search + Bento Portfolio + Cosmic Feed
+    - NEW: Dedicated Registration Feature (Signup vs Login)
+    - FIX: Search Bar UI Persistence
+    - SECURITY: Guest Blocked from Community Creation
 ==================================================================================================== */
 
 const express = require('express');
@@ -76,13 +76,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .star { position: absolute; background: #fff; border-radius: 50%; opacity: 0.3; animation: twinkle var(--d) infinite; }
         @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.7; transform: scale(1.2); } }
 
-        /* NAV DOCK WITH GENZ LABELS */
+        /* NAV DOCK + GENZ SEARCH */
         .top-left-nav { position: fixed; top: 25px; left: 25px; z-index: 10001; display: flex; align-items: center; gap: 15px; }
-        .nav-row { display: flex; gap: 12px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 24px; border: 1px solid var(--border); backdrop-filter: blur(20px); }
         
+        .genz-search { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--border); border-radius: 20px; padding: 12px 20px; color: #fff; width: 180px; outline: none; backdrop-filter: blur(15px); font-size: 12px; }
+        .genz-search:focus { width: 250px; border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
+
+        .nav-row { display: flex; gap: 12px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 24px; border: 1px solid var(--border); backdrop-filter: blur(20px); }
         .nav-item { position: relative; display: flex; flex-direction: column; align-items: center; }
         .nav-btn-circle { width: 50px; height: 50px; background: var(--glass); border: 1px solid var(--border); border-radius: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; text-decoration: none; font-size: 18px; }
-        .nav-btn-circle:hover { transform: translateY(-5px); border-color: var(--cyan); color: var(--cyan); box-shadow: 0 10px 20px rgba(0, 242, 255, 0.2); }
+        .nav-btn-circle:hover { transform: translateY(-5px); border-color: var(--cyan); color: var(--cyan); }
         
         .icon-label { position: absolute; top: 60px; background: var(--cyan); color: #000; font-size: 9px; font-weight: 900; padding: 4px 10px; border-radius: 8px; opacity: 0; transform: translateY(-10px); pointer-events: none; text-transform: uppercase; letter-spacing: 1px; }
         .nav-item:hover .icon-label { opacity: 1; transform: translateY(0); }
@@ -92,21 +95,19 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .nav-logout + .icon-label { background: var(--p); color: #fff; }
 
         .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 220px; height: 45px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; letter-spacing: 2px; }
-        .dynamic-island:hover { width: 350px; height: 60px; border-color: var(--p); box-shadow: 0 0 30px rgba(255, 0, 127, 0.2); }
 
         .main-container { max-width: 1100px; margin: 130px auto 50px auto; display: flex; gap: 35px; padding: 0 20px; }
         .feed { flex: 2; }
         .sidebar { flex: 1; }
 
         .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 32px; padding: 30px; margin-bottom: 25px; position: relative; }
-        .card:hover { border-color: var(--p); transform: translateY(-5px); }
+        .card:hover { border-color: var(--p); }
 
         .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 15px; border-radius: 20px; font-weight: 900; cursor: pointer; margin-top: 15px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; text-align: center; }
         
-        /* BENTO STYLES */
+        /* BENTO GRID */
         .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
         .bento-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 20px; padding: 20px; text-align: center; }
-        .aura-tag { background: linear-gradient(90deg, var(--p), var(--v)); padding: 4px 12px; border-radius: 50px; font-size: 10px; font-weight: 900; margin-top: 10px; }
 
         footer { text-align: center; padding: 60px; font-size: 11px; opacity: 0.4; letter-spacing: 2px; }
     </style>
@@ -115,6 +116,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     <div class="stars-container" id="stars"></div>
     
     <div class="top-left-nav">
+        <input type="text" class="genz-search" placeholder="SEARCH THE VOID...">
+        
         <div class="nav-row">
             <div class="nav-item">
                 <a href="/dashboard" class="nav-btn-circle"><i class="fas fa-rocket"></i></a>
@@ -161,10 +164,23 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         </div>
     </div>
 
-    <footer>XAVIROX COSMIC OS V52 | CORE: xavirox.co@gmail.com</footer>
+    <footer>XAVIROX COSMIC OS V54 | CORE: xavirox.co@gmail.com</footer>
 
     <script>
-        document.getElementById('feedbackBtn').addEventListener('click', function() {
+        // Stars Engine
+        const container = document.getElementById('stars');
+        for(let i=0; i<120; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2;
+            star.style.width = size + 'px'; star.style.height = size + 'px';
+            star.style.top = Math.random() * 100 + '%'; star.style.left = Math.random() * 100 + '%';
+            star.style.setProperty('--d', (Math.random() * 3 + 2) + 's');
+            container.appendChild(star);
+        }
+
+        // Feedback Logic
+        document.getElementById('feedbackBtn')?.addEventListener('click', function() {
             const txt = document.getElementById('feedbackText');
             if(!txt.value.trim()) return;
             this.innerHTML = "SIGNAL DELIVERED 🛸";
@@ -177,17 +193,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                 this.style.color = "#fff";
             }, 3000);
         });
-
-        const container = document.getElementById('stars');
-        for(let i=0; i<120; i++) {
-            const star = document.createElement('div');
-            star.className = 'star';
-            const size = Math.random() * 2;
-            star.style.width = size + 'px'; star.style.height = size + 'px';
-            star.style.top = Math.random() * 100 + '%'; star.style.left = Math.random() * 100 + '%';
-            star.style.setProperty('--d', (Math.random() * 3 + 2) + 's');
-            container.appendChild(star);
-        }
     </script>
 </body></html>`;
 };
@@ -212,21 +217,20 @@ app.get('/dashboard', async (req, res) => {
 
     const html = posts.map(p => `<div class="card">
         <b style="color:var(--cyan); font-size:14px;">@${p.author}</b>
-        <p style="margin-top:12px; font-size:16px; line-height:1.5;">${p.content}</p>
+        <p style="margin-top:12px; font-size:16px;">${p.content}</p>
         ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);">` : ''}
     </div>`).join('');
     
-    res.send(MASTER_UI(postForm + (html || '<div style="text-align:center; opacity:0.2; padding:80px;">NO SIGNALS IN THIS SECTOR</div>'), req.session.user, sectors, activeSector));
+    res.send(MASTER_UI(postForm + (html || '<div style="text-align:center; opacity:0.2; padding:80px;">NO SIGNALS</div>'), req.session.user, sectors, activeSector));
 });
 
 app.get('/portfolio', async (req, res) => {
     const user = req.session.user;
     const sectors = await Sector.find();
-    
     const portfolioContent = `
         <div class="card" style="border: 2px solid ${user ? 'var(--cyan)' : 'var(--p)'};">
             <div style="text-align: center;">
-                <div style="width: 100px; height: 100px; background: linear-gradient(45deg, var(--p), var(--v)); border-radius: 30px; margin: 0 auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(255,0,127,0.3);">
+                <div style="width: 100px; height: 100px; background: linear-gradient(45deg, var(--p), var(--v)); border-radius: 30px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-${user ? 'user-ninja' : 'ghost'} fa-3x"></i>
                 </div>
                 <h1 style="margin-top:25px; font-size:32px;">${user ? user.username : 'GUEST'}<span style="color:var(--cyan);">.os</span></h1>
@@ -235,14 +239,8 @@ app.get('/portfolio', async (req, res) => {
                         <h3 style="font-size:10px; opacity:0.5;">AURA LEVEL</h3>
                         <p style="font-size:24px; color:var(--cyan); font-weight:900;">${user ? user.aura : '0'}</p>
                     </div>
-                    <div class="bento-item">
-                        <i class="fas fa-shield-alt"></i>
-                        <p style="font-size:11px; margin-top:5px;">${user ? 'SECURED' : 'LURKING'}</p>
-                    </div>
-                    <div class="bento-item">
-                        <i class="fas fa-terminal"></i>
-                        <p style="font-size:11px; margin-top:5px;">ACTIVE</p>
-                    </div>
+                    <div class="bento-item"><i class="fas fa-shield-alt"></i><p style="font-size:11px;">SECURED</p></div>
+                    <div class="bento-item"><i class="fas fa-terminal"></i><p style="font-size:11px;">ACTIVE</p></div>
                 </div>
                 ${!user ? `<a href="/login" class="create-btn">SYNC NOW</a>` : ''}
             </div>
@@ -250,7 +248,7 @@ app.get('/portfolio', async (req, res) => {
     res.send(MASTER_UI(portfolioContent, user, sectors, 'Portfolio'));
 });
 
-// --- [SYSTEM LOGIC FIXES] ---
+// --- [SYSTEM LOGIC] ---
 app.post('/addpost', upload.single('media'), async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
@@ -260,36 +258,55 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
 });
 
 app.get('/create-sector', async (req, res) => {
-    // BUG FIX: Guest Blocked
-    if (!req.session.user) {
-        return res.send("<script>alert('Account required!'); window.location.href='/login';</script>");
-    }
+    if (!req.session.user) return res.send("<script>alert('GANG ONLY!'); window.location.href='/login';</script>");
     const name = req.query.name ? req.query.name.toLowerCase().trim() : null;
     if (name) { try { await new Sector({ name }).save(); } catch(e) {} }
     res.redirect('/dashboard?sector=' + (name || 'Global'));
 });
 
+// --- [AUTH SYSTEM: LOGIN + NEW ACCOUNT] ---
 app.get('/login', (req, res) => {
-    res.send(`<body style="background:#000; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;">
-        <form action="/login" method="POST" style="background:rgba(255,255,255,0.05); padding:50px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); text-align:center;">
-            <h2 style="color:#fff; letter-spacing:5px; margin-bottom:30px;">XAVIROX</h2>
-            <input name="username" placeholder="IDENTITY" required style="display:block; margin:15px auto; padding:15px; width:260px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none;">
-            <input name="password" type="password" placeholder="ACCESS KEY" required style="display:block; margin:15px auto; padding:15px; width:260px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none;">
-            <button style="padding:15px 50px; border-radius:50px; background:#fff; color:#000; font-weight:900; border:none; cursor:pointer; margin-top:20px;">SYNC</button>
-        </form></body>`);
+    res.send(`<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; overflow:hidden;">
+        <div style="background:rgba(255,255,255,0.05); padding:50px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); text-align:center; backdrop-filter:blur(20px);">
+            <h2 style="letter-spacing:5px; margin-bottom:10px;">XAVIROX</h2>
+            <p style="font-size:10px; opacity:0.5; margin-bottom:30px;">SECURE ACCESS PROTOCOL</p>
+            
+            <form action="/login" method="POST">
+                <input name="username" placeholder="IDENTITY (Username)" required style="display:block; margin:15px auto; padding:15px; width:280px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none;">
+                <input name="password" type="password" placeholder="ACCESS KEY (Password)" required style="display:block; margin:15px auto; padding:15px; width:280px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none;">
+                
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button name="action" value="login" style="flex:1; padding:15px; border-radius:15px; background:#fff; color:#000; font-weight:900; border:none; cursor:pointer;">SYNC</button>
+                    <button name="action" value="register" style="flex:1; padding:15px; border-radius:15px; background:transparent; color:#fff; font-weight:900; border:1px solid #444; cursor:pointer;">NEW IDENTITY</button>
+                </div>
+            </form>
+            <a href="/dashboard" style="display:block; margin-top:25px; color:rgba(255,255,255,0.3); text-decoration:none; font-size:12px;">LURK AS GUEST</a>
+        </div>
+    </body>`);
 });
 
 app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-    let user = await User.findOne({ username: username.toLowerCase() });
-    if (!user) {
+    const { username, password, action } = req.body;
+    const userLower = username.toLowerCase();
+
+    if (action === 'register') {
+        const exists = await User.findOne({ username: userLower });
+        if (exists) return res.send("<script>alert('Identity already taken!'); window.history.back();</script>");
+        
         const hashed = await bcrypt.hash(password, 10);
-        user = await new User({ username: username.toLowerCase(), password: hashed }).save();
+        const newUser = await new User({ username: userLower, password: hashed }).save();
+        req.session.user = newUser;
+        return res.redirect('/dashboard');
     }
-    if (await bcrypt.compare(password, user.password)) {
+
+    // Login Logic
+    const user = await User.findOne({ username: userLower });
+    if (user && await bcrypt.compare(password, user.password)) {
         req.session.user = user;
         res.redirect('/dashboard');
-    } else res.send("Unauthorized.");
+    } else {
+        res.send("<script>alert('Invalid Identity or Key!'); window.history.back();</script>");
+    }
 });
 
 app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/dashboard'); });
