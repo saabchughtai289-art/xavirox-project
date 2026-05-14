@@ -1,7 +1,7 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V46 [LEFT-NAV ELITE MERGE]
-    FEATURES: Left-Side Navigation & Search, Ultra-Smooth Aura Glow, iOS 26 Elastic Island, 
-              Sidebar Community Creator, Feedback System, Glass-Transparency.
+    🚀 XAVIROX COSMIC OS - V47 [HORIZONTAL ELITE MERGE]
+    FEATURES: Horizontal Top-Left Nav, High-Visibility Search, iOS 26 Elastic Island, 
+              Sidebar Community Creator, Integrated Support (xavirox.co@gmail.com).
 ==================================================================================================== */
 
 const express = require('express');
@@ -56,9 +56,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     const isGuest = !user;
     
     const unhingedPrompts = [
-        "type something unhinged...", "drop your hot take here", "bro is thinking...", 
-        "cooked or cooking?", "your brainrot goes here", "speak your truth king",
-        "post and pray", "this box can’t handle your aura", "go full sigma", 
+        "type something unhinged...", "drop your hot take here", "cooked or cooking?", 
+        "your brainrot goes here", "speak your truth king", "this box can’t handle your aura", 
         "certified yap zone"
     ];
     const randomPrompt = unhingedPrompts[Math.floor(Math.random() * unhingedPrompts.length)];
@@ -72,8 +71,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     <title>XAVIROX | ${activeSector}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --bg: #000; --glass: rgba(255, 255, 255, 0.04); --border: rgba(255, 255, 255, 0.08); }
-        * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        :root { --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --bg: #000; --glass: rgba(255, 255, 255, 0.07); --border: rgba(255, 255, 255, 0.12); }
+        
+        /* ULTRA-SMOOTH ANIMATIONS */
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
 
         /* STAR ENGINE */
@@ -81,41 +83,44 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .star { position: absolute; background: #fff; border-radius: 50%; opacity: 0.4; animation: twinkle var(--d) infinite ease-in-out; }
         @keyframes twinkle { 0%, 100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.3); opacity: 0.8; box-shadow: 0 0 10px #fff; } }
 
-        /* LEFT SIDE NAVIGATION (SEARCH + BUTTONS) */
-        .top-left-nav { position: fixed; top: 20px; left: 20px; z-index: 10001; display: flex; flex-direction: column; gap: 15px; }
-        .genz-search { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 12px 15px; color: #fff; width: 180px; font-size: 12px; outline: none; backdrop-filter: blur(10px); }
-        .genz-search:focus { width: 220px; border-color: var(--cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
+        /* HORIZONTAL TOP-LEFT NAV */
+        .top-left-nav { position: fixed; top: 25px; left: 25px; z-index: 10001; display: flex; align-items: center; gap: 15px; }
         
-        .nav-btn-circle { width: 45px; height: 45px; background: var(--glass); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; text-decoration: none; backdrop-filter: blur(10px); }
-        .nav-btn-circle:hover { transform: scale(1.1) rotate(5deg); border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 15px var(--cyan); }
+        /* HIGH VISIBILITY SEARCH BAR */
+        .genz-search { background: rgba(255, 255, 255, 0.1); border: 2px solid var(--border); border-radius: 18px; padding: 12px 20px; color: #fff; width: 220px; font-size: 13px; outline: none; backdrop-filter: blur(15px); box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .genz-search:focus { width: 300px; border-color: var(--cyan); box-shadow: 0 0 25px rgba(0, 242, 255, 0.3); background: rgba(255, 255, 255, 0.15); }
+        
+        .nav-row { display: flex; gap: 10px; }
+        .nav-btn-circle { width: 48px; height: 48px; background: var(--glass); border: 1px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; text-decoration: none; backdrop-filter: blur(10px); }
+        .nav-btn-circle:hover { transform: translateY(-3px) scale(1.1); border-color: var(--cyan); color: var(--cyan); box-shadow: 0 10px 20px rgba(0, 242, 255, 0.2); }
 
         /* iOS 26 DYNAMIC ISLAND */
-        .dynamic-island { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 180px; height: 35px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; letter-spacing: 1px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.2); overflow: hidden; }
-        .dynamic-island:hover { width: 340px; height: 65px; border-color: var(--p); box-shadow: 0 10px 40px rgba(255, 0, 127, 0.4); }
+        .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 200px; height: 40px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; letter-spacing: 1px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.25); }
+        .dynamic-island:hover { width: 360px; height: 70px; border-color: var(--p); box-shadow: 0 15px 45px rgba(255, 0, 127, 0.4); }
 
         /* GLO-AURA CARDS */
-        .card { background: var(--glass); backdrop-filter: blur(30px); border: 1px solid var(--border); border-radius: 28px; padding: 25px; margin-bottom: 25px; position: relative; }
-        .card:hover { border-color: transparent; box-shadow: 0 0 30px -5px var(--p), 0 0 30px -5px var(--v); transform: translateY(-5px); background: rgba(255, 255, 255, 0.06); }
+        .card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--border); border-radius: 30px; padding: 28px; margin-bottom: 25px; position: relative; overflow: hidden; }
+        .card:hover { border-color: transparent; box-shadow: 0 0 40px -10px var(--p), 0 0 40px -10px var(--v); transform: translateY(-6px); background: rgba(255, 255, 255, 0.08); }
 
-        /* RIGHT DOCK (LOGOUT ONLY) */
-        .dock { position: fixed; right: 20px; top: 50%; transform: translateY(-50%); width: 60px; background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 50px; display: flex; flex-direction: column; padding: 20px 0; align-items: center; z-index: 1000; }
-        .dock i:hover { color: var(--p); transform: scale(1.3); filter: drop-shadow(0 0 8px var(--p)); }
+        /* RIGHT DOCK */
+        .dock { position: fixed; right: 25px; top: 50%; transform: translateY(-50%); width: 65px; background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 50px; display: flex; flex-direction: column; padding: 25px 0; align-items: center; z-index: 1000; }
+        .dock i:hover { color: var(--p); transform: scale(1.4); filter: drop-shadow(0 0 10px var(--p)); }
 
-        .main-container { max-width: 1050px; margin: 100px auto 50px 240px; display: flex; gap: 30px; }
-        .feed { flex: 2; }
+        .main-container { max-width: 1100px; margin: 120px auto 50px auto; display: flex; gap: 35px; padding: 0 20px; }
+        .feed { flex: 2.2; }
         .sidebar { flex: 1; }
 
-        .btn-transmit { background: #fff; color: #000; border: none; padding: 12px 25px; border-radius: 50px; font-weight: 900; cursor: pointer; }
-        .btn-transmit:hover { background: var(--cyan); box-shadow: 0 0 20px var(--cyan); transform: scale(1.05); }
+        .btn-transmit { background: #fff; color: #000; border: none; padding: 14px 30px; border-radius: 50px; font-weight: 900; cursor: pointer; letter-spacing: 1px; }
+        .btn-transmit:hover { background: var(--cyan); box-shadow: 0 0 25px var(--cyan); transform: scale(1.05); }
 
         /* SIDEBAR BLOCKS */
-        .sidebar-block { background: var(--glass); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(20px); }
-        .feedback-input { width: 100%; background: #000; border: 1px solid #222; border-radius: 12px; color: #fff; padding: 12px; font-size: 13px; margin-top: 10px; outline: none; resize: none; }
+        .sidebar-block { background: var(--glass); border: 1px solid var(--border); border-radius: 28px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(20px); }
+        .feedback-input { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid #333; border-radius: 15px; color: #fff; padding: 15px; font-size: 13px; margin-top: 12px; outline: none; resize: none; }
         
-        .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 12px; border-radius: 15px; font-size: 11px; font-weight: 900; text-decoration: none; text-align: center; margin-top: 15px; cursor: pointer; text-transform: uppercase; }
-        .create-btn:hover { filter: brightness(1.2); box-shadow: 0 0 15px var(--p); }
+        .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 14px; border-radius: 18px; font-size: 12px; font-weight: 900; text-decoration: none; text-align: center; margin-top: 15px; cursor: pointer; text-transform: uppercase; }
+        .create-btn:hover { filter: brightness(1.2); box-shadow: 0 0 20px var(--p); transform: scale(1.02); }
 
-        footer { text-align: center; padding: 60px; font-size: 11px; opacity: 0.3; letter-spacing: 1px; }
+        footer { text-align: center; padding: 80px 20px; font-size: 12px; opacity: 0.4; letter-spacing: 2px; line-height: 2; }
     </style>
 </head>
 <body>
@@ -123,8 +128,10 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     
     <div class="top-left-nav">
         <input type="text" class="genz-search" placeholder="Search the void...">
-        <a href="/dashboard" class="nav-btn-circle" title="Home Feed"><i class="fas fa-rocket"></i></a>
-        <a href="/portfolio" class="nav-btn-circle" title="My Portfolio"><i class="fas fa-fingerprint"></i></a>
+        <div class="nav-row">
+            <a href="/dashboard" class="nav-btn-circle" title="Home Feed"><i class="fas fa-rocket"></i></a>
+            <a href="/portfolio" class="nav-btn-circle" title="Portfolio"><i class="fas fa-fingerprint"></i></a>
+        </div>
     </div>
 
     <div class="dynamic-island" id="island">
@@ -139,13 +146,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         <div class="feed">
             <div class="card">
                 ${isGuest ? `
-                    <button class="create-btn" style="width:100%; font-size:14px;" onclick="location.href='/login'">INITIALIZE SYNC / LOGIN</button>
+                    <div style="text-align:center;">
+                        <h2 style="margin-bottom:20px; font-size:14px; opacity:0.6;">AUTHENTICATION REQUIRED</h2>
+                        <button class="create-btn" onclick="location.href='/login'">INITIALIZE SYNC (LOGIN)</button>
+                    </div>
                 ` : `
                     <form action="/addpost" method="POST" enctype="multipart/form-data">
-                        <textarea name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:19px; min-height:80px;" placeholder="${randomPrompt}" required></textarea>
+                        <textarea name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:20px; min-height:100px;" placeholder="${randomPrompt}" required></textarea>
                         <input type="hidden" name="sector" value="${activeSector}">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
-                            <label for="media" style="cursor:pointer; opacity:0.6;"><i class="fas fa-image fa-xl"></i><input type="file" name="media" id="media" hidden></label>
+                            <label for="media" style="cursor:pointer; opacity:0.7;"><i class="fas fa-image fa-2x"></i><input type="file" name="media" id="media" hidden></label>
                             <button class="btn-transmit">TRANSMIT</button>
                         </div>
                     </form>
@@ -156,17 +166,19 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 
         <div class="sidebar">
             <div class="sidebar-block">
-                <h4 style="font-size:10px; opacity:0.6; letter-spacing:3px; margin-bottom:20px; text-transform:uppercase;">Communities</h4>
-                <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:12px; text-decoration:none; font-weight:900; font-size:14px;">🌏 GLOBAL FEED</a>
-                ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#eee; font-size:13px; text-decoration:none; margin-top:10px; opacity:0.8;"># ${s.name.toUpperCase()}</a>`).join('')}
-                <button class="create-btn" onclick="let n=prompt('Enter Community Name:'); if(n) location.href='/create-sector?name='+n">
+                <h4 style="font-size:11px; opacity:0.6; letter-spacing:4px; margin-bottom:22px; text-transform:uppercase;">Communities</h4>
+                <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:15px; text-decoration:none; font-weight:900; font-size:15px;">🌏 GLOBAL FEED</a>
+                <div style="max-height:300px; overflow-y:auto; padding-right:5px;">
+                    ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#ddd; font-size:14px; text-decoration:none; margin-top:12px; opacity:0.8;"># ${s.name.toUpperCase()}</a>`).join('')}
+                </div>
+                <button class="create-btn" onclick="let n=prompt('New Community Name?'); if(n) location.href='/create-sector?name='+n">
                     + NEW COMMUNITY
                 </button>
             </div>
 
             <div class="sidebar-block">
-                <h4 style="font-size:10px; opacity:0.6; letter-spacing:3px; text-transform:uppercase;">Feedback Loop</h4>
-                <textarea class="feedback-input" rows="3" placeholder="Drop lore or report bugs..."></textarea>
+                <h4 style="font-size:11px; opacity:0.6; letter-spacing:4px; text-transform:uppercase;">Feedback Loop</h4>
+                <textarea class="feedback-input" id="feedText" rows="3" placeholder="Drop lore or report bugs..."></textarea>
                 <button class="create-btn" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid var(--border);" onclick="alert('Signal sent to xavirox.co@gmail.com')">
                     Submit Signal
                 </button>
@@ -175,19 +187,20 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     </div>
 
     <footer>
-        XAVIROX COSMIC OS V46 | 2026<br>
-        <span style="opacity:0.5">ESTABLISHED FOR THE ELITE</span>
+        XAVIROX COSMIC OS V47 | 2026<br>
+        <span style="opacity:0.6; font-size:10px;">CORE CONTACT: xavirox.co@gmail.com</span><br>
+        <span style="opacity:0.4; font-size:9px;">ESTABLISHED FOR THE ELITE | NO BUGS ALLOWED</span>
     </footer>
 
     <script>
         const container = document.getElementById('stars');
-        for(let i=0; i<160; i++) {
+        for(let i=0; i<180; i++) {
             const star = document.createElement('div');
             star.className = 'star';
-            const size = Math.random() * 2.5;
+            const size = Math.random() * 2.8;
             star.style.width = size + 'px'; star.style.height = size + 'px';
             star.style.top = Math.random() * 100 + '%'; star.style.left = Math.random() * 100 + '%';
-            star.style.setProperty('--d', (Math.random() * 3 + 2) + 's');
+            star.style.setProperty('--d', (Math.random() * 4 + 2) + 's');
             container.appendChild(star);
         }
     </script>
@@ -202,14 +215,14 @@ app.get('/dashboard', async (req, res) => {
     const html = posts.map(p => `
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b style="color:var(--cyan); font-size:15px;">@${p.author}</b>
-                <span style="font-size:10px; opacity:0.3; background:rgba(255,255,255,0.05); padding:4px 10px; border-radius:10px;">#${p.sector}</span>
+                <b style="color:var(--cyan); font-size:16px;">@${p.author}</b>
+                <span style="font-size:11px; opacity:0.4; background:rgba(255,255,255,0.08); padding:5px 12px; border-radius:12px;">#${p.sector}</span>
             </div>
-            <p style="margin-top:18px; font-size:16px; line-height:1.6; color:#efefef;">${p.content}</p>
-            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:22px; margin-top:20px; border:1px solid var(--border);">` : ''}
+            <p style="margin-top:20px; font-size:17px; line-height:1.7; color:#f5f5f5;">${p.content}</p>
+            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:25px; margin-top:25px; border:1px solid var(--border); box-shadow: 0 15px 40px rgba(0,0,0,0.6);">` : ''}
         </div>
     `).join('');
-    res.send(MASTER_UI(html || '<div class="card" style="text-align:center; opacity:0.4; padding:50px;">The void is empty...</div>', req.session.user, sectors, activeSector));
+    res.send(MASTER_UI(html || '<div class="card" style="text-align:center; opacity:0.4; padding:60px;">The cosmic void is silent...</div>', req.session.user, sectors, activeSector));
 });
 
 app.post('/addpost', upload.single('media'), async (req, res) => {
@@ -228,7 +241,7 @@ app.get('/create-sector', async (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    res.send(`<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><form action="/login" method="POST" style="background:rgba(255,255,255,0.03); padding:50px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); text-align:center; backdrop-filter:blur(20px);"> <h1 style="letter-spacing:5px; margin-bottom:30px;">XAVIROX</h1> <input name="username" placeholder="IDENTITY" required style="display:block; margin:20px auto; padding:15px; width:280px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none;"> <input name="password" type="password" placeholder="ACCESS KEY" required style="display:block; margin:20px auto; padding:15px; width:280px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none;"> <button style="padding:15px 60px; border-radius:50px; background:#fff; color:#000; font-weight:900; border:none; cursor:pointer; margin-top:20px;">SYNC</button> </form></body>`);
+    res.send(`<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><form action="/login" method="POST" style="background:rgba(255,255,255,0.04); padding:60px; border-radius:45px; border:1px solid rgba(255,255,255,0.15); text-align:center; backdrop-filter:blur(30px); box-shadow:0 20px 50px rgba(0,0,0,0.8);"> <h1 style="letter-spacing:8px; margin-bottom:40px; font-weight:900;">XAVIROX</h1> <input name="username" placeholder="IDENTITY" required style="display:block; margin:20px auto; padding:18px; width:300px; background:#111; border:2px solid #333; color:#fff; border-radius:20px; outline:none; font-size:15px;"> <input name="password" type="password" placeholder="ACCESS KEY" required style="display:block; margin:20px auto; padding:18px; width:300px; background:#111; border:2px solid #333; color:#fff; border-radius:20px; outline:none; font-size:15px;"> <button style="padding:18px 70px; border-radius:50px; background:#fff; color:#000; font-weight:900; border:none; cursor:pointer; margin-top:30px; letter-spacing:2px;">SYNC</button> </form></body>`);
 });
 
 app.post('/login', async (req, res) => {
