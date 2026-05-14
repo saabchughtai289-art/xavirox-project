@@ -4,6 +4,7 @@
     - INTEGRATED: GenZ Cyber Footer (Support, DMCA & Content Removal -> xavirox.co@gmail.com)
     - FIXED: Mobile Layout Breakdown (Added CSS Media Queries for Stacked Mobile Flow & Adaptive Padding)
     - RETAINED: GenZ Style Anonymous Message Center, Cyber Drop Boxes, V61 Void Search, Toggles
+    - FIXED BUG: Interaction Sync Glitch for Live W/L/Save System for Authenticated Sessions
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
 ==================================================================================================== */
 
@@ -144,7 +145,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             .genz-search:focus { width: 55%; }
             .nav-row { padding: 4px; gap: 6px; border-radius: 16px; }
             .nav-btn-circle { width: 38px; height: 38px; border-radius: 12px; font-size: 14px; }
-            .icon-label { display: none !important; } /* Hide labels on hover for mobile touch sanity */
+            .icon-label { display: none !important; }
 
             .dynamic-island { top: 75px; width: 90%; height: 42px; font-size: 9px; letter-spacing: 1px; }
             .dynamic-island:hover { width: 92%; height: 60px; }
@@ -205,6 +206,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=DMCA%20Takedown%20Notice" class="footer-link"><span><i class="fas fa-shield-halved"></i></span> DMCA Notice</a>
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
+        <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
         <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V63 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
@@ -220,10 +222,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         
         async function interact(postId, type) {
             const res = await fetch('/interact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId, type }) });
-            if(res.ok) {
+            if(res.status === 200) {
                 location.reload();
-            } else {
+            } else if(res.status === 401) {
                 alert('MADE A ACC LIL BRO 💀');
+            } else {
+                alert('Database network out of sync. Try again!');
             }
         }
 
@@ -304,7 +308,6 @@ app.get('/portfolio', async (req, res) => {
     const sectors = await Sector.find();
     const savedPostObjects = await Post.find({ _id: { $in: dbUser.savedPosts } });
 
-    // GENZ STYLED INBOX STREAM
     const ghostInbox = dbUser.ghostMessages.map(m => `
         <div class="ghost-msg-node">
             <span style="font-size:10px; color:var(--v); font-weight:900; letter-spacing:1px;"><i class="fas fa-mask"></i> ANONYMOUS INCOMING...</span>
