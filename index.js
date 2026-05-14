@@ -1,9 +1,9 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V54 [THE MASTER SYNC]
-    STATUS: ALL SYSTEMS INTEGRATED
+    🚀 XAVIROX COSMIC OS - V56 [THE MASTER SYNC + PINK GLOW]
+    STATUS: ALL SYSTEMS INTEGRATED + DYNAMIC ISLAND FIX + COSMIC GLOW
     - MERGED: GenZ Search + Bento Portfolio + Cosmic Feed
-    - NEW: Dedicated Registration Feature (Signup vs Login)
-    - FIX: Search Bar UI Persistence
+    - FIXED: Dynamic Island Expansion (Hover Logic Added)
+    - NEW: Pink Glow Neon Aura on Hover (Cards & Island)
     - SECURITY: Guest Blocked from Community Creation
 ==================================================================================================== */
 
@@ -67,7 +67,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     <title>XAVIROX | ${activeSector}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --bg: #000; --glass: rgba(255, 255, 255, 0.07); --border: rgba(255, 255, 255, 0.12); }
+        :root { --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --bg: #000; --glass: rgba(255, 255, 255, 0.07); --border: rgba(255, 255, 255, 0.12); --pink-glow: 0 0 25px rgba(255, 0, 127, 0.4); }
         * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
 
@@ -78,30 +78,43 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 
         /* NAV DOCK + GENZ SEARCH */
         .top-left-nav { position: fixed; top: 25px; left: 25px; z-index: 10001; display: flex; align-items: center; gap: 15px; }
-        
         .genz-search { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--border); border-radius: 20px; padding: 12px 20px; color: #fff; width: 180px; outline: none; backdrop-filter: blur(15px); font-size: 12px; }
         .genz-search:focus { width: 250px; border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
 
         .nav-row { display: flex; gap: 12px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 24px; border: 1px solid var(--border); backdrop-filter: blur(20px); }
         .nav-item { position: relative; display: flex; flex-direction: column; align-items: center; }
         .nav-btn-circle { width: 50px; height: 50px; background: var(--glass); border: 1px solid var(--border); border-radius: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; text-decoration: none; font-size: 18px; }
-        .nav-btn-circle:hover { transform: translateY(-5px); border-color: var(--cyan); color: var(--cyan); }
-        
+        .nav-btn-circle:hover { transform: translateY(-5px); border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); }
         .icon-label { position: absolute; top: 60px; background: var(--cyan); color: #000; font-size: 9px; font-weight: 900; padding: 4px 10px; border-radius: 8px; opacity: 0; transform: translateY(-10px); pointer-events: none; text-transform: uppercase; letter-spacing: 1px; }
         .nav-item:hover .icon-label { opacity: 1; transform: translateY(0); }
 
         .nav-logout { border-color: rgba(255, 0, 127, 0.4); color: var(--p); }
         .nav-logout:hover { border-color: var(--p); background: var(--p); color: #fff; box-shadow: 0 0 20px var(--p); }
-        .nav-logout + .icon-label { background: var(--p); color: #fff; }
 
-        .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 220px; height: 45px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; letter-spacing: 2px; }
+        /* DYNAMIC ISLAND + PINK GLOW */
+        .dynamic-island { 
+            position: fixed; top: 25px; left: 50%; transform: translateX(-50%); 
+            width: 220px; height: 45px; background: #000; 
+            border: 1px solid var(--border); border-radius: 50px; 
+            z-index: 10000; display: flex; align-items: center; justify-content: center; 
+            font-size: 11px; font-weight: 900; letter-spacing: 2px;
+            cursor: pointer; overflow: hidden;
+        }
+        .dynamic-island:hover { 
+            width: 380px; height: 70px; 
+            border-color: var(--p); 
+            box-shadow: var(--pink-glow);
+        }
+        .island-detail { display: none; font-size: 9px; opacity: 0.6; margin-top: 5px; letter-spacing: 1px; }
+        .dynamic-island:hover .island-detail { display: block; }
 
         .main-container { max-width: 1100px; margin: 130px auto 50px auto; display: flex; gap: 35px; padding: 0 20px; }
         .feed { flex: 2; }
         .sidebar { flex: 1; }
 
+        /* PINK GLOW CARDS */
         .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 32px; padding: 30px; margin-bottom: 25px; position: relative; }
-        .card:hover { border-color: var(--p); }
+        .card:hover { border-color: var(--p); box-shadow: var(--pink-glow); transform: scale(1.01); }
 
         .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 15px; border-radius: 20px; font-weight: 900; cursor: pointer; margin-top: 15px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; text-align: center; }
         
@@ -117,7 +130,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     
     <div class="top-left-nav">
         <input type="text" class="genz-search" placeholder="SEARCH THE VOID...">
-        
         <div class="nav-row">
             <div class="nav-item">
                 <a href="/dashboard" class="nav-btn-circle"><i class="fas fa-rocket"></i></a>
@@ -136,7 +148,14 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     </div>
 
     <div class="dynamic-island">
-        ${isGuest ? "STILL LURKING? 💀" : `SYNCED: ${activeSector.toUpperCase()}`}
+        <div style="text-align:center;">
+            <div class="island-main">
+                ${isGuest ? "LURKING IN SHADOWS 💀" : `SYNCED: ${activeSector.toUpperCase()}`}
+            </div>
+            <div class="island-detail">
+                ${isGuest ? "IDENTITY REQUIRED FOR ACCESS" : "SECURE CONNECTION STABLE"}
+            </div>
+        </div>
     </div>
 
     <div class="main-container">
@@ -164,10 +183,9 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         </div>
     </div>
 
-    <footer>XAVIROX COSMIC OS V54 | CORE: xavirox.co@gmail.com</footer>
+    <footer>XAVIROX COSMIC OS V56 | CORE: xavirox.co@gmail.com</footer>
 
     <script>
-        // Stars Engine
         const container = document.getElementById('stars');
         for(let i=0; i<120; i++) {
             const star = document.createElement('div');
@@ -179,7 +197,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             container.appendChild(star);
         }
 
-        // Feedback Logic
         document.getElementById('feedbackBtn')?.addEventListener('click', function() {
             const txt = document.getElementById('feedbackText');
             if(!txt.value.trim()) return;
@@ -270,11 +287,9 @@ app.get('/login', (req, res) => {
         <div style="background:rgba(255,255,255,0.05); padding:50px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); text-align:center; backdrop-filter:blur(20px);">
             <h2 style="letter-spacing:5px; margin-bottom:10px;">XAVIROX</h2>
             <p style="font-size:10px; opacity:0.5; margin-bottom:30px;">SECURE ACCESS PROTOCOL</p>
-            
             <form action="/login" method="POST">
                 <input name="username" placeholder="IDENTITY (Username)" required style="display:block; margin:15px auto; padding:15px; width:280px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none;">
                 <input name="password" type="password" placeholder="ACCESS KEY (Password)" required style="display:block; margin:15px auto; padding:15px; width:280px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none;">
-                
                 <div style="display:flex; gap:10px; margin-top:20px;">
                     <button name="action" value="login" style="flex:1; padding:15px; border-radius:15px; background:#fff; color:#000; font-weight:900; border:none; cursor:pointer;">SYNC</button>
                     <button name="action" value="register" style="flex:1; padding:15px; border-radius:15px; background:transparent; color:#fff; font-weight:900; border:1px solid #444; cursor:pointer;">NEW IDENTITY</button>
@@ -288,18 +303,14 @@ app.get('/login', (req, res) => {
 app.post('/login', async (req, res) => {
     const { username, password, action } = req.body;
     const userLower = username.toLowerCase();
-
     if (action === 'register') {
         const exists = await User.findOne({ username: userLower });
         if (exists) return res.send("<script>alert('Identity already taken!'); window.history.back();</script>");
-        
         const hashed = await bcrypt.hash(password, 10);
         const newUser = await new User({ username: userLower, password: hashed }).save();
         req.session.user = newUser;
         return res.redirect('/dashboard');
     }
-
-    // Login Logic
     const user = await User.findOne({ username: userLower });
     if (user && await bcrypt.compare(password, user.password)) {
         req.session.user = user;
