@@ -1,9 +1,9 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V63 [THE CORE SYSTEM LOCK & FOOTER AUDIT]
-    STATUS: FULL MASTER MERGE + LEGAL SUPPORT ENGINE SYNC
+    🚀 XAVIROX COSMIC OS - V63 [THE MOBILE STABLE ENGINE & FOOTER AUDIT]
+    STATUS: FULL MASTER MERGE + LEGAL SUPPORT ENGINE SYNC + 100% MOBILE RESPONSIVE
     - INTEGRATED: GenZ Cyber Footer (Support, DMCA & Content Removal -> xavirox.co@gmail.com)
+    - FIXED: Mobile Layout Breakdown (Added CSS Media Queries for Stacked Mobile Flow & Adaptive Padding)
     - RETAINED: GenZ Style Anonymous Message Center, Cyber Drop Boxes, V61 Void Search, Toggles
-    - BUG FIXES: Handled potential structural crashes in edge cases & strict null checks for authors
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
 ==================================================================================================== */
 
@@ -134,6 +134,35 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .footer-link { color: rgba(255, 255, 255, 0.6); text-decoration: none; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
         .footer-link:hover { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
         .footer-link span { color: var(--p); }
+
+        /* ======================================================================
+           📱 STRICT 2026 MOBILE RESPONSIVE ENGINE (MEDIA QUERIES)
+           ====================================================================== */
+        @media (max-width: 768px) {
+            .top-left-nav { position: absolute; top: 15px; left: 10px; right: 10px; width: calc(100% - 20px); justify-content: space-between; gap: 5px; }
+            .genz-search { width: 45%; padding: 10px; font-size: 10px; }
+            .genz-search:focus { width: 55%; }
+            .nav-row { padding: 4px; gap: 6px; border-radius: 16px; }
+            .nav-btn-circle { width: 38px; height: 38px; border-radius: 12px; font-size: 14px; }
+            .icon-label { display: none !important; } /* Hide labels on hover for mobile touch sanity */
+
+            .dynamic-island { top: 75px; width: 90%; height: 42px; font-size: 9px; letter-spacing: 1px; }
+            .dynamic-island:hover { width: 92%; height: 60px; }
+
+            .main-container { margin: 140px auto 30px auto; flex-direction: column; gap: 15px; padding: 0 12px; }
+            .feed { order: 1; width: 100%; }
+            .sidebar { order: 2; width: 100%; }
+            
+            .card { padding: 20px; border-radius: 24px; margin-bottom: 15px; }
+            .bento-grid { gap: 10px; }
+            .bento-item { padding: 12px; border-radius: 14px; }
+            
+            .interaction-bar { gap: 12px; justify-content: space-between; }
+            .action-btn { font-size: 11px; gap: 4px; }
+            
+            .footer-links { gap: 15px; }
+            .footer-link { font-size: 10px; letter-spacing: 0.5px; }
+        }
     </style>
 </head>
 <body>
@@ -390,14 +419,16 @@ app.get('/create-sector', async (req, res) => {
 
 // --- [AUTH] ---
 app.get('/login', (req, res) => {
-    res.send(`<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;">
-        <div style="background:rgba(255,255,255,0.05); padding:50px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); text-align:center; backdrop-filter:blur(20px);">
+    res.send(`<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; padding:15px;">
+        <div style="background:rgba(255,255,255,0.05); padding:35px 20px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); text-align:center; backdrop-filter:blur(20px); width:100%; max-width:400px;">
             <h2 style="letter-spacing:5px; margin-bottom:10px;">XAVIROX</h2>
             <form action="/login" method="POST">
-                <input name="username" placeholder="IDENTITY" required style="display:block; margin:15px auto; padding:15px; width:280px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none;">
-                <input name="password" type="password" placeholder="ACCESS KEY" required style="display:block; margin:15px auto; padding:15px; width:280px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none;">
-                <button name="action" value="login" style="padding:15px 30px; border-radius:15px; background:#fff; font-weight:900; border:none; cursor:pointer;">SYNC</button>
-                <button name="action" value="register" style="padding:15px 30px; border-radius:15px; background:transparent; color:#fff; border:1px solid #444; cursor:pointer;">JOIN</button>
+                <input name="username" placeholder="IDENTITY" required style="display:block; margin:15px auto; padding:15px; width:100%; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none; font-size:14px;">
+                <input name="password" type="password" placeholder="ACCESS KEY" required style="display:block; margin:15px auto; padding:15px; width:100%; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none; font-size:14px;">
+                <div style="display:flex; gap:10px; justify-content:center;">
+                    <button name="action" value="login" style="flex:1; padding:15px; border-radius:15px; background:#fff; font-weight:900; border:none; cursor:pointer; font-size:13px;">SYNC</button>
+                    <button name="action" value="register" style="flex:1; padding:15px; border-radius:15px; background:transparent; color:#fff; border:1px solid #444; cursor:pointer; font-size:13px;">JOIN</button>
+                </div>
             </form>
         </div>
     </body>`);
