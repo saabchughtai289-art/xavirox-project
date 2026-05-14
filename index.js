@@ -1,9 +1,9 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V57 [THE INTERACTIVE SYNC]
-    STATUS: ALL SYSTEMS INTEGRATED + DYNAMIC ISLAND FIX + COSMIC GLOW
-    - MERGED: GenZ Search + Bento Portfolio + Cosmic Feed
-    - NEW: Like (W), Dislike (L), and Save (Archive) logic
-    - NEW: Pink Glow Neon Aura on Hover (Cards & Island)
+    🚀 XAVIROX COSMIC OS - V58 [THE GLOW-UP ENGINE INTEGRATION]
+    STATUS: ALL SYSTEMS INTEGRATED + AURA DYNAMIC GLOW + STABLE ARCHIVE
+    - MERGED: GenZ Search + Bento Portfolio + Cosmic Feed + Save/Archive Feature
+    - FEATURE: Like (W), Dislike (L), and Save (Archive) tracking with active state colors
+    - NEW UNIQUE ENGINE: Aura-Driven CSS UI Sync (Glow changes dynamically based on score)
     - SECURITY: Guest Blocked from Community Creation & Interaction
 ==================================================================================================== */
 
@@ -36,6 +36,7 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
 
 const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema({
     author: String, 
+    authorAura: { type: Number, default: 100 },
     content: String, 
     mediaUrl: String, 
     sector: { type: String, default: 'Global' }, 
@@ -64,6 +65,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 // --- [MASTER UI ENGINE] ---
 const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') => {
     const isGuest = !user;
+    
+    // Unique Engine: Dynamic Aura Color Logic
+    const auraColor = user ? (user.aura > 500 ? 'var(--cyan)' : user.aura < 50 ? '#ff0000' : 'var(--p)') : 'var(--p)';
 
     return `
 <!DOCTYPE html>
@@ -74,7 +78,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     <title>XAVIROX | ${activeSector}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --bg: #000; --glass: rgba(255, 255, 255, 0.07); --border: rgba(255, 255, 255, 0.12); --pink-glow: 0 0 25px rgba(255, 0, 127, 0.4); }
+        :root { 
+            --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --bg: #000; 
+            --glass: rgba(255, 255, 255, 0.07); --border: rgba(255, 255, 255, 0.12); 
+            --pink-glow: 0 0 25px rgba(255, 0, 127, 0.4); 
+            --dynamic-glow: 0 0 25px ${auraColor}44;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
 
@@ -109,8 +118,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         }
         .dynamic-island:hover { 
             width: 380px; height: 70px; 
-            border-color: var(--p); 
-            box-shadow: var(--pink-glow);
+            border-color: ${auraColor}; 
+            box-shadow: var(--dynamic-glow);
         }
         .island-detail { display: none; font-size: 9px; opacity: 0.6; margin-top: 5px; letter-spacing: 1px; }
         .dynamic-island:hover .island-detail { display: block; }
@@ -121,7 +130,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 
         /* INTERACTION BUTTONS */
         .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 32px; padding: 30px; margin-bottom: 25px; position: relative; }
-        .card:hover { border-color: var(--p); box-shadow: var(--pink-glow); transform: scale(1.01); }
+        .card:hover { border-color: ${auraColor}; box-shadow: var(--dynamic-glow); transform: scale(1.01); }
 
         .interaction-bar { display: flex; gap: 20px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); }
         .action-btn { background: transparent; border: none; color: #fff; font-size: 13px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 8px; opacity: 0.6; }
@@ -129,6 +138,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .action-btn.active-w { color: var(--cyan); opacity: 1; }
         .action-btn.active-l { color: var(--p); opacity: 1; }
         .action-btn.active-save { color: #ffea00; opacity: 1; }
+
+        .aura-badge { font-size: 9px; background: ${auraColor}; color: #000; padding: 2px 8px; border-radius: 50px; font-weight: 900; vertical-align: middle; margin-left: 10px; }
 
         .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 15px; border-radius: 20px; font-weight: 900; cursor: pointer; margin-top: 15px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; text-align: center; }
         
@@ -163,7 +174,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     <div class="dynamic-island">
         <div style="text-align:center;">
             <div class="island-main">
-                ${isGuest ? "LURKING IN SHADOWS 💀" : `SYNCED: ${activeSector.toUpperCase()}`}
+                ${isGuest ? "LURKING IN SHADOWS 💀" : `AURA: ${user.aura}`}
             </div>
             <div class="island-detail">
                 ${isGuest ? "IDENTITY REQUIRED FOR ACCESS" : "SECURE CONNECTION STABLE"}
@@ -196,7 +207,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         </div>
     </div>
 
-    <footer>XAVIROX COSMIC OS V57 | CORE: xavirox.co@gmail.com</footer>
+    <footer>XAVIROX COSMIC OS V58 | CORE: xavirox.co@gmail.com</footer>
 
     <script>
         const container = document.getElementById('stars');
@@ -260,9 +271,10 @@ app.get('/dashboard', async (req, res) => {
         const hasW = user && p.likes.includes(user.username);
         const hasL = user && p.dislikes.includes(user.username);
         const isSaved = user && user.savedPosts && user.savedPosts.includes(p._id.toString());
+        const postAuraColor = p.authorAura > 500 ? 'var(--cyan)' : p.authorAura < 50 ? '#ff0000' : 'var(--p)';
 
         return `<div class="card">
-            <b style="color:var(--cyan); font-size:14px;">@${p.author}</b>
+            <b style="color:${postAuraColor}; font-size:14px;">@${p.author} <span class="aura-badge">${p.authorAura || 100}</span></b>
             <p style="margin-top:12px; font-size:16px;">${p.content}</p>
             ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);">` : ''}
             
@@ -291,13 +303,26 @@ app.post('/interact', async (req, res) => {
 
     const post = await Post.findById(postId);
     const dbUser = await User.findOne({ username });
+    const author = await User.findOne({ username: post.author });
 
     if (type === 'like') {
-        if (post.likes.includes(username)) post.likes = post.likes.filter(u => u !== username);
-        else { post.likes.push(username); post.dislikes = post.dislikes.filter(u => u !== username); }
+        if (post.likes.includes(username)) {
+            post.likes = post.likes.filter(u => u !== username);
+            if(author) author.aura -= 10;
+        } else { 
+            post.likes.push(username); 
+            post.dislikes = post.dislikes.filter(u => u !== username); 
+            if(author) author.aura += 10;
+        }
     } else if (type === 'dislike') {
-        if (post.dislikes.includes(username)) post.dislikes = post.dislikes.filter(u => u !== username);
-        else { post.dislikes.push(username); post.likes = post.likes.filter(u => u !== username); }
+        if (post.dislikes.includes(username)) {
+            post.dislikes = post.dislikes.filter(u => u !== username);
+            if(author) author.aura += 5;
+        } else { 
+            post.dislikes.push(username); 
+            post.likes = post.likes.filter(u => u !== username); 
+            if(author) author.aura -= 5;
+        }
     } else if (type === 'save') {
         if (dbUser.savedPosts.includes(postId)) dbUser.savedPosts = dbUser.savedPosts.filter(id => id !== postId);
         else dbUser.savedPosts.push(postId);
@@ -305,6 +330,8 @@ app.post('/interact', async (req, res) => {
         req.session.user.savedPosts = dbUser.savedPosts;
     }
     
+    if(author) await author.save();
+    post.authorAura = author ? author.aura : 100;
     await post.save();
     res.sendStatus(200);
 });
@@ -336,9 +363,12 @@ app.get('/portfolio', async (req, res) => {
 // --- [SYSTEM LOGIC] ---
 app.post('/addpost', upload.single('media'), async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
+    const user = await User.findOne({ username: req.session.user.username });
     let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
-    await new Post({ author: req.session.user.username, content: req.body.content, sector: req.body.sector, mediaUrl }).save();
-    await User.findOneAndUpdate({ username: req.session.user.username }, { $inc: { aura: 15 } });
+    await new Post({ author: user.username, authorAura: user.aura, content: req.body.content, sector: req.body.sector, mediaUrl }).save();
+    user.aura += 15;
+    await user.save();
+    req.session.user.aura = user.aura; // Sync active session
     res.redirect('back');
 });
 
@@ -375,7 +405,7 @@ app.post('/login', async (req, res) => {
         const exists = await User.findOne({ username: userLower });
         if (exists) return res.send("<script>alert('Identity already taken!'); window.history.back();</script>");
         const hashed = await bcrypt.hash(password, 10);
-        const newUser = await new User({ username: userLower, password: hashed, savedPosts: [] }).save();
+        const newUser = await new User({ username: userLower, password: hashed, aura: 100, savedPosts: [] }).save();
         req.session.user = newUser;
         return res.redirect('/dashboard');
     }
