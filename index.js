@@ -1,9 +1,10 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V62 [THE ANONYMOUS ENGINE GLOW]
-    STATUS: FULL REFINED ELEMENT INTEGRATION + ADVANCED GHOST INBOX UI
-    - UPGRADED: GenZ Style Anonymous Message Center + Cyber Drop Boxes
-    - RETAINED: V61 Search Void, Fancy Toggles, Live Portfolio Stream Vault
-    - ENGINE: Aura-Driven CSS UI Sync (Full Scaled Code Structure)
+    🚀 XAVIROX COSMIC OS - V63 [THE CORE SYSTEM LOCK & FOOTER AUDIT]
+    STATUS: FULL MASTER MERGE + LEGAL SUPPORT ENGINE SYNC
+    - INTEGRATED: GenZ Cyber Footer (Support, DMCA & Content Removal -> xavirox.co@gmail.com)
+    - RETAINED: GenZ Style Anonymous Message Center, Cyber Drop Boxes, V61 Void Search, Toggles
+    - BUG FIXES: Handled potential structural crashes in edge cases & strict null checks for authors
+    - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
 ==================================================================================================== */
 
 const express = require('express');
@@ -78,7 +79,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     <style>
         :root { --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --bg: #000; --glass: rgba(255, 255, 255, 0.07); --border: rgba(255, 255, 255, 0.12); --dynamic-glow: 0 0 25px ${auraColor}44; }
         * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
         
         .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: #000; }
         .star { position: absolute; background: #fff; border-radius: 50%; opacity: 0.3; animation: twinkle var(--d) infinite; }
@@ -98,7 +99,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 260px; height: 45px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; letter-spacing: 2px; cursor: pointer; overflow: hidden; }
         .dynamic-island:hover { width: 400px; height: 70px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); }
         
-        .main-container { max-width: 1100px; margin: 130px auto 50px auto; display: flex; gap: 35px; padding: 0 20px; }
+        .main-container { max-width: 1100px; margin: 130px auto 50px auto; display: flex; gap: 35px; padding: 0 20px; flex: 1; width: 100%; }
         .feed { flex: 2; } .sidebar { flex: 1; }
         .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 32px; padding: 30px; margin-bottom: 25px; position: relative; }
         .card:hover { border-color: ${auraColor}; box-shadow: var(--dynamic-glow); transform: scale(1.01); }
@@ -126,6 +127,13 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .ghost-msg-node { background: rgba(112, 0, 255, 0.03); padding: 16px; border-radius: 20px; border: 1px solid rgba(112, 0, 255, 0.2); margin-bottom: 12px; box-shadow: inset 0 0 15px rgba(112, 0, 255, 0.05); }
         .ghost-input { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 14px; border-radius: 16px; margin-bottom: 12px; outline: none; font-size: 13px; font-weight: 600; }
         .ghost-input:focus { border-color: var(--v); box-shadow: 0 0 15px rgba(112, 0, 255, 0.3); }
+
+        /* CYBER GENZ FOOTER */
+        .cosmic-footer { background: rgba(0, 0, 0, 0.6); border-top: 1px solid var(--border); backdrop-filter: blur(20px); width: 100%; padding: 25px 20px; text-align: center; margin-top: auto; }
+        .footer-links { display: flex; justify-content: center; gap: 30px; margin-bottom: 12px; flex-wrap: wrap; }
+        .footer-link { color: rgba(255, 255, 255, 0.6); text-decoration: none; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+        .footer-link:hover { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
+        .footer-link span { color: var(--p); }
     </style>
 </head>
 <body>
@@ -161,6 +169,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             </div>
         </div>
     </div>
+
+    <footer class="cosmic-footer">
+        <div class="footer-links">
+            <a href="mailto:xavirox.co@gmail.com?subject=Support%20Request" class="footer-link"><i class="fas fa-headset"></i> Support</a>
+            <a href="mailto:xavirox.co@gmail.com?subject=DMCA%20Takedown%20Notice" class="footer-link"><span><i class="fas fa-shield-halved"></i></span> DMCA Notice</a>
+            <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
+        </div>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V63 // ALL ENGINES OPERATIONAL</p>
+    </footer>
+
     <script>
         const container = document.getElementById('stars');
         for(let i=0; i<100; i++) {
@@ -325,20 +343,38 @@ app.post('/interact', async (req, res) => {
     const { postId, type } = req.body;
     const username = req.session.user.username;
     const post = await Post.findById(postId);
+    if (!post) return res.sendStatus(404);
+    
     const dbUser = await User.findOne({ username });
     const author = await User.findOne({ username: post.author });
 
     if (type === 'like') {
-        if (post.likes.includes(username)) { post.likes = post.likes.filter(u => u !== username); if(author) author.aura -= 10; }
-        else { post.likes.push(username); post.dislikes = post.dislikes.filter(u => u !== username); if(author) author.aura += 10; }
+        if (post.likes.includes(username)) { 
+            post.likes = post.likes.filter(u => u !== username); 
+            if(author) author.aura -= 10; 
+        } else { 
+            post.likes.push(username); 
+            post.dislikes = post.dislikes.filter(u => u !== username); 
+            if(author) author.aura += 10; 
+        }
     } else if (type === 'dislike') {
-        if (post.dislikes.includes(username)) { post.dislikes = post.dislikes.filter(u => u !== username); if(author) author.aura += 5; }
-        else { post.dislikes.push(username); post.likes = post.likes.filter(u => u !== username); if(author) author.aura -= 5; }
-    } else if (type === 'save') {
-        if (dbUser.savedPosts.includes(postId)) dbUser.savedPosts = dbUser.savedPosts.filter(id => id !== postId);
-        else dbUser.savedPosts.push(postId);
+        if (post.dislikes.includes(username)) { 
+            post.dislikes = post.dislikes.filter(u => u !== username); 
+            if(author) author.aura += 5; 
+        } else { 
+            post.dislikes.push(username); 
+            post.likes = post.likes.filter(u => u !== username); 
+            if(author) author.aura -= 5; 
+        }
+    } else if (type === 'save' && dbUser) {
+        if (dbUser.savedPosts.includes(postId)) {
+            dbUser.savedPosts = dbUser.savedPosts.filter(id => id !== postId);
+        } else {
+            dbUser.savedPosts.push(postId);
+        }
         await dbUser.save();
     }
+    
     if(author) await author.save();
     post.authorAura = author ? author.aura : 100;
     await post.save();
