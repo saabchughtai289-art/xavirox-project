@@ -1,8 +1,11 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V49 [GENZ BENTO PORTFOLIO MERGE]
-    FEATURES: Horizontal Top-Left Nav, High-Visibility Search, iOS 26 Elastic Island, 
-              Sidebar Community Creator, Integrated Support (xavirox.co@gmail.com),
-              GENZ PORTFOLIO: Bento Grid, Neon Glow, Cyber-Aura Design.
+    🚀 XAVIROX COSMIC OS - V51 [HYBRID MERGE & LOGIC FIX]
+    MERGED FEATURES: 
+    - GENZ BENTO PORTFOLIO (V49) + DYNAMIC LOGIC (V50)
+    - Fix: Feedback Bar Dynamic Response
+    - Fix: Logout Integrated in Nav Row
+    - Fix: Portfolio Context Awareness (User vs Guest)
+    - DESIGN: Neon Glow, Cyber-Aura, iOS 26 Elastic Island, Star Engine.
 ==================================================================================================== */
 
 const express = require('express');
@@ -55,11 +58,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 // --- [MASTER UI ENGINE] ---
 const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') => {
     const isGuest = !user;
-    
     const unhingedPrompts = [
         "type something unhinged...", "drop your hot take here", "cooked or cooking?", 
-        "your brainrot goes here", "speak your truth king", "this box can’t handle your aura", 
-        "certified yap zone"
+        "your brainrot goes here", "speak your truth king", "certified yap zone"
     ];
     const randomPrompt = unhingedPrompts[Math.floor(Math.random() * unhingedPrompts.length)];
 
@@ -73,53 +74,45 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --bg: #000; --glass: rgba(255, 255, 255, 0.07); --border: rgba(255, 255, 255, 0.12); }
-        
-        /* ULTRA-SMOOTH ANIMATIONS */
         * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
 
         /* STAR ENGINE */
         .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: #000; overflow: hidden; }
         .star { position: absolute; background: #fff; border-radius: 50%; opacity: 0.4; animation: twinkle var(--d) infinite ease-in-out; }
-        @keyframes twinkle { 0%, 100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.3); opacity: 0.8; box-shadow: 0 0 10px #fff; } }
+        @keyframes twinkle { 0%, 100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.3); opacity: 0.8; } }
 
-        /* HORIZONTAL TOP-LEFT NAV */
+        /* NAV & SEARCH */
         .top-left-nav { position: fixed; top: 25px; left: 25px; z-index: 10001; display: flex; align-items: center; gap: 15px; }
-        
-        .genz-search { background: rgba(255, 255, 255, 0.1); border: 2px solid var(--border); border-radius: 18px; padding: 12px 20px; color: #fff; width: 220px; font-size: 13px; outline: none; backdrop-filter: blur(15px); box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
-        .genz-search:focus { width: 300px; border-color: var(--cyan); box-shadow: 0 0 25px rgba(0, 242, 255, 0.3); background: rgba(255, 255, 255, 0.15); }
+        .genz-search { background: rgba(255, 255, 255, 0.1); border: 2px solid var(--border); border-radius: 18px; padding: 12px 20px; color: #fff; width: 220px; outline: none; backdrop-filter: blur(15px); }
+        .genz-search:focus { width: 300px; border-color: var(--cyan); box-shadow: 0 0 25px rgba(0, 242, 255, 0.3); }
         
         .nav-row { display: flex; gap: 10px; }
         .nav-btn-circle { width: 48px; height: 48px; background: var(--glass); border: 1px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; text-decoration: none; backdrop-filter: blur(10px); }
-        .nav-btn-circle:hover { transform: translateY(-3px) scale(1.1); border-color: var(--cyan); color: var(--cyan); box-shadow: 0 10px 20px rgba(0, 242, 255, 0.2); }
+        .nav-btn-circle:hover { transform: translateY(-3px); border-color: var(--cyan); color: var(--cyan); }
+        .nav-logout { border-color: rgba(255, 0, 127, 0.3); color: var(--p); }
+        .nav-logout:hover { background: rgba(255, 0, 127, 0.1); border-color: var(--p); box-shadow: 0 0 20px var(--p); }
 
-        /* iOS 26 DYNAMIC ISLAND */
-        .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 200px; height: 40px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; letter-spacing: 1px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.25); }
-        .dynamic-island:hover { width: 360px; height: 70px; border-color: var(--p); box-shadow: 0 15px 45px rgba(255, 0, 127, 0.4); }
-
-        /* GLO-AURA CARDS */
-        .card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--border); border-radius: 30px; padding: 28px; margin-bottom: 25px; position: relative; overflow: hidden; }
-        .card:hover { border-color: transparent; box-shadow: 0 0 40px -10px var(--p), 0 0 40px -10px var(--v); transform: translateY(-6px); background: rgba(255, 255, 255, 0.08); }
-
-        /* RIGHT DOCK */
-        .dock { position: fixed; right: 25px; top: 50%; transform: translateY(-50%); width: 65px; background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 50px; display: flex; flex-direction: column; padding: 25px 0; align-items: center; z-index: 1000; }
-        .dock i:hover { color: var(--p); transform: scale(1.4); filter: drop-shadow(0 0 10px var(--p)); }
+        .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 200px; height: 40px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; letter-spacing: 1px; cursor: pointer; }
+        .dynamic-island:hover { width: 360px; height: 60px; border-color: var(--p); box-shadow: 0 10px 30px rgba(255, 0, 127, 0.3); }
 
         .main-container { max-width: 1100px; margin: 120px auto 50px auto; display: flex; gap: 35px; padding: 0 20px; }
         .feed { flex: 2.2; }
         .sidebar { flex: 1; }
 
-        /* GENZ BENTO STYLES */
+        .card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--border); border-radius: 30px; padding: 28px; margin-bottom: 25px; position: relative; }
+        .card:hover { border-color: var(--p); transform: translateY(-5px); box-shadow: 0 10px 40px rgba(255, 0, 127, 0.15); }
+
+        .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 14px; border-radius: 18px; font-weight: 900; cursor: pointer; margin-top: 15px; text-decoration: none; text-align: center; font-size: 12px; text-transform: uppercase; }
+        .create-btn:hover { box-shadow: 0 0 20px var(--p); transform: scale(1.02); }
+
+        /* BENTO STYLES */
         .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
-        .bento-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .bento-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 20px; padding: 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .bento-item i { margin-bottom: 10px; color: var(--cyan); }
         .aura-tag { background: linear-gradient(90deg, var(--p), var(--v)); padding: 4px 12px; border-radius: 50px; font-size: 10px; font-weight: 900; margin-top: 10px; }
 
-        .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 14px; border-radius: 18px; font-size: 12px; font-weight: 900; text-decoration: none; text-align: center; margin-top: 15px; cursor: pointer; text-transform: uppercase; }
-        .create-btn:hover { filter: brightness(1.2); box-shadow: 0 0 20px var(--p); transform: scale(1.02); }
-
-        footer { text-align: center; padding: 80px 20px; font-size: 12px; opacity: 0.4; letter-spacing: 2px; line-height: 2; }
+        footer { text-align: center; padding: 80px 20px; font-size: 11px; opacity: 0.4; letter-spacing: 2px; }
     </style>
 </head>
 <body>
@@ -130,6 +123,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         <div class="nav-row">
             <a href="/dashboard" class="nav-btn-circle" title="Home Feed"><i class="fas fa-rocket"></i></a>
             <a href="/portfolio" class="nav-btn-circle" title="Portfolio"><i class="fas fa-fingerprint"></i></a>
+            ${!isGuest ? `<a href="/logout" class="nav-btn-circle nav-logout" title="Logout"><i class="fas fa-power-off"></i></a>` : ''}
         </div>
     </div>
 
@@ -137,48 +131,51 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         ${isGuest ? "LURKING IN 4K 💀" : `SECTOR: ${activeSector.toUpperCase()}`}
     </div>
 
-    <div class="dock">
-        <i class="fas fa-power-off" style="color:var(--p); cursor:pointer;" onclick="location.href='/logout'"></i>
-    </div>
-
     <div class="main-container">
-        <div class="feed">
-            ${content}
-        </div>
-
+        <div class="feed">${content}</div>
         <div class="sidebar">
-            <div class="sidebar-block">
-                <h4 style="font-size:11px; opacity:0.6; letter-spacing:4px; margin-bottom:22px; text-transform:uppercase;">Communities</h4>
-                <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:15px; text-decoration:none; font-weight:900; font-size:15px;">🌏 GLOBAL FEED</a>
-                <div style="max-height:300px; overflow-y:auto; padding-right:5px;">
-                    ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#ddd; font-size:14px; text-decoration:none; margin-top:12px; opacity:0.8;"># ${s.name.toUpperCase()}</a>`).join('')}
-                </div>
-                <button class="create-btn" onclick="let n=prompt('New Community Name?'); if(n) location.href='/create-sector?name='+n">
-                    + NEW COMMUNITY
-                </button>
+            <div class="card" style="padding: 25px;">
+                <h4 style="font-size:11px; opacity:0.6; letter-spacing:4px; margin-bottom:20px;">COMMUNITIES</h4>
+                <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:15px; text-decoration:none; font-weight:900;">🌏 GLOBAL FEED</a>
+                ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#ddd; font-size:14px; text-decoration:none; margin-top:10px;"># ${s.name.toUpperCase()}</a>`).join('')}
+                <button class="create-btn" onclick="let n=prompt('Name?'); if(n) location.href='/create-sector?name='+n">+ NEW SECTOR</button>
             </div>
 
-            <div class="sidebar-block">
-                <h4 style="font-size:11px; opacity:0.6; letter-spacing:4px; text-transform:uppercase;">Feedback Loop</h4>
-                <textarea class="feedback-input" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid #333; border-radius:15px; color:#fff; padding:15px; font-size:13px; margin-top:12px; outline:none; resize:none;" rows="3" placeholder="Drop lore..."></textarea>
-                <button class="create-btn" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid var(--border);" onclick="alert('Signal sent to xavirox.co@gmail.com')">
-                    Submit Signal
-                </button>
+            <div class="card" style="padding: 25px;">
+                <h4 style="font-size:11px; opacity:0.6; letter-spacing:4px;">FEEDBACK LOOP</h4>
+                <textarea id="feedbackText" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid #333; border-radius:15px; color:#fff; padding:15px; margin-top:12px; outline:none; resize:none;" rows="3" placeholder="Drop lore..."></textarea>
+                <button id="feedbackBtn" class="create-btn" style="background:rgba(255,255,255,0.1); border:1px solid var(--border);">SEND SIGNAL</button>
             </div>
         </div>
     </div>
 
     <footer>
-        XAVIROX COSMIC OS V49 | 2026<br>
+        XAVIROX COSMIC OS V51 | 2026<br>
         <span style="opacity:0.6; font-size:10px;">CORE CONTACT: xavirox.co@gmail.com</span>
     </footer>
 
     <script>
+        // DYNAMIC FEEDBACK FIX
+        document.getElementById('feedbackBtn').addEventListener('click', function() {
+            const txt = document.getElementById('feedbackText');
+            if(txt.value.trim() === "") return alert("Empty signal?");
+            this.innerHTML = "<i class='fas fa-check'></i> SIGNAL SENT";
+            this.style.background = "var(--cyan)";
+            this.style.color = "#000";
+            txt.value = "";
+            setTimeout(() => {
+                this.innerHTML = "SEND SIGNAL";
+                this.style.background = "rgba(255,255,255,0.1)";
+                this.style.color = "#fff";
+            }, 3000);
+        });
+
+        // STAR ENGINE
         const container = document.getElementById('stars');
-        for(let i=0; i<180; i++) {
+        for(let i=0; i<150; i++) {
             const star = document.createElement('div');
             star.className = 'star';
-            const size = Math.random() * 2.8;
+            const size = Math.random() * 2.5;
             star.style.width = size + 'px'; star.style.height = size + 'px';
             star.style.top = Math.random() * 100 + '%'; star.style.left = Math.random() * 100 + '%';
             star.style.setProperty('--d', (Math.random() * 4 + 2) + 's');
@@ -194,88 +191,84 @@ app.get('/dashboard', async (req, res) => {
     const posts = await Post.find(activeSector !== 'Global' ? { sector: activeSector } : {}).sort({ date: -1 });
     const sectors = await Sector.find();
     
-    const isGuest = !req.session.user;
-    const postForm = `
-        <div class="card">
-            ${isGuest ? `
-                <div style="text-align:center;">
-                    <h2 style="margin-bottom:20px; font-size:14px; opacity:0.6;">AUTHENTICATION REQUIRED</h2>
-                    <button class="create-btn" onclick="location.href='/login'">INITIALIZE SYNC (LOGIN)</button>
+    const postForm = `<div class="card">
+        ${!req.session.user ? `<button class="create-btn" onclick="location.href='/login'">INITIALIZE SYNC (LOGIN)</button>` : `
+            <form action="/addpost" method="POST" enctype="multipart/form-data">
+                <textarea name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:20px; min-height:80px;" placeholder="What's cooking?" required></textarea>
+                <input type="hidden" name="sector" value="${activeSector}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                    <label style="cursor:pointer; opacity:0.7;"><i class="fas fa-image fa-2x"></i><input type="file" name="media" hidden></label>
+                    <button style="background:#fff; color:#000; border:none; padding:12px 30px; border-radius:50px; font-weight:900; cursor:pointer;">TRANSMIT</button>
                 </div>
-            ` : `
-                <form action="/addpost" method="POST" enctype="multipart/form-data">
-                    <textarea name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:20px; min-height:100px;" placeholder="What's cooking?" required></textarea>
-                    <input type="hidden" name="sector" value="${activeSector}">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
-                        <label for="media" style="cursor:pointer; opacity:0.7;"><i class="fas fa-image fa-2x"></i><input type="file" name="media" id="media" hidden></label>
-                        <button class="btn-transmit" style="background:#fff; color:#000; border:none; padding:14px 30px; border-radius:50px; font-weight:900; cursor:pointer;">TRANSMIT</button>
-                    </div>
-                </form>
-            `}
-        </div>
-    `;
+            </form>`}
+    </div>`;
 
-    const html = posts.map(p => `
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b style="color:var(--cyan); font-size:16px;">@${p.author}</b>
-                <span style="font-size:11px; opacity:0.4; background:rgba(255,255,255,0.08); padding:5px 12px; border-radius:12px;">#${p.sector}</span>
-            </div>
-            <p style="margin-top:20px; font-size:17px; line-height:1.7; color:#f5f5f5;">${p.content}</p>
-            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:25px; margin-top:25px; border:1px solid var(--border);">` : ''}
-        </div>
-    `).join('');
+    const html = posts.map(p => `<div class="card">
+        <b style="color:var(--cyan);">@${p.author}</b>
+        <p style="margin-top:15px; font-size:17px;">${p.content}</p>
+        ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:20px; border:1px solid var(--border);">` : ''}
+    </div>`).join('');
     
-    res.send(MASTER_UI(postForm + (html || '<div class="card" style="text-align:center; opacity:0.4; padding:60px;">The cosmic void is silent...</div>'), req.session.user, sectors, activeSector));
+    res.send(MASTER_UI(postForm + (html || '<div style="text-align:center; opacity:0.3; padding:50px;">VOID IS SILENT...</div>'), req.session.user, sectors, activeSector));
 });
 
-// --- [GENZ PORTFOLIO ROUTE] ---
+// --- [PERSONALIZED BENTO PORTFOLIO] ---
 app.get('/portfolio', async (req, res) => {
     const sectors = await Sector.find();
+    const user = req.session.user;
+    
     const portfolioContent = `
-        <div class="card" style="border: 2px solid var(--cyan); background: radial-gradient(circle at top right, rgba(0,242,255,0.1), transparent);">
+        <div class="card" style="border: 2px solid ${user ? 'var(--cyan)' : 'var(--p)'}; background: radial-gradient(circle at top right, rgba(0,242,255,0.1), transparent);">
             <div style="text-align: center; padding: 20px;">
                 <div style="position: relative; display: inline-block;">
-                    <div style="width: 120px; height: 120px; background: url('https://api.dicebear.com/7.x/avataaars/svg?seed=Xavirox') center/cover; border-radius: 30px; border: 4px solid #fff; box-shadow: 0 0 40px var(--cyan);"></div>
-                    <div style="position: absolute; bottom: -10px; right: -10px; background: var(--p); padding: 5px 15px; border-radius: 10px; font-size: 12px; font-weight: 900; transform: rotate(5deg);">LVL 99</div>
+                    <div style="width: 120px; height: 120px; background: linear-gradient(45deg, var(--p), var(--v)); border-radius: 35px; border: 4px solid #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 40px var(--p);">
+                        <i class="fas fa-${user ? 'user-ninja' : 'ghost'} fa-4x"></i>
+                    </div>
+                    <div style="position: absolute; bottom: -10px; right: -10px; background: var(--cyan); color:#000; padding: 5px 15px; border-radius: 10px; font-size: 12px; font-weight: 900; transform: rotate(5deg);">
+                        ${user ? 'LVL 99' : 'LVL 0'}
+                    </div>
                 </div>
                 
-                <h1 style="margin-top: 30px; font-size: 42px; font-weight: 900; text-transform: uppercase; letter-spacing: -2px;">Xavirox<span style="color: var(--cyan);">.co</span></h1>
-                <p style="opacity: 0.6; font-size: 14px; letter-spacing: 2px;">FULL-STACK COSMIC ARCHITECT</p>
+                <h1 style="margin-top: 30px; font-size: 42px; font-weight: 900; text-transform: uppercase; letter-spacing: -2px;">
+                    ${user ? user.username : 'GUEST'}<span style="color: var(--cyan);">.node</span>
+                </h1>
+                <p style="opacity: 0.6; font-size: 14px; letter-spacing: 2px;">${user ? 'AUTHORIZED COSMIC ARCHITECT' : 'UNAUTHORIZED LURKER'}</p>
                 
                 <div class="bento-grid">
-                    <div class="bento-item" style="grid-column: span 2; background: rgba(112,0,255,0.15);">
-                        <i class="fas fa-terminal fa-2x"></i>
-                        <h3 style="font-size: 13px;">MAIN STACK</h3>
-                        <p style="font-size: 18px; font-weight: 900;">NODE.JS + MONGODB + UI/UX</p>
-                        <div class="aura-tag">+5000 AURA</div>
+                    <div class="bento-item" style="grid-column: span 2; background: rgba(0,242,255,0.05);">
+                        <i class="fas fa-bolt fa-2x"></i>
+                        <h3 style="font-size: 13px; opacity:0.7;">TOTAL AURA</h3>
+                        <p style="font-size: 28px; font-weight: 900; color: var(--cyan);">${user ? user.aura : '0'}</p>
+                        <div class="aura-tag">${user ? 'STABLE' : 'UNSTABLE'} ENERGY</div>
                     </div>
                     <div class="bento-item">
-                        <i class="fas fa-code-branch fa-2x"></i>
-                        <h3 style="font-size: 11px;">PROJECTS</h3>
-                        <p style="font-size: 20px; font-weight: 900;">46+</p>
+                        <i class="fas fa-terminal"></i>
+                        <h3 style="font-size: 11px;">STATUS</h3>
+                        <p style="font-weight: 900;">${user ? 'ACTIVE' : 'OFFLINE'}</p>
                     </div>
                     <div class="bento-item" style="border-color: var(--p);">
-                        <i class="fas fa-bolt fa-2x" style="color: var(--p);"></i>
-                        <h3 style="font-size: 11px;">STATUS</h3>
-                        <p style="font-size: 16px; font-weight: 900;">CRANKING 24/7</p>
+                        <i class="fas fa-shield-alt" style="color: var(--p);"></i>
+                        <h3 style="font-size: 11px;">SECURITY</h3>
+                        <p style="font-weight: 900;">ENCRYPTED</p>
                     </div>
                 </div>
 
+                ${!user ? `<button class="create-btn" onclick="location.href='/login'" style="margin-top:20px;">AUTHENTICATE TO UNLOCK LORE</button>` : `
                 <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: center;">
-                    <button class="btn-transmit" onclick="alert('Contact: xavirox.co@gmail.com')" style="width: 100%;">SLIDE INTO DMS</button>
-                </div>
+                    <button class="create-btn" style="width: 100%; background:rgba(255,255,255,0.1); border:1px solid var(--border);">EDIT PORTFOLIO</button>
+                </div>`}
             </div>
         </div>
     `;
-    res.send(MASTER_UI(portfolioContent, req.session.user, sectors, 'Portfolio'));
+    res.send(MASTER_UI(portfolioContent, user, sectors, 'Portfolio'));
 });
 
+// --- [CORE SYSTEM LOGIC] ---
 app.post('/addpost', upload.single('media'), async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
     await new Post({ author: req.session.user.username, content: req.body.content, sector: req.body.sector, mediaUrl }).save();
-    await User.findOneAndUpdate({ username: req.session.user.username }, { $inc: { aura: 10 } });
+    await User.findOneAndUpdate({ username: req.session.user.username }, { $inc: { aura: 15 } });
     res.redirect('back');
 });
 
