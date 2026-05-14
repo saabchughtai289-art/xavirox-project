@@ -1,7 +1,8 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V47 [HORIZONTAL ELITE MERGE]
+    🚀 XAVIROX COSMIC OS - V49 [GENZ BENTO PORTFOLIO MERGE]
     FEATURES: Horizontal Top-Left Nav, High-Visibility Search, iOS 26 Elastic Island, 
-              Sidebar Community Creator, Integrated Support (xavirox.co@gmail.com).
+              Sidebar Community Creator, Integrated Support (xavirox.co@gmail.com),
+              GENZ PORTFOLIO: Bento Grid, Neon Glow, Cyber-Aura Design.
 ==================================================================================================== */
 
 const express = require('express');
@@ -86,7 +87,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         /* HORIZONTAL TOP-LEFT NAV */
         .top-left-nav { position: fixed; top: 25px; left: 25px; z-index: 10001; display: flex; align-items: center; gap: 15px; }
         
-        /* HIGH VISIBILITY SEARCH BAR */
         .genz-search { background: rgba(255, 255, 255, 0.1); border: 2px solid var(--border); border-radius: 18px; padding: 12px 20px; color: #fff; width: 220px; font-size: 13px; outline: none; backdrop-filter: blur(15px); box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
         .genz-search:focus { width: 300px; border-color: var(--cyan); box-shadow: 0 0 25px rgba(0, 242, 255, 0.3); background: rgba(255, 255, 255, 0.15); }
         
@@ -110,13 +110,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .feed { flex: 2.2; }
         .sidebar { flex: 1; }
 
-        .btn-transmit { background: #fff; color: #000; border: none; padding: 14px 30px; border-radius: 50px; font-weight: 900; cursor: pointer; letter-spacing: 1px; }
-        .btn-transmit:hover { background: var(--cyan); box-shadow: 0 0 25px var(--cyan); transform: scale(1.05); }
+        /* GENZ BENTO STYLES */
+        .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
+        .bento-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .bento-item i { margin-bottom: 10px; color: var(--cyan); }
+        .aura-tag { background: linear-gradient(90deg, var(--p), var(--v)); padding: 4px 12px; border-radius: 50px; font-size: 10px; font-weight: 900; margin-top: 10px; }
 
-        /* SIDEBAR BLOCKS */
-        .sidebar-block { background: var(--glass); border: 1px solid var(--border); border-radius: 28px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(20px); }
-        .feedback-input { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid #333; border-radius: 15px; color: #fff; padding: 15px; font-size: 13px; margin-top: 12px; outline: none; resize: none; }
-        
         .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 14px; border-radius: 18px; font-size: 12px; font-weight: 900; text-decoration: none; text-align: center; margin-top: 15px; cursor: pointer; text-transform: uppercase; }
         .create-btn:hover { filter: brightness(1.2); box-shadow: 0 0 20px var(--p); transform: scale(1.02); }
 
@@ -144,23 +143,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 
     <div class="main-container">
         <div class="feed">
-            <div class="card">
-                ${isGuest ? `
-                    <div style="text-align:center;">
-                        <h2 style="margin-bottom:20px; font-size:14px; opacity:0.6;">AUTHENTICATION REQUIRED</h2>
-                        <button class="create-btn" onclick="location.href='/login'">INITIALIZE SYNC (LOGIN)</button>
-                    </div>
-                ` : `
-                    <form action="/addpost" method="POST" enctype="multipart/form-data">
-                        <textarea name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:20px; min-height:100px;" placeholder="${randomPrompt}" required></textarea>
-                        <input type="hidden" name="sector" value="${activeSector}">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
-                            <label for="media" style="cursor:pointer; opacity:0.7;"><i class="fas fa-image fa-2x"></i><input type="file" name="media" id="media" hidden></label>
-                            <button class="btn-transmit">TRANSMIT</button>
-                        </div>
-                    </form>
-                `}
-            </div>
             ${content}
         </div>
 
@@ -178,7 +160,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 
             <div class="sidebar-block">
                 <h4 style="font-size:11px; opacity:0.6; letter-spacing:4px; text-transform:uppercase;">Feedback Loop</h4>
-                <textarea class="feedback-input" id="feedText" rows="3" placeholder="Drop lore or report bugs..."></textarea>
+                <textarea class="feedback-input" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid #333; border-radius:15px; color:#fff; padding:15px; font-size:13px; margin-top:12px; outline:none; resize:none;" rows="3" placeholder="Drop lore..."></textarea>
                 <button class="create-btn" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid var(--border);" onclick="alert('Signal sent to xavirox.co@gmail.com')">
                     Submit Signal
                 </button>
@@ -187,9 +169,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     </div>
 
     <footer>
-        XAVIROX COSMIC OS V47 | 2026<br>
-        <span style="opacity:0.6; font-size:10px;">CORE CONTACT: xavirox.co@gmail.com</span><br>
-        <span style="opacity:0.4; font-size:9px;">ESTABLISHED FOR THE ELITE | NO BUGS ALLOWED</span>
+        XAVIROX COSMIC OS V49 | 2026<br>
+        <span style="opacity:0.6; font-size:10px;">CORE CONTACT: xavirox.co@gmail.com</span>
     </footer>
 
     <script>
@@ -212,6 +193,28 @@ app.get('/dashboard', async (req, res) => {
     const activeSector = req.query.sector || 'Global';
     const posts = await Post.find(activeSector !== 'Global' ? { sector: activeSector } : {}).sort({ date: -1 });
     const sectors = await Sector.find();
+    
+    const isGuest = !req.session.user;
+    const postForm = `
+        <div class="card">
+            ${isGuest ? `
+                <div style="text-align:center;">
+                    <h2 style="margin-bottom:20px; font-size:14px; opacity:0.6;">AUTHENTICATION REQUIRED</h2>
+                    <button class="create-btn" onclick="location.href='/login'">INITIALIZE SYNC (LOGIN)</button>
+                </div>
+            ` : `
+                <form action="/addpost" method="POST" enctype="multipart/form-data">
+                    <textarea name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:20px; min-height:100px;" placeholder="What's cooking?" required></textarea>
+                    <input type="hidden" name="sector" value="${activeSector}">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                        <label for="media" style="cursor:pointer; opacity:0.7;"><i class="fas fa-image fa-2x"></i><input type="file" name="media" id="media" hidden></label>
+                        <button class="btn-transmit" style="background:#fff; color:#000; border:none; padding:14px 30px; border-radius:50px; font-weight:900; cursor:pointer;">TRANSMIT</button>
+                    </div>
+                </form>
+            `}
+        </div>
+    `;
+
     const html = posts.map(p => `
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -219,10 +222,53 @@ app.get('/dashboard', async (req, res) => {
                 <span style="font-size:11px; opacity:0.4; background:rgba(255,255,255,0.08); padding:5px 12px; border-radius:12px;">#${p.sector}</span>
             </div>
             <p style="margin-top:20px; font-size:17px; line-height:1.7; color:#f5f5f5;">${p.content}</p>
-            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:25px; margin-top:25px; border:1px solid var(--border); box-shadow: 0 15px 40px rgba(0,0,0,0.6);">` : ''}
+            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:25px; margin-top:25px; border:1px solid var(--border);">` : ''}
         </div>
     `).join('');
-    res.send(MASTER_UI(html || '<div class="card" style="text-align:center; opacity:0.4; padding:60px;">The cosmic void is silent...</div>', req.session.user, sectors, activeSector));
+    
+    res.send(MASTER_UI(postForm + (html || '<div class="card" style="text-align:center; opacity:0.4; padding:60px;">The cosmic void is silent...</div>'), req.session.user, sectors, activeSector));
+});
+
+// --- [GENZ PORTFOLIO ROUTE] ---
+app.get('/portfolio', async (req, res) => {
+    const sectors = await Sector.find();
+    const portfolioContent = `
+        <div class="card" style="border: 2px solid var(--cyan); background: radial-gradient(circle at top right, rgba(0,242,255,0.1), transparent);">
+            <div style="text-align: center; padding: 20px;">
+                <div style="position: relative; display: inline-block;">
+                    <div style="width: 120px; height: 120px; background: url('https://api.dicebear.com/7.x/avataaars/svg?seed=Xavirox') center/cover; border-radius: 30px; border: 4px solid #fff; box-shadow: 0 0 40px var(--cyan);"></div>
+                    <div style="position: absolute; bottom: -10px; right: -10px; background: var(--p); padding: 5px 15px; border-radius: 10px; font-size: 12px; font-weight: 900; transform: rotate(5deg);">LVL 99</div>
+                </div>
+                
+                <h1 style="margin-top: 30px; font-size: 42px; font-weight: 900; text-transform: uppercase; letter-spacing: -2px;">Xavirox<span style="color: var(--cyan);">.co</span></h1>
+                <p style="opacity: 0.6; font-size: 14px; letter-spacing: 2px;">FULL-STACK COSMIC ARCHITECT</p>
+                
+                <div class="bento-grid">
+                    <div class="bento-item" style="grid-column: span 2; background: rgba(112,0,255,0.15);">
+                        <i class="fas fa-terminal fa-2x"></i>
+                        <h3 style="font-size: 13px;">MAIN STACK</h3>
+                        <p style="font-size: 18px; font-weight: 900;">NODE.JS + MONGODB + UI/UX</p>
+                        <div class="aura-tag">+5000 AURA</div>
+                    </div>
+                    <div class="bento-item">
+                        <i class="fas fa-code-branch fa-2x"></i>
+                        <h3 style="font-size: 11px;">PROJECTS</h3>
+                        <p style="font-size: 20px; font-weight: 900;">46+</p>
+                    </div>
+                    <div class="bento-item" style="border-color: var(--p);">
+                        <i class="fas fa-bolt fa-2x" style="color: var(--p);"></i>
+                        <h3 style="font-size: 11px;">STATUS</h3>
+                        <p style="font-size: 16px; font-weight: 900;">CRANKING 24/7</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn-transmit" onclick="alert('Contact: xavirox.co@gmail.com')" style="width: 100%;">SLIDE INTO DMS</button>
+                </div>
+            </div>
+        </div>
+    `;
+    res.send(MASTER_UI(portfolioContent, req.session.user, sectors, 'Portfolio'));
 });
 
 app.post('/addpost', upload.single('media'), async (req, res) => {
@@ -241,7 +287,7 @@ app.get('/create-sector', async (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    res.send(`<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><form action="/login" method="POST" style="background:rgba(255,255,255,0.04); padding:60px; border-radius:45px; border:1px solid rgba(255,255,255,0.15); text-align:center; backdrop-filter:blur(30px); box-shadow:0 20px 50px rgba(0,0,0,0.8);"> <h1 style="letter-spacing:8px; margin-bottom:40px; font-weight:900;">XAVIROX</h1> <input name="username" placeholder="IDENTITY" required style="display:block; margin:20px auto; padding:18px; width:300px; background:#111; border:2px solid #333; color:#fff; border-radius:20px; outline:none; font-size:15px;"> <input name="password" type="password" placeholder="ACCESS KEY" required style="display:block; margin:20px auto; padding:18px; width:300px; background:#111; border:2px solid #333; color:#fff; border-radius:20px; outline:none; font-size:15px;"> <button style="padding:18px 70px; border-radius:50px; background:#fff; color:#000; font-weight:900; border:none; cursor:pointer; margin-top:30px; letter-spacing:2px;">SYNC</button> </form></body>`);
+    res.send(`<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><form action="/login" method="POST" style="background:rgba(255,255,255,0.04); padding:60px; border-radius:45px; border:1px solid rgba(255,255,255,0.15); text-align:center; backdrop-filter:blur(30px);"> <h1 style="letter-spacing:8px; margin-bottom:40px; font-weight:900;">XAVIROX</h1> <input name="username" placeholder="IDENTITY" required style="display:block; margin:20px auto; padding:18px; width:300px; background:#111; border:2px solid #333; color:#fff; border-radius:20px; outline:none;"> <input name="password" type="password" placeholder="ACCESS KEY" required style="display:block; margin:20px auto; padding:18px; width:300px; background:#111; border:2px solid #333; color:#fff; border-radius:20px; outline:none;"> <button style="padding:18px 70px; border-radius:50px; background:#fff; color:#000; font-weight:900; border:none; cursor:pointer; margin-top:30px;">SYNC</button> </form></body>`);
 });
 
 app.post('/login', async (req, res) => {
