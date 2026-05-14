@@ -1,6 +1,6 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V44 [FINAL ELITE MERGE]
-    FEATURES: Ultra-Smooth Aura Glow, iOS 26 Elastic Island, Top-Left Gen-Z Search, 
+    🚀 XAVIROX COSMIC OS - V46 [LEFT-NAV ELITE MERGE]
+    FEATURES: Left-Side Navigation & Search, Ultra-Smooth Aura Glow, iOS 26 Elastic Island, 
               Sidebar Community Creator, Feedback System, Glass-Transparency.
 ==================================================================================================== */
 
@@ -58,9 +58,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     const unhingedPrompts = [
         "type something unhinged...", "drop your hot take here", "bro is thinking...", 
         "cooked or cooking?", "your brainrot goes here", "speak your truth king",
-        "post and pray", "write like the main character", "insert midnight thoughts",
-        "this box can’t handle your aura", "go full sigma", "the timeline needs content",
-        "enter your villain arc thoughts", "the internet is listening 👀", "certified yap zone"
+        "post and pray", "this box can’t handle your aura", "go full sigma", 
+        "certified yap zone"
     ];
     const randomPrompt = unhingedPrompts[Math.floor(Math.random() * unhingedPrompts.length)];
 
@@ -82,23 +81,27 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .star { position: absolute; background: #fff; border-radius: 50%; opacity: 0.4; animation: twinkle var(--d) infinite ease-in-out; }
         @keyframes twinkle { 0%, 100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.3); opacity: 0.8; box-shadow: 0 0 10px #fff; } }
 
-        /* TOP-LEFT GEN-Z SEARCH */
-        .top-left-nav { position: fixed; top: 20px; left: 20px; z-index: 10001; }
-        .genz-search { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 10px 15px; color: #fff; width: 180px; font-size: 12px; outline: none; backdrop-filter: blur(10px); }
-        .genz-search:focus { width: 250px; border-color: var(--cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
+        /* LEFT SIDE NAVIGATION (SEARCH + BUTTONS) */
+        .top-left-nav { position: fixed; top: 20px; left: 20px; z-index: 10001; display: flex; flex-direction: column; gap: 15px; }
+        .genz-search { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 12px 15px; color: #fff; width: 180px; font-size: 12px; outline: none; backdrop-filter: blur(10px); }
+        .genz-search:focus { width: 220px; border-color: var(--cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
+        
+        .nav-btn-circle { width: 45px; height: 45px; background: var(--glass); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; text-decoration: none; backdrop-filter: blur(10px); }
+        .nav-btn-circle:hover { transform: scale(1.1) rotate(5deg); border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 15px var(--cyan); }
 
         /* iOS 26 DYNAMIC ISLAND */
         .dynamic-island { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 180px; height: 35px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; letter-spacing: 1px; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.2); overflow: hidden; }
-        .dynamic-island:hover { width: 340px; height: 65px; border-color: var(--p); box-shadow: 0 10px 40px rgba(255, 0, 127, 0.4); background: rgba(10, 10, 10, 0.95); }
+        .dynamic-island:hover { width: 340px; height: 65px; border-color: var(--p); box-shadow: 0 10px 40px rgba(255, 0, 127, 0.4); }
 
-        /* GLO-AURA CARDS (SMOOTH ANIMATION) */
+        /* GLO-AURA CARDS */
         .card { background: var(--glass); backdrop-filter: blur(30px); border: 1px solid var(--border); border-radius: 28px; padding: 25px; margin-bottom: 25px; position: relative; }
         .card:hover { border-color: transparent; box-shadow: 0 0 30px -5px var(--p), 0 0 30px -5px var(--v); transform: translateY(-5px); background: rgba(255, 255, 255, 0.06); }
 
-        .dock { position: fixed; right: 20px; top: 50%; transform: translateY(-50%); width: 60px; background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 50px; display: flex; flex-direction: column; padding: 30px 0; gap: 25px; align-items: center; z-index: 1000; }
-        .dock i:hover { color: var(--cyan); filter: drop-shadow(0 0 8px var(--cyan)); transform: scale(1.3); }
+        /* RIGHT DOCK (LOGOUT ONLY) */
+        .dock { position: fixed; right: 20px; top: 50%; transform: translateY(-50%); width: 60px; background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 50px; display: flex; flex-direction: column; padding: 20px 0; align-items: center; z-index: 1000; }
+        .dock i:hover { color: var(--p); transform: scale(1.3); filter: drop-shadow(0 0 8px var(--p)); }
 
-        .main-container { max-width: 1100px; margin: 100px auto 50px 220px; display: flex; gap: 30px; }
+        .main-container { max-width: 1050px; margin: 100px auto 50px 240px; display: flex; gap: 30px; }
         .feed { flex: 2; }
         .sidebar { flex: 1; }
 
@@ -107,10 +110,9 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 
         /* SIDEBAR BLOCKS */
         .sidebar-block { background: var(--glass); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(20px); }
-        .sidebar-block:hover { border-color: var(--cyan); }
         .feedback-input { width: 100%; background: #000; border: 1px solid #222; border-radius: 12px; color: #fff; padding: 12px; font-size: 13px; margin-top: 10px; outline: none; resize: none; }
         
-        .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 12px; border-radius: 15px; font-size: 11px; font-weight: 900; text-decoration: none; text-align: center; margin-top: 15px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 12px; border-radius: 15px; font-size: 11px; font-weight: 900; text-decoration: none; text-align: center; margin-top: 15px; cursor: pointer; text-transform: uppercase; }
         .create-btn:hover { filter: brightness(1.2); box-shadow: 0 0 15px var(--p); }
 
         footer { text-align: center; padding: 60px; font-size: 11px; opacity: 0.3; letter-spacing: 1px; }
@@ -121,6 +123,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     
     <div class="top-left-nav">
         <input type="text" class="genz-search" placeholder="Search the void...">
+        <a href="/dashboard" class="nav-btn-circle" title="Home Feed"><i class="fas fa-rocket"></i></a>
+        <a href="/portfolio" class="nav-btn-circle" title="My Portfolio"><i class="fas fa-fingerprint"></i></a>
     </div>
 
     <div class="dynamic-island" id="island">
@@ -128,17 +132,14 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     </div>
 
     <div class="dock">
-        <i class="fas fa-rocket" onclick="location.href='/dashboard'"></i>
-        <i class="fas fa-fingerprint" onclick="location.href='/portfolio'"></i>
-        <i class="fas fa-power-off" style="color:var(--p);" onclick="location.href='/logout'"></i>
+        <i class="fas fa-power-off" style="color:var(--p); cursor:pointer;" onclick="location.href='/logout'"></i>
     </div>
 
     <div class="main-container">
         <div class="feed">
             <div class="card">
                 ${isGuest ? `
-                    <input class="genz-search" style="width:100%; height:55px; font-size:16px; border-radius:20px;" placeholder="sign up gang 💀" readonly onclick="location.href='/login'">
-                    <button class="btn-transmit" style="margin-top:20px; width:100%" onclick="location.href='/login'">INITIALIZE SYNC</button>
+                    <button class="create-btn" style="width:100%; font-size:14px;" onclick="location.href='/login'">INITIALIZE SYNC / LOGIN</button>
                 ` : `
                     <form action="/addpost" method="POST" enctype="multipart/form-data">
                         <textarea name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:19px; min-height:80px;" placeholder="${randomPrompt}" required></textarea>
@@ -157,11 +158,9 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <div class="sidebar-block">
                 <h4 style="font-size:10px; opacity:0.6; letter-spacing:3px; margin-bottom:20px; text-transform:uppercase;">Communities</h4>
                 <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:12px; text-decoration:none; font-weight:900; font-size:14px;">🌏 GLOBAL FEED</a>
-                <div style="max-height: 250px; overflow-y: auto; margin-bottom: 10px;">
-                    ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#eee; font-size:13px; text-decoration:none; margin-top:10px; opacity:0.8;"># ${s.name.toUpperCase()}</a>`).join('')}
-                </div>
+                ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#eee; font-size:13px; text-decoration:none; margin-top:10px; opacity:0.8;"># ${s.name.toUpperCase()}</a>`).join('')}
                 <button class="create-btn" onclick="let n=prompt('Enter Community Name:'); if(n) location.href='/create-sector?name='+n">
-                    <i class="fas fa-plus-circle"></i> New Community
+                    + NEW COMMUNITY
                 </button>
             </div>
 
@@ -176,12 +175,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     </div>
 
     <footer>
-        XAVIROX COSMIC OS V44 | 2026<br>
+        XAVIROX COSMIC OS V46 | 2026<br>
         <span style="opacity:0.5">ESTABLISHED FOR THE ELITE</span>
     </footer>
 
     <script>
-        // STARS GENERATOR
         const container = document.getElementById('stars');
         for(let i=0; i<160; i++) {
             const star = document.createElement('div');
@@ -191,19 +189,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             star.style.top = Math.random() * 100 + '%'; star.style.left = Math.random() * 100 + '%';
             star.style.setProperty('--d', (Math.random() * 3 + 2) + 's');
             container.appendChild(star);
-        }
-
-        // ISLAND ROASTS
-        const roasts = ["STILL LURKING? 💀", "SIGN UP LIL BRO", "BRO FEARS ACCOUNTS", "NPC ENERGY DETECTED", "GET A USERNAME", "LURKING GOES CRAZY"];
-        if(${isGuest}) {
-            setInterval(() => {
-                const island = document.getElementById('island');
-                island.style.transform = 'translateX(-50%) scale(0.8)';
-                setTimeout(() => {
-                    island.innerText = roasts[Math.floor(Math.random() * roasts.length)];
-                    island.style.transform = 'translateX(-50%) scale(1)';
-                }, 500);
-            }, 15000);
         }
     </script>
 </body></html>`;
@@ -221,10 +206,10 @@ app.get('/dashboard', async (req, res) => {
                 <span style="font-size:10px; opacity:0.3; background:rgba(255,255,255,0.05); padding:4px 10px; border-radius:10px;">#${p.sector}</span>
             </div>
             <p style="margin-top:18px; font-size:16px; line-height:1.6; color:#efefef;">${p.content}</p>
-            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:22px; margin-top:20px; border:1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">` : ''}
+            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:22px; margin-top:20px; border:1px solid var(--border);">` : ''}
         </div>
     `).join('');
-    res.send(MASTER_UI(html || '<div class="card" style="text-align:center; opacity:0.4; padding:50px;">The void is empty... Start a transmission.</div>', req.session.user, sectors, activeSector));
+    res.send(MASTER_UI(html || '<div class="card" style="text-align:center; opacity:0.4; padding:50px;">The void is empty...</div>', req.session.user, sectors, activeSector));
 });
 
 app.post('/addpost', upload.single('media'), async (req, res) => {
@@ -238,9 +223,7 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
 app.get('/create-sector', async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     const name = req.query.name ? req.query.name.toLowerCase().trim() : null;
-    if (name) {
-        try { await new Sector({ name }).save(); } catch(e) {}
-    }
+    if (name) { try { await new Sector({ name }).save(); } catch(e) {} }
     res.redirect('/dashboard?sector=' + (name || 'Global'));
 });
 
