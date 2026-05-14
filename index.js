@@ -185,11 +185,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         <div class="feed" id="feedContainer">${content}</div>
         <div class="sidebar">
             <div class="card">
-                <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:20px;">SECTORS</h4>
+                <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:20px;">SECTORS / COMMUNITIES</h4>
                 <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:15px; text-decoration:none; font-weight:900;">🌏 GLOBAL</a>
                 <a href="/dashboard?sector=confessions" style="display:block; color:#ffea00; margin-bottom:15px; text-decoration:none; font-weight:900;">👻 #CONFESSIONS</a>
                 ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#ccc; font-size:13px; text-decoration:none; margin-top:12px;"># ${s.name.toUpperCase()}</a>`).join('')}
-                ${!isGuest ? `<button class="create-btn" style="margin-top:20px;" onclick="let n=prompt('Sector Name?'); if(n) location.href='/create-sector?name='+n">+ BUILD COMMUNITY</button>` : ''}
+                ${!isGuest ? `<button class="create-btn" style="margin-top:20px;" onclick="let n=prompt('Community / Sector Name?'); if(n) location.href='/create-sector?name='+n">+ BUILD COMMUNITY</button>` : ''}
             </div>
             <div class="card">
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px;">FEEDBACK</h4>
