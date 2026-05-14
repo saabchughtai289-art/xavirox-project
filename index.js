@@ -1,9 +1,9 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V60 [THE GHOST PROTOCOL MERGE]
-    STATUS: FULL INTEGRATION + ANONYMOUS MESSAGING + AURA DYNAMICS
-    - MERGED: Ghost Signals (Anonymous) + Archive System + Media Uploads
-    - FEATURES: Global Anonymous Inbox, #CONFESSIONS Auto-Ghost, Bento Portfolio
-    - ENGINE: Aura-Driven CSS UI Sync (Full Scale Logic)
+    🚀 XAVIROX COSMIC OS - V62 [THE ANONYMOUS ENGINE GLOW]
+    STATUS: FULL REFINED ELEMENT INTEGRATION + ADVANCED GHOST INBOX UI
+    - UPGRADED: GenZ Style Anonymous Message Center + Cyber Drop Boxes
+    - RETAINED: V61 Search Void, Fancy Toggles, Live Portfolio Stream Vault
+    - ENGINE: Aura-Driven CSS UI Sync (Full Scaled Code Structure)
 ==================================================================================================== */
 
 const express = require('express');
@@ -31,7 +31,7 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     password: { type: String, required: true },
     aura: { type: Number, default: 100 },
     savedPosts: [String],
-    ghostMessages: [{ content: String, date: { type: Date, default: Date.now } }] // Private Anonymous Inbox
+    ghostMessages: [{ content: String, date: { type: Date, default: Date.now } }]
 }));
 
 const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema({
@@ -40,7 +40,7 @@ const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema(
     content: String, 
     mediaUrl: String, 
     sector: { type: String, default: 'Global' }, 
-    isAnonymous: { type: Boolean, default: false }, // Ghost Mode Flag
+    isAnonymous: { type: Boolean, default: false }, 
     date: { type: Date, default: Date.now },
     likes: { type: [String], default: [] },
     dislikes: { type: [String], default: [] }
@@ -54,7 +54,7 @@ const Sector = mongoose.models.Sector || mongoose.model('Sector', new mongoose.S
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(session({ 
-    secret: 'xavirox_ghost_protocol_v60_2026', 
+    secret: 'xavirox_ghost_protocol_v62_2026', 
     resave: false, 
     saveUninitialized: false,
     cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 } 
@@ -79,36 +79,59 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         :root { --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --bg: #000; --glass: rgba(255, 255, 255, 0.07); --border: rgba(255, 255, 255, 0.12); --dynamic-glow: 0 0 25px ${auraColor}44; }
         * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        
         .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: #000; }
         .star { position: absolute; background: #fff; border-radius: 50%; opacity: 0.3; animation: twinkle var(--d) infinite; }
         @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.7; transform: scale(1.2); } }
+        
         .top-left-nav { position: fixed; top: 25px; left: 25px; z-index: 10001; display: flex; align-items: center; gap: 15px; }
+        .genz-search { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); border-radius: 20px; padding: 12px 20px; color: #fff; width: 180px; outline: none; backdrop-filter: blur(15px); font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+        .genz-search:focus { width: 260px; border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 242, 255, 0.3); }
+
         .nav-row { display: flex; gap: 12px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 24px; border: 1px solid var(--border); backdrop-filter: blur(20px); }
         .nav-item { position: relative; display: flex; flex-direction: column; align-items: center; }
         .nav-btn-circle { width: 50px; height: 50px; background: var(--glass); border: 1px solid var(--border); border-radius: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; text-decoration: none; font-size: 18px; }
         .nav-btn-circle:hover { transform: translateY(-5px); border-color: var(--cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); }
         .icon-label { position: absolute; top: 60px; background: var(--cyan); color: #000; font-size: 9px; font-weight: 900; padding: 4px 10px; border-radius: 8px; opacity: 0; transform: translateY(-10px); pointer-events: none; text-transform: uppercase; letter-spacing: 1px; }
         .nav-item:hover .icon-label { opacity: 1; transform: translateY(0); }
-        .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 220px; height: 45px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; letter-spacing: 2px; cursor: pointer; overflow: hidden; }
-        .dynamic-island:hover { width: 380px; height: 70px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); }
+        
+        .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 260px; height: 45px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; letter-spacing: 2px; cursor: pointer; overflow: hidden; }
+        .dynamic-island:hover { width: 400px; height: 70px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); }
+        
         .main-container { max-width: 1100px; margin: 130px auto 50px auto; display: flex; gap: 35px; padding: 0 20px; }
         .feed { flex: 2; } .sidebar { flex: 1; }
         .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 32px; padding: 30px; margin-bottom: 25px; position: relative; }
         .card:hover { border-color: ${auraColor}; box-shadow: var(--dynamic-glow); transform: scale(1.01); }
-        .ghost-card { border: 1px dashed #555; background: rgba(255,255,255,0.02); }
+        .ghost-card { border: 1px dashed rgba(112, 0, 255, 0.4); background: rgba(112, 0, 255, 0.02); }
+        
+        .fancy-ghost-container { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+        .switch-track { width: 42px; height: 22px; background: #222; border: 1px solid var(--border); border-radius: 50px; position: relative; transition: background 0.3s; }
+        .switch-thumb { width: 14px; height: 14px; background: #666; border-radius: 50%; position: absolute; top: 3px; left: 4px; transition: all 0.3s; }
+        input[type="checkbox"]:checked + .switch-track { background: var(--v); border-color: var(--p); box-shadow: 0 0 10px var(--v); }
+        input[type="checkbox"]:checked + .switch-track .switch-thumb { left: 22px; background: #fff; box-shadow: 0 0 8px #fff; }
+
         .interaction-bar { display: flex; gap: 20px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); }
         .action-btn { background: transparent; border: none; color: #fff; font-size: 13px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 8px; opacity: 0.6; }
         .action-btn:hover { opacity: 1; color: var(--cyan); }
-        .active-w { color: var(--cyan); opacity: 1; } .active-l { color: var(--p); opacity: 1; } .active-save { color: #ffea00; opacity: 1; }
+        .active-w { color: var(--cyan); opacity: 1; text-shadow: 0 0 10px var(--cyan); } 
+        .active-l { color: var(--p); opacity: 1; text-shadow: 0 0 10px var(--p); } 
+        .active-save { color: #ffea00; opacity: 1; text-shadow: 0 0 10px #ffea00; }
+        
         .aura-badge { font-size: 9px; background: ${auraColor}; color: #000; padding: 2px 8px; border-radius: 50px; font-weight: 900; margin-left: 10px; }
         .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 15px; border-radius: 20px; font-weight: 900; cursor: pointer; font-size: 11px; text-transform: uppercase; text-decoration: none; text-align: center; }
         .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
         .bento-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 20px; padding: 20px; text-align: center; }
+
+        /* GENZ ANONYMOUS ALIGNMENTS */
+        .ghost-msg-node { background: rgba(112, 0, 255, 0.03); padding: 16px; border-radius: 20px; border: 1px solid rgba(112, 0, 255, 0.2); margin-bottom: 12px; box-shadow: inset 0 0 15px rgba(112, 0, 255, 0.05); }
+        .ghost-input { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 14px; border-radius: 16px; margin-bottom: 12px; outline: none; font-size: 13px; font-weight: 600; }
+        .ghost-input:focus { border-color: var(--v); box-shadow: 0 0 15px rgba(112, 0, 255, 0.3); }
     </style>
 </head>
 <body>
     <div class="stars-container" id="stars"></div>
     <div class="top-left-nav">
+        <input type="text" class="genz-search" placeholder="SEARCH THE VOID..." onkeyup="searchVoid(this.value)">
         <div class="nav-row">
             <div class="nav-item"><a href="/dashboard" class="nav-btn-circle"><i class="fas fa-rocket"></i></a><span class="icon-label">Orbit</span></div>
             <div class="nav-item"><a href="/portfolio" class="nav-btn-circle"><i class="fas fa-fingerprint"></i></a><span class="icon-label">Identity</span></div>
@@ -117,12 +140,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     </div>
     <div class="dynamic-island">
         <div style="text-align:center;">
-            <div class="island-main">${isGuest ? "GHOST MODE" : "AURA: " + user.aura}</div>
-            <div class="island-detail">SECURE XAVIROX SYNC</div>
+            <div class="island-main">${isGuest ? "⚡ XAVIROX AURA: MADE A ACC LIL BRO 💀" : "⚡ XAVIROX AURA: " + user.aura}</div>
+            <div class="island-detail">${isGuest ? "ACCESS REJECTED" : "SECURE RADAR STABLE"}</div>
         </div>
     </div>
     <div class="main-container">
-        <div class="feed">${content}</div>
+        <div class="feed" id="feedContainer">${content}</div>
         <div class="sidebar">
             <div class="card">
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:20px;">SECTORS</h4>
@@ -147,9 +170,23 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             star.style.setProperty('--d', (Math.random() * 3 + 2) + 's');
             container.appendChild(star);
         }
+        
         async function interact(postId, type) {
             const res = await fetch('/interact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId, type }) });
-            if(res.ok) location.reload(); else alert('Login to interact!');
+            if(res.ok) {
+                location.reload();
+            } else {
+                alert('MADE A ACC LIL BRO 💀');
+            }
+        }
+
+        function searchVoid(query) {
+            let cards = document.querySelectorAll('.feed .card');
+            cards.forEach(card => {
+                let text = card.innerText.toLowerCase();
+                if(text.includes(query.toLowerCase())) card.style.display = 'block';
+                else card.style.display = 'none';
+            });
         }
     </script>
 </body></html>`;
@@ -168,9 +205,13 @@ app.get('/dashboard', async (req, res) => {
                 <textarea name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px;" placeholder="${activeSector==='confessions'?'Share a secret ghost signal...':'Transmit a signal...'}" required></textarea>
                 <input type="hidden" name="sector" value="${activeSector}">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
-                    <div style="display:flex; gap:15px; align-items:center;">
+                    <div style="display:flex; gap:20px; align-items:center;">
                         <label style="cursor:pointer; opacity:0.7;"><i class="fas fa-camera fa-lg"></i><input type="file" name="media" hidden></label>
-                        <label style="font-size:11px; color:#666; cursor:pointer;"><input type="checkbox" name="isAnonymous" ${activeSector==='confessions'?'checked':''}> GHOST MODE</label>
+                        <label class="fancy-ghost-container">
+                            <input type="checkbox" name="isAnonymous" id="ghostToggle" ${activeSector==='confessions'?'checked':''} style="display:none;">
+                            <div class="switch-track"><div class="switch-thumb"></div></div>
+                            <span style="font-size:11px; font-weight:900; color:#aaa; letter-spacing:1px;">GHOST MODE</span>
+                        </label>
                     </div>
                     <button class="create-btn" style="width:auto; padding:10px 30px;">TRANSMIT</button>
                 </div>
@@ -183,8 +224,8 @@ app.get('/dashboard', async (req, res) => {
         const isSaved = user && user.savedPosts && user.savedPosts.includes(p._id.toString());
         const postAuraColor = p.authorAura > 500 ? 'var(--cyan)' : p.authorAura < 50 ? '#ff0000' : 'var(--p)';
 
-        return `<div class="card ${p.isAnonymous ? 'ghost-card' : ''}">
-            <b style="color:${p.isAnonymous ? '#666' : postAuraColor};">
+        return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}">
+            <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:13px; letter-spacing:0.5px;">
                 ${p.isAnonymous ? '👻 GHOST_SIGNAL' : '@'+p.author} 
                 ${!p.isAnonymous ? `<span class="aura-badge">${p.authorAura}</span>` : ''}
             </b>
@@ -201,23 +242,33 @@ app.get('/dashboard', async (req, res) => {
     res.send(MASTER_UI(postForm + html, user, sectors, activeSector));
 });
 
-// --- [GHOST INBOX & PORTFOLIO] ---
+// --- [GHOST INBOX ENGINE] ---
 app.post('/send-ghost-msg', async (req, res) => {
     const { targetUser, message } = req.body;
     await User.findOneAndUpdate({ username: targetUser.toLowerCase() }, { $push: { ghostMessages: { content: message } } });
-    res.send("<script>alert('GHOST SIGNAL TRANSMITTED'); window.history.back();</script>");
+    res.send("<script>alert('GHOST SIGNAL INJECTED UNTRACEABLE 🧠'); window.history.back();</script>");
 });
 
 app.get('/portfolio', async (req, res) => {
     const user = req.session.user;
-    if(!user) return res.redirect('/login');
+    if(!user) return res.send("<script>alert('MADE A ACC LIL BRO 💀'); window.location.href='/login';</script>");
+    
     const dbUser = await User.findOne({ username: user.username });
     const sectors = await Sector.find();
+    const savedPostObjects = await Post.find({ _id: { $in: dbUser.savedPosts } });
 
+    // GENZ STYLED INBOX STREAM
     const ghostInbox = dbUser.ghostMessages.map(m => `
-        <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:15px; margin-bottom:10px; border-left:3px solid var(--p);">
-            <p style="font-size:13px;">${m.content}</p>
-            <small style="opacity:0.2; font-size:9px;">${new Date(m.date).toLocaleString()}</small>
+        <div class="ghost-msg-node">
+            <span style="font-size:10px; color:var(--v); font-weight:900; letter-spacing:1px;"><i class="fas fa-mask"></i> ANONYMOUS INCOMING...</span>
+            <p style="font-size:14px; margin-top:6px; color:#fff; font-weight:500;">${m.content}</p>
+            <small style="opacity:0.2; font-size:9px; display:block; margin-top:5px;">${new Date(m.date).toLocaleString()}</small>
+        </div>`).join('');
+
+    const savedFeedHtml = savedPostObjects.map(sp => `
+        <div style="background:rgba(0,242,255,0.03); padding:18px; border-radius:20px; border:1px solid rgba(0,242,255,0.15); margin-bottom:12px;">
+            <span style="font-size:11px; color:var(--cyan); font-weight:bold;">📍 @${sp.isAnonymous ? 'ANONYMOUS' : sp.author} [${sp.sector.toUpperCase()}]</span>
+            <p style="font-size:14px; margin-top:6px; color:#fff;">${sp.content}</p>
         </div>`).join('');
 
     const content = `
@@ -230,16 +281,23 @@ app.get('/portfolio', async (req, res) => {
                 <div class="bento-item"><i class="fas fa-ghost"></i><p style="font-size:10px;">${dbUser.ghostMessages.length} GHOSTS</p></div>
             </div>
         </div>
-        <div class="card ghost-card">
-            <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; opacity:0.6;">GHOST INBOX (ANONYMOUS)</h4>
-            ${ghostInbox || '<p style="opacity:0.2; text-align:center;">VOID IS EMPTY</p>'}
+        
+        <div class="card" style="border-color:#ffea00;">
+            <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:#ffea00;">📁 SAVED CHANNELS & VAULT</h4>
+            ${savedFeedHtml || '<p style="opacity:0.2; font-size:12px; text-align:center;">NO ARCHIVED FILES FOUND</p>'}
         </div>
-        <div class="card">
-            <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px;">SEND ANONYMOUS SIGNAL</h4>
+
+        <div class="card ghost-card">
+            <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--v); font-weight:900;">📥 INCOGNITO GHOST VOID</h4>
+            ${ghostInbox || '<p style="opacity:0.3; font-size:12px; text-align:center; padding:10px;">GHOST VOID IS EMPTY</p>'}
+        </div>
+
+        <div class="card" style="border-color: rgba(255,255,255,0.15);">
+            <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--p); font-weight:900;">💥 DROP AN ANONYMOUS BOMB</h4>
             <form action="/send-ghost-msg" method="POST">
-                <input name="targetUser" placeholder="Target @username" required style="width:100%; background:#111; border:1px solid #333; color:#fff; padding:12px; border-radius:12px; margin-bottom:10px;">
-                <textarea name="message" placeholder="Message content..." required style="width:100%; background:#111; border:1px solid #333; color:#fff; padding:12px; border-radius:12px;"></textarea>
-                <button class="create-btn" style="margin-top:10px;">SEND GHOST SIGNAL</button>
+                <input name="targetUser" class="ghost-input" placeholder="🎯 Target @username" required>
+                <textarea name="message" class="ghost-input" style="min-height:80px; resize:none;" placeholder="Write a confidential truth bomb..." required></textarea>
+                <button class="create-btn" style="background: linear-gradient(45deg, var(--v), #000);">LAUNCH ANONYMOUS SIGNAL</button>
             </form>
         </div>`;
     
