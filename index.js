@@ -1,10 +1,10 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V56 [THE MASTER SYNC + PINK GLOW]
+    🚀 XAVIROX COSMIC OS - V57 [THE INTERACTIVE SYNC]
     STATUS: ALL SYSTEMS INTEGRATED + DYNAMIC ISLAND FIX + COSMIC GLOW
     - MERGED: GenZ Search + Bento Portfolio + Cosmic Feed
-    - FIXED: Dynamic Island Expansion (Hover Logic Added)
+    - NEW: Like (W), Dislike (L), and Save (Archive) logic
     - NEW: Pink Glow Neon Aura on Hover (Cards & Island)
-    - SECURITY: Guest Blocked from Community Creation
+    - SECURITY: Guest Blocked from Community Creation & Interaction
 ==================================================================================================== */
 
 const express = require('express');
@@ -30,11 +30,18 @@ const connectDB = async () => {
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
     username: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
-    aura: { type: Number, default: 100 }
+    aura: { type: Number, default: 100 },
+    savedPosts: [String] // Array of Post IDs
 }));
 
 const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema({
-    author: String, content: String, mediaUrl: String, sector: { type: String, default: 'Global' }, date: { type: Date, default: Date.now }
+    author: String, 
+    content: String, 
+    mediaUrl: String, 
+    sector: { type: String, default: 'Global' }, 
+    date: { type: Date, default: Date.now },
+    likes: { type: [String], default: [] },    // Array of Usernames
+    dislikes: { type: [String], default: [] }  // Array of Usernames
 }));
 
 const Sector = mongoose.models.Sector || mongoose.model('Sector', new mongoose.Schema({ 
@@ -91,7 +98,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .nav-logout { border-color: rgba(255, 0, 127, 0.4); color: var(--p); }
         .nav-logout:hover { border-color: var(--p); background: var(--p); color: #fff; box-shadow: 0 0 20px var(--p); }
 
-        /* DYNAMIC ISLAND + PINK GLOW */
+        /* DYNAMIC ISLAND */
         .dynamic-island { 
             position: fixed; top: 25px; left: 50%; transform: translateX(-50%); 
             width: 220px; height: 45px; background: #000; 
@@ -112,13 +119,19 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .feed { flex: 2; }
         .sidebar { flex: 1; }
 
-        /* PINK GLOW CARDS */
+        /* INTERACTION BUTTONS */
         .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 32px; padding: 30px; margin-bottom: 25px; position: relative; }
         .card:hover { border-color: var(--p); box-shadow: var(--pink-glow); transform: scale(1.01); }
 
+        .interaction-bar { display: flex; gap: 20px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); }
+        .action-btn { background: transparent; border: none; color: #fff; font-size: 13px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 8px; opacity: 0.6; }
+        .action-btn:hover { opacity: 1; color: var(--cyan); }
+        .action-btn.active-w { color: var(--cyan); opacity: 1; }
+        .action-btn.active-l { color: var(--p); opacity: 1; }
+        .action-btn.active-save { color: #ffea00; opacity: 1; }
+
         .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 15px; border-radius: 20px; font-weight: 900; cursor: pointer; margin-top: 15px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; text-align: center; }
         
-        /* BENTO GRID */
         .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
         .bento-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 20px; padding: 20px; text-align: center; }
 
@@ -183,7 +196,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         </div>
     </div>
 
-    <footer>XAVIROX COSMIC OS V56 | CORE: xavirox.co@gmail.com</footer>
+    <footer>XAVIROX COSMIC OS V57 | CORE: xavirox.co@gmail.com</footer>
 
     <script>
         const container = document.getElementById('stars');
@@ -195,6 +208,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             star.style.top = Math.random() * 100 + '%'; star.style.left = Math.random() * 100 + '%';
             star.style.setProperty('--d', (Math.random() * 3 + 2) + 's');
             container.appendChild(star);
+        }
+
+        async function interact(postId, type) {
+            const res = await fetch('/interact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ postId, type })
+            });
+            if(res.ok) location.reload();
+            else alert('LOG IN TO INTERACT!');
         }
 
         document.getElementById('feedbackBtn')?.addEventListener('click', function() {
@@ -219,9 +242,10 @@ app.get('/dashboard', async (req, res) => {
     const activeSector = req.query.sector || 'Global';
     const posts = await Post.find(activeSector !== 'Global' ? { sector: activeSector } : {}).sort({ date: -1 });
     const sectors = await Sector.find();
+    const user = req.session.user;
     
     const postForm = `<div class="card">
-        ${!req.session.user ? `<button class="create-btn" onclick="location.href='/login'">SYNC IDENTITY TO POST</button>` : `
+        ${!user ? `<button class="create-btn" onclick="location.href='/login'">SYNC IDENTITY TO POST</button>` : `
             <form action="/addpost" method="POST" enctype="multipart/form-data">
                 <textarea name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px;" placeholder="What's the signal?" required></textarea>
                 <input type="hidden" name="sector" value="${activeSector}">
@@ -232,13 +256,57 @@ app.get('/dashboard', async (req, res) => {
             </form>`}
     </div>`;
 
-    const html = posts.map(p => `<div class="card">
-        <b style="color:var(--cyan); font-size:14px;">@${p.author}</b>
-        <p style="margin-top:12px; font-size:16px;">${p.content}</p>
-        ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);">` : ''}
-    </div>`).join('');
+    const html = posts.map(p => {
+        const hasW = user && p.likes.includes(user.username);
+        const hasL = user && p.dislikes.includes(user.username);
+        const isSaved = user && user.savedPosts && user.savedPosts.includes(p._id.toString());
+
+        return `<div class="card">
+            <b style="color:var(--cyan); font-size:14px;">@${p.author}</b>
+            <p style="margin-top:12px; font-size:16px;">${p.content}</p>
+            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);">` : ''}
+            
+            <div class="interaction-bar">
+                <button onclick="interact('${p._id}', 'like')" class="action-btn ${hasW ? 'active-w' : ''}">
+                    <i class="fas fa-crown"></i> ${p.likes.length} W
+                </button>
+                <button onclick="interact('${p._id}', 'dislike')" class="action-btn ${hasL ? 'active-l' : ''}">
+                    <i class="fas fa-skull"></i> ${p.dislikes.length} L
+                </button>
+                <button onclick="interact('${p._id}', 'save')" class="action-btn ${isSaved ? 'active-save' : ''}">
+                    <i class="fas fa-bookmark"></i> ${isSaved ? 'ARCHIVED' : 'SAVE'}
+                </button>
+            </div>
+        </div>`
+    }).join('');
     
-    res.send(MASTER_UI(postForm + (html || '<div style="text-align:center; opacity:0.2; padding:80px;">NO SIGNALS</div>'), req.session.user, sectors, activeSector));
+    res.send(MASTER_UI(postForm + (html || '<div style="text-align:center; opacity:0.2; padding:80px;">NO SIGNALS</div>'), user, sectors, activeSector));
+});
+
+// --- [INTERACTION LOGIC] ---
+app.post('/interact', async (req, res) => {
+    if (!req.session.user) return res.status(401).send();
+    const { postId, type } = req.body;
+    const username = req.session.user.username;
+
+    const post = await Post.findById(postId);
+    const dbUser = await User.findOne({ username });
+
+    if (type === 'like') {
+        if (post.likes.includes(username)) post.likes = post.likes.filter(u => u !== username);
+        else { post.likes.push(username); post.dislikes = post.dislikes.filter(u => u !== username); }
+    } else if (type === 'dislike') {
+        if (post.dislikes.includes(username)) post.dislikes = post.dislikes.filter(u => u !== username);
+        else { post.dislikes.push(username); post.likes = post.likes.filter(u => u !== username); }
+    } else if (type === 'save') {
+        if (dbUser.savedPosts.includes(postId)) dbUser.savedPosts = dbUser.savedPosts.filter(id => id !== postId);
+        else dbUser.savedPosts.push(postId);
+        await dbUser.save();
+        req.session.user.savedPosts = dbUser.savedPosts;
+    }
+    
+    await post.save();
+    res.sendStatus(200);
 });
 
 app.get('/portfolio', async (req, res) => {
@@ -281,7 +349,7 @@ app.get('/create-sector', async (req, res) => {
     res.redirect('/dashboard?sector=' + (name || 'Global'));
 });
 
-// --- [AUTH SYSTEM: LOGIN + NEW ACCOUNT] ---
+// --- [AUTH SYSTEM] ---
 app.get('/login', (req, res) => {
     res.send(`<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; overflow:hidden;">
         <div style="background:rgba(255,255,255,0.05); padding:50px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); text-align:center; backdrop-filter:blur(20px);">
@@ -307,7 +375,7 @@ app.post('/login', async (req, res) => {
         const exists = await User.findOne({ username: userLower });
         if (exists) return res.send("<script>alert('Identity already taken!'); window.history.back();</script>");
         const hashed = await bcrypt.hash(password, 10);
-        const newUser = await new User({ username: userLower, password: hashed }).save();
+        const newUser = await new User({ username: userLower, password: hashed, savedPosts: [] }).save();
         req.session.user = newUser;
         return res.redirect('/dashboard');
     }
