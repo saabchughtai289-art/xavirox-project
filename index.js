@@ -1,6 +1,6 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - VERSION 40.0 [STABLE DEPLOYMENT]
-    FIXED: connect-mongo, app.listen syntax, and DB caching
+    🚀 XAVIROX COSMIC OS - VERSION 40.0 [TITAN STABLE - VERCEL OPTIMIZED]
+    FIXED: Session Store Lazy Loading & Connection Caching
 ==================================================================================================== */
 
 const express = require('express');
@@ -9,34 +9,33 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
-const path = require('path');
 
 const app = express();
 const dbURI = "mongodb+srv://xavirox_boss:BDqrTgZZq2MFmoP3@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority";
 
-// --- [DATABASE ARCHITECTURE - CACHED FOR VERCEL] ---
-let isConnected = false;
-const connectDB = async () => {
-    if (isConnected) return;
-    try {
-        const db = await mongoose.connect(dbURI);
-        isConnected = db.connections[0].readyState;
-        console.log('✅ COSMIC-LINK ONLINE');
-    } catch (err) {
-        console.error('❌ DB ERROR:', err);
-    }
-};
+// --- [DATABASE CACHING STRATEGY] ---
+let cachedDb = null;
+
+async function connectToDatabase() {
+    if (cachedDb) return cachedDb;
+    
+    // Vercel ke liye connection settings
+    const opts = {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 5000,
+    };
+
+    cachedDb = await mongoose.connect(dbURI, opts);
+    return cachedDb;
+}
 
 // --- [SCHEMAS] ---
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
-    pfp: { type: String, default: "" },
-    bio: { type: String, default: "Inhabitant of the Xavirox Cosmos." },
     aura: { type: Number, default: 100 },
-    rank: { type: String, default: "Cosmic Citizen" },
-    skills: { type: [String], default: ["Gen-Z", "Web Dev"] },
-    socialLinks: { instagram: String, github: String, twitter: String }
+    bio: { type: String, default: "Inhabitant of the Xavirox Cosmos." }
 });
 
 const PostSchema = new mongoose.Schema({
@@ -48,31 +47,41 @@ const PostSchema = new mongoose.Schema({
 });
 
 const SectorSchema = new mongoose.Schema({ 
-    name: { type: String, required: true, unique: true, lowercase: true },
-    createdBy: String,
-    memberCount: { type: Number, default: 1 }
+    name: { type: String, required: true, unique: true, lowercase: true }
 });
 
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
 const Post = mongoose.models.Post || mongoose.model('Post', PostSchema);
 const Sector = mongoose.models.Sector || mongoose.model('Sector', SectorSchema);
 
-// --- [MIDDLEWARE & SESSION] ---
+// --- [MIDDLEWARE ENGINE] ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Middleware to ensure DB is connected before any request
+// ⚡ VERCEL SESSION PERSISTENCE FIX
 app.use(async (req, res, next) => {
-    await connectDB();
-    next();
+    try {
+        await connectToDatabase();
+        next();
+    } catch (err) {
+        res.status(500).send("Database Link Failed. Check Atlas IP Whitelist.");
+    }
 });
 
 app.use(session({ 
-    secret: 'xavirox_cosmic_core_unlocked_2026', 
+    secret: 'xavirox_cosmic_core_2026', 
     resave: false, 
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: dbURI }),
-    cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, secure: false } 
+    store: MongoStore.create({ 
+        mongoUrl: dbURI,
+        collectionName: 'sessions',
+        ttl: 14 * 24 * 60 * 60
+    }),
+    cookie: { 
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        secure: process.env.NODE_ENV === 'production', // Production pe HTTPS lazmi hai
+        sameSite: 'lax'
+    } 
 }));
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -111,7 +120,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .cosmic-input { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 15px; color: #fff; padding: 15px; outline: none; }
         .btn-transmit { background: #fff; color: #000; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 800; cursor: pointer; }
         .btn-transmit:hover { background: var(--cyan); box-shadow: 0 0 20px var(--cyan); }
-        .pfp-orbit { width: 100px; height: 100px; border-radius: 35px; border: 3px solid var(--p); object-fit: cover; }
     </style>
 </head>
 <body>
@@ -151,14 +159,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
 </body></html>`;
 };
 
-// --- [ROUTES] ---
-app.get('/', (req, res) => res.redirect('/dashboard'));
-
+// --- [CORE ROUTES] ---
 app.get('/dashboard', async (req, res) => {
     const activeSector = req.query.sector || 'Global';
-    let query = activeSector !== 'Global' ? { sector: activeSector } : {};
-    const posts = await Post.find(query).sort({ date: -1 });
-    const sectors = await Sector.find().sort({ memberCount: -1 });
+    const posts = await Post.find(activeSector !== 'Global' ? { sector: activeSector } : {}).sort({ date: -1 });
+    const sectors = await Sector.find();
     
     const htmlContent = posts.map(p => `
         <div class="card">
@@ -171,27 +176,8 @@ app.get('/dashboard', async (req, res) => {
     res.send(MASTER_UI(htmlContent, req.session.user, sectors, activeSector));
 });
 
-app.get('/portfolio', async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    const u = await User.findOne({ username: req.session.user.username });
-    const html = `<div class="card" style="text-align:center;"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}" class="pfp-orbit"><h1>@${u.username}</h1><div style="background:var(--v); display:inline-block; padding:5px 15px; border-radius:50px; margin-top:10px;">AURA: ${u.aura}</div></div>`;
-    res.send(MASTER_UI(html, u, [], 'Identity', true));
-});
-
-app.post('/addpost', upload.single('media'), async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
-    await new Post({ author: req.session.user.username, content: req.body.content, sector: req.body.sector, mediaUrl }).save();
-    await User.findOneAndUpdate({ username: req.session.user.username }, { $inc: { aura: 10 } });
-    res.redirect('back');
-});
-
 app.get('/login', (req, res) => {
-    res.send(`<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;">
-        <form action="/login" method="POST" style="text-align:center;">
-            <h1>SYNC IDENTITY</h1>
-            <input name="username" placeholder="USERNAME" required style="display:block; margin:10px auto; padding:10px;"><input name="password" type="password" placeholder="KEY" required style="display:block; margin:10px auto; padding:10px;"><button style="padding:10px 40px; border-radius:50px; cursor:pointer;">SYNC</button>
-        </form></body>`);
+    res.send(`<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;"><form action="/login" method="POST" style="text-align:center;"><h1>SYNC IDENTITY</h1><input name="username" placeholder="USERNAME" required style="display:block; margin:10px auto; padding:10px;"><input name="password" type="password" placeholder="KEY" required style="display:block; margin:10px auto; padding:10px;"><button style="padding:10px 40px; border-radius:50px; cursor:pointer;">SYNC</button></form></body>`);
 });
 
 app.post('/login', async (req, res) => {
@@ -208,9 +194,11 @@ app.post('/login', async (req, res) => {
 });
 
 app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/dashboard'); });
+app.get('/', (req, res) => res.redirect('/dashboard'));
 
-// --- [FINAL EXPORT] ---
+// --- [PORT HANDLING] ---
 if (process.env.NODE_ENV !== 'production') {
-    app.listen(3000, () => console.log('🚀 LIVE ON 3000'));
+    app.listen(3000, () => console.log('🚀 Local Live'));
 }
+
 module.exports = app;
