@@ -14,6 +14,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
+const MongoStore = require('connect-mongo'); // Session persistence fix
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
@@ -23,22 +24,10 @@ const app = express();
 // --- [DATABASE ARCHITECTURE - DEEP NEURAL LINK] ---
 const dbURI = "mongodb+srv://xavirox_boss:BDqrTgZZq2MFmoP3@cluster0.myxiyfk.mongodb.net/xavirox_db?retryWrites=true&w=majority";
 
-let cachedDb = null;
-async function connectDB() {
-    if (cachedDb) return cachedDb;
-    try {
-        const db = await mongoose.connect(dbURI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-        cachedDb = db;
-        console.log('✅ [XAVIROX]: COSMIC-LINK 40.0 - ALL SECTORS ONLINE');
-        return db;
-    } catch (err) {
-        console.error('❌ [DATABASE CRITICAL ERROR]:', err);
-        process.exit(1);
-    }
-}
+// Stable Connection Logic
+mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('✅ [XAVIROX]: COSMIC-LINK 40.0 - ALL SECTORS ONLINE'))
+    .catch(err => console.error('❌ [DATABASE CRITICAL ERROR]:', err));
 
 // --- [SCHEMA ARCHITECTURE - THE COSMOS DATA] ---
 const UserSchema = new mongoose.Schema({
@@ -60,7 +49,7 @@ const PostSchema = new mongoose.Schema({
     mediaUrl: { type: String, default: null },
     likes: { type: Number, default: 0 },
     comments: [{ user: String, text: String, date: { type: Date, default: Date.now } }],
-    sector: { type: String, default: 'General' },
+    sector: { type: String, default: 'Global' }, // Default changed to Global
     date: { type: Date, default: Date.now }
 });
 
@@ -82,6 +71,7 @@ app.use(session({
     secret: 'xavirox_cosmic_core_unlocked_2026_ultra_secret_key_999', 
     resave: false, 
     saveUninitialized: false,
+    store: MongoStore.create({ mongoUrl: dbURI }), // Fix for session logout on restart
     cookie: { maxAge: 7 * 24 * 60 * 60 * 1000, secure: false } 
 }));
 
@@ -89,11 +79,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ 
     storage: storage,
     limits: { fileSize: 20 * 1024 * 1024 } 
-});
-
-app.use(async (req, res, next) => {
-    await connectDB();
-    next();
 });
 
 // --- [MASTER UI ENGINE - COSMIC FRAMEWORK] ---
@@ -119,133 +104,85 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); }
         body { background: var(--bg); color: #fff; overflow-x: hidden; min-height: 100vh; }
 
-        /* --- THE BLACK HOLE: EVENT HORIZON --- */
         .cosmic-void { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100vw; height: 100vh; z-index: -10; pointer-events: none; }
         .black-hole-core { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 250px; height: 250px; background: #000; border-radius: 50%; box-shadow: 0 0 80px 20px var(--v), 0 0 150px 40px var(--p), 0 0 300px 60px rgba(112, 0, 255, 0.2); }
         .accretion-disk { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotateX(70deg); width: 600px; height: 600px; border: 4px solid var(--cyan); border-radius: 50%; filter: blur(2px); animation: spin 8s linear infinite; box-shadow: 0 0 40px var(--cyan), inset 0 0 40px var(--cyan); }
         @keyframes spin { from { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(0deg); } to { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(360deg); } }
 
-        /* --- DYNAMIC ISLAND NAVIGATION --- */
         .island-nav { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 400px; height: 50px; background: rgba(0,0,0,0.85); backdrop-filter: blur(30px); border-radius: 100px; border: 1px solid var(--border); border-top: 2px solid var(--p); display: flex; align-items: center; justify-content: center; z-index: 9999; cursor: pointer; }
         .island-nav:hover { width: 500px; height: 60px; border-color: var(--cyan); }
         .island-text { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 3px; color: #fff; text-shadow: 0 0 10px var(--p); }
 
-        /* --- LEFT DOCK SYSTEMS --- */
         .dock { position: fixed; left: 30px; top: 50%; transform: translateY(-50%); width: 75px; background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 100px; display: flex; flex-direction: column; padding: 40px 0; gap: 35px; align-items: center; z-index: 1000; }
         .dock i { font-size: 22px; color: rgba(255,255,255,0.3); cursor: pointer; }
         .dock i:hover { color: var(--cyan); transform: scale(1.4) rotate(10deg); text-shadow: 0 0 20px var(--cyan); }
         .active-link { color: var(--p) !important; text-shadow: 0 0 15px var(--p); }
 
-        /* --- CONTENT WRAPPER --- */
         .main-container { max-width: 1200px; margin: 120px auto 50px 150px; display: flex; gap: 40px; }
         .feed-engine { flex: 2; }
         .side-panel { flex: 1; position: sticky; top: 120px; height: fit-content; }
 
-        /* --- GLASS CARDS --- */
         .card { background: var(--glass); backdrop-filter: blur(60px); border: 1px solid var(--border); border-radius: 40px; padding: 35px; margin-bottom: 30px; position: relative; overflow: hidden; }
-        .card:hover { border-color: rgba(255, 255, 255, 0.2); transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-        .card::before { content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); transition: 0.8s; }
-        .card:hover::before { left: 100%; }
+        .card:hover { border-color: rgba(255, 255, 255, 0.2); transform: translateY(-5px); }
 
-        /* --- INPUTS & BUTTONS --- */
-        .cosmic-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 20px; color: #fff; padding: 20px; outline: none; font-size: 16px; }
-        .cosmic-input:focus { border-color: var(--v); box-shadow: 0 0 20px rgba(112, 0, 255, 0.2); }
-        .btn-transmit { background: #fff; color: #000; border: none; padding: 12px 35px; border-radius: 50px; font-weight: 800; cursor: pointer; letter-spacing: 1px; font-size: 12px; }
-        .btn-transmit:hover { background: var(--cyan); box-shadow: 0 0 30px var(--cyan); transform: scale(1.05); }
+        .cosmic-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 20px; color: #fff; padding: 20px; outline: none; }
+        .btn-transmit { background: #fff; color: #000; border: none; padding: 12px 35px; border-radius: 50px; font-weight: 800; cursor: pointer; }
+        .btn-transmit:hover { background: var(--cyan); box-shadow: 0 0 30px var(--cyan); }
 
-        /* --- PORTFOLIO EXTRAS --- */
-        .pfp-orbit { width: 150px; height: 150px; border-radius: 50px; border: 4px solid var(--p); object-fit: cover; box-shadow: 0 0 50px rgba(255,0,127,0.4); margin-bottom: 25px; }
-        .aura-badge { background: linear-gradient(45deg, var(--v), var(--p)); padding: 8px 20px; border-radius: 50px; font-weight: 900; font-size: 12px; }
-        .sector-tag { display: inline-block; padding: 5px 15px; border-radius: 50px; background: rgba(255,255,255,0.1); font-size: 10px; font-weight: bold; margin-right: 10px; color: var(--cyan); }
+        .pfp-orbit { width: 150px; height: 150px; border-radius: 50px; border: 4px solid var(--p); object-fit: cover; }
+        .aura-badge { background: linear-gradient(45deg, var(--v), var(--p)); padding: 8px 20px; border-radius: 50px; font-weight: 900; }
+        .sector-tag { display: inline-block; padding: 5px 15px; border-radius: 50px; background: rgba(255,255,255,0.1); font-size: 10px; color: var(--cyan); }
 
-        /* --- COMMUNITY MODAL --- */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: none; align-items: center; justify-content: center; }
-        
-        .footer { margin: 100px 0 50px 150px; opacity: 0.3; font-size: 11px; letter-spacing: 2px; }
+        .footer { margin: 100px 0 50px 150px; opacity: 0.3; font-size: 11px; }
     </style>
 </head>
 <body>
-    <div class="cosmic-void">
-        <div class="accretion-disk"></div>
-        <div class="black-hole-core"></div>
-    </div>
-
-    <div class="island-nav">
-        <div class="island-text">${islandText}</div>
-    </div>
-
+    <div class="cosmic-void"><div class="accretion-disk"></div><div class="black-hole-core"></div></div>
+    <div class="island-nav"><div class="island-text">${islandText}</div></div>
     <div class="dock">
         <i class="fas fa-rocket ${activeSector !== 'Identity' ? 'active-link' : ''}" onclick="location.href='/dashboard'"></i>
         <i class="fas fa-fingerprint ${activeSector === 'Identity' ? 'active-link' : ''}" onclick="location.href='/portfolio'"></i>
         <i class="fas fa-atom" onclick="document.getElementById('sector-modal').style.display='flex'"></i>
-        <i class="fas fa-search"></i>
         <i class="fas fa-power-off" style="margin-top:auto; color:var(--p);" onclick="location.href='/logout'"></i>
     </div>
 
     <div class="main-container">
         <div class="feed-engine">
-            ${isGuest ? `
-                <div class="card" style="text-align:center; border: 2px solid var(--v);">
-                    <h1 style="margin-bottom:15px; font-family:'Space Grotesk'">ACCESS DENIED.</h1>
-                    <p style="opacity:0.6; margin-bottom:25px;">You are currently drifting in the void. Sync your identity to interact.</p>
-                    <button class="btn-transmit" onclick="location.href='/login'">SYNC NOW</button>
-                </div>
-            ` : (isPortfolio ? content : `
-                <div class="card" style="border-top: 4px solid var(--p);">
+            ${isGuest ? `<div class="card" style="text-align:center;"><button class="btn-transmit" onclick="location.href='/login'">SYNC IDENTITY</button></div>` : 
+            (isPortfolio ? content : `
+                <div class="card">
                     <form action="/addpost" method="POST" enctype="multipart/form-data">
-                        <textarea name="content" class="cosmic-input" style="height:120px;" placeholder="What's happening in your sector, boss?" required></textarea>
+                        <textarea name="content" class="cosmic-input" style="height:120px;" placeholder="What's happening, boss?" required></textarea>
                         <input type="hidden" name="sector" value="${activeSector}">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                        <div style="display:flex; justify-content:space-between; margin-top:20px;">
                             <label style="cursor:pointer; opacity:0.5;"><i class="fas fa-image fa-lg"></i><input type="file" name="media" hidden></label>
-                            <button class="btn-transmit">TRANSMIT TO VOID</button>
+                            <button class="btn-transmit">TRANSMIT</button>
                         </div>
                     </form>
                 </div>
                 ${content}
             `)}
         </div>
-
         <div class="side-panel">
             <div class="card">
-                <h4 style="font-size:11px; opacity:0.5; margin-bottom:20px; letter-spacing:2px;">OMNI-SECTORS</h4>
-                <a href="/dashboard?sector=Global" style="display:block; text-decoration:none; color:var(--cyan); font-weight:900; margin-bottom:15px;">🌏 THE GLOBAL VOID</a>
-                ${sectors.map(s => `
-                    <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-                        <a href="/dashboard?sector=${s.name}" style="text-decoration:none; color:#fff; font-size:14px; opacity:0.8;"># ${s.name.toUpperCase()}</a>
-                        <span style="font-size:10px; opacity:0.3;">${s.memberCount} Mapped</span>
-                    </div>
-                `).join('')}
-            </div>
-            
-            <div class="card">
-                <h4 style="font-size:11px; opacity:0.5; margin-bottom:15px; letter-spacing:2px;">FEEDBACK LOOP</h4>
-                <form action="/send-feedback" method="POST">
-                    <textarea name="msg" class="cosmic-input" style="height:80px; font-size:12px;" placeholder="Message for Xavi..."></textarea>
-                    <button class="btn-transmit" style="width:100%; margin-top:10px; background:var(--v); color:#fff;">SEND SIGNAL</button>
-                </form>
+                <h4 style="font-size:11px; opacity:0.5; margin-bottom:20px;">OMNI-SECTORS</h4>
+                <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:15px;">🌏 GLOBAL VOID</a>
+                ${sectors.map(s => `<div><a href="/dashboard?sector=${s.name}" style="color:#fff; font-size:14px;"># ${s.name.toUpperCase()}</a></div>`).join('')}
             </div>
         </div>
     </div>
 
     <div id="sector-modal" class="modal">
-        <div class="card" style="width:400px; background:#000; border: 2px solid var(--cyan);">
-            <h2 style="margin-bottom:20px;">CREATE SECTOR</h2>
+        <div class="card" style="width:400px; background:#000;">
             <form action="/create-sector" method="POST">
-                <input name="name" class="cosmic-input" placeholder="sector-name (e.g. coding)" required style="margin-bottom:20px;">
-                <textarea name="description" class="cosmic-input" placeholder="What is this sector for?" style="height:80px; margin-bottom:20px;"></textarea>
-                <div style="display:flex; gap:10px;">
-                    <button type="button" class="btn-transmit" style="background:#222; color:#fff;" onclick="document.getElementById('sector-modal').style.display='none'">CANCEL</button>
-                    <button class="btn-transmit">INITIALIZE</button>
-                </div>
+                <input name="name" class="cosmic-input" placeholder="sector-name" required style="margin-bottom:20px;">
+                <button class="btn-transmit">INITIALIZE</button>
+                <button type="button" class="btn-transmit" style="background:#222; color:#fff;" onclick="document.getElementById('sector-modal').style.display='none'">BACK</button>
             </form>
         </div>
     </div>
-
-    <footer class="footer">
-        © 2026 XAVIROX COSMIC OS | VERSION 40.0 TITAN | ENCRYPTED BY THE VOID
-    </footer>
-</body>
-</html>`;
+</body></html>`;
 };
 
 // --- [CORE LOGIC & ROUTES] ---
@@ -255,100 +192,51 @@ app.get('/', (req, res) => res.redirect('/dashboard'));
 app.get('/dashboard', async (req, res) => {
     try {
         const activeSector = req.query.sector || 'Global';
-        let query = {};
-        if (activeSector !== 'Global') query.sector = activeSector;
-
+        let query = activeSector !== 'Global' ? { sector: activeSector } : {};
         const posts = await Post.find(query).sort({ date: -1 }).limit(100);
         const sectors = await Sector.find().sort({ memberCount: -1 });
         const user = req.session.user;
 
         const htmlContent = posts.map(p => `
             <div class="card">
-                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                    <span style="color:var(--cyan); font-weight:900; font-size:13px;">@${p.author} <span class="sector-tag">#${p.sector}</span></span>
-                    <span style="opacity:0.3; font-size:10px;">${new Date(p.date).toLocaleTimeString()}</span>
-                </div>
-                <p style="font-size:16px; line-height:1.6; opacity:0.9;">${p.content}</p>
-                ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:25px; margin-top:20px; border:1px solid var(--border);">` : ''}
-                <div style="margin-top:20px; display:flex; gap:20px; opacity:0.4; font-size:14px;">
-                    <span><i class="fas fa-heart"></i> ${p.likes}</span>
-                    <span><i class="fas fa-comment"></i> ${p.comments.length}</span>
-                    <i class="fas fa-share-alt" style="margin-left:auto;"></i>
-                </div>
+                <span style="color:var(--cyan); font-weight:900;">@${p.author} <span class="sector-tag">#${p.sector}</span></span>
+                <p style="margin-top:15px; font-size:16px;">${p.content}</p>
+                ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:25px; margin-top:20px;">` : ''}
             </div>
-        `).join('') || `<div class="card" style="text-align:center; opacity:0.5;">The void is currently silent in this sector.</div>`;
+        `).join('') || `<div class="card" style="text-align:center;">The void is silent.</div>`;
 
         res.send(MASTER_UI(htmlContent, user, sectors, activeSector));
-    } catch (err) { res.status(500).send("System Reboot Required."); }
+    } catch (err) { res.status(500).send("Critical System Error."); }
 });
 
 app.get('/portfolio', async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     const u = await User.findOne({ username: req.session.user.username });
     const sectors = await Sector.find();
-    
-    const html = `
-        <div class="card" style="text-align:center; position:relative;">
-            <div class="aura-badge" style="position:absolute; top:30px; right:30px;">AURA: ${u.aura}</div>
-            <img src="${u.pfp || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + u.username}" class="pfp-orbit">
-            <h1 style="font-size:45px; font-family:'Space Grotesk'; letter-spacing:-2px;">@${u.username}</h1>
-            <div style="color:var(--cyan); font-weight:bold; margin-bottom:20px;">RANK: ${u.rank}</div>
-            <p style="max-width:500px; margin:0 auto 25px; opacity:0.7; line-height:1.7;">${u.bio}</p>
-            <div style="display:flex; justify-content:center; gap:12px; margin-bottom:30px;">
-                ${u.skills.map(s => `<span class="sector-tag" style="background:var(--v); color:#fff; padding:8px 20px;">${s}</span>`).join('')}
-            </div>
-            ${u.username === 'xavi' ? `<button class="btn-transmit" onclick="location.href='/admin/signals'">VIEW NEURAL SIGNALS</button>` : ''}
-        </div>
-    `;
+    const html = `<div class="card" style="text-align:center;"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}" class="pfp-orbit"><h1>@${u.username}</h1><div class="aura-badge">AURA: ${u.aura}</div></div>`;
     res.send(MASTER_UI(html, u, sectors, 'Identity', true));
 });
 
 app.post('/create-sector', async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
-    try {
-        const { name, description } = req.body;
-        await new Sector({ name: name.toLowerCase(), description, createdBy: req.session.user.username }).save();
-        res.redirect('/dashboard?sector=' + name.toLowerCase());
-    } catch (e) { res.redirect('/dashboard'); }
+    const { name } = req.body;
+    await new Sector({ name: name.toLowerCase(), createdBy: req.session.user.username }).save();
+    res.redirect('/dashboard?sector=' + name.toLowerCase());
 });
 
 app.post('/addpost', upload.single('media'), async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
-    let mediaUrl = null;
-    if (req.file) mediaUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-    
-    await new Post({ 
-        author: req.session.user.username, 
-        content: req.body.content, 
-        sector: req.body.sector, 
-        mediaUrl 
-    }).save();
-    
-    // Increase user aura for posting
+    let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
+    await new Post({ author: req.session.user.username, content: req.body.content, sector: req.body.sector || 'Global', mediaUrl }).save();
     await User.findOneAndUpdate({ username: req.session.user.username }, { $inc: { aura: 10 } });
     res.redirect('back');
 });
 
 app.get('/login', (req, res) => {
-    res.send(`
-        <!DOCTYPE html><html><head><title>XAVIROX | SYNC</title>
-        <style>
-            body { background:#000; color:#fff; font-family:sans-serif; display:flex; height:100vh; align-items:center; justify-content:center; }
-            .login-card { width:400px; padding:50px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); border-radius:40px; text-align:center; }
-            input { width:100%; padding:15px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; margin-bottom:15px; outline:none; }
-            button { width:100%; padding:15px; background:#fff; color:#000; font-weight:900; border-radius:50px; border:none; cursor:pointer; }
-        </style>
-        </head><body>
-        <div class="login-card">
-            <h1 style="margin-bottom:30px; letter-spacing:2px;">XAVIROX SYNC</h1>
-            <form action="/login" method="POST">
-                <input name="username" placeholder="NEURAL ID" required>
-                <input name="password" type="password" placeholder="ACCESS KEY" required>
-                <button>SYNC IDENTITY</button>
-            </form>
-            <p style="margin-top:20px; font-size:12px; opacity:0.4;">New? Just enter details to initialize.</p>
-        </div></body></html>
-    `);
+    res.send(`<!DOCTYPE html><html><body style="background:#000; color:#fff; display:flex; height:100vh; align-items:center; justify-content:center; font-family:sans-serif;">
+        <div style="width:350px; text-align:center;"><h1>XAVIROX SYNC</h1>
+        <form action="/login" method="POST"><input name="username" placeholder="ID" style="width:100%; padding:15px; margin:10px 0; border-radius:10px;"><input name="password" type="password" placeholder="KEY" style="width:100%; padding:15px; margin:10px 0; border-radius:10px;"><button style="width:100%; padding:15px; border-radius:50px; cursor:pointer;">SYNC</button></form>
+        </div></body></html>`);
 });
 
 app.post('/login', async (req, res) => {
@@ -361,20 +249,12 @@ app.post('/login', async (req, res) => {
     if (await bcrypt.compare(password, user.password)) {
         req.session.user = user;
         res.redirect('/dashboard');
-    } else {
-        res.send("<script>alert('Sync Failed. Incorrect Key.'); window.location='/login';</script>");
-    }
+    } else { res.send("Wrong Key."); }
 });
 
-app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/dashboard');
-});
+app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/dashboard'); });
 
-// Final System Export
+// Final Export & Start
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 XAVIROX TITAN LIVE`));
 module.exports = app;
-
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => console.log(\`🚀 XAVIROX 40.0 TITAN IS LIVE ON PORT \${PORT}\`));
-}
