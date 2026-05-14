@@ -5,6 +5,7 @@
     - FIXED: Mobile Layout Breakdown (Added CSS Media Queries for Stacked Mobile Flow & Adaptive Padding)
     - RETAINED: GenZ Style Anonymous Message Center, Cyber Drop Boxes, V61 Void Search, Toggles
     - FIXED BUG: Interaction Sync Glitch for Live W/L/Save System for Authenticated Sessions
+    - ENHANCED: Added 100+ GenZ Chaos Strings inside Input Textbar Rotator Engine.
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
 ==================================================================================================== */
 
@@ -239,6 +240,43 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                 else card.style.display = 'none';
             });
         }
+
+        // --- DYNAMIC INTRUSIVE THOUGHTS ROTATOR ENGINE ---
+        const chaoticThoughts = [
+            "type something unhinged...", "drop your hot take here", "bro is thinking...", "enter your villain arc thoughts",
+            "type before the motivation disappears", "the internet is listening 👀", "cooked or cooking?", "say something legendary",
+            "your brainrot goes here", "start a war in the comments", "type like nobody screenshots", "certified yap zone",
+            "summon chaos here", "drop lore immediately", "speak your truth king", "type something your future self regrets",
+            "enter forbidden opinions", "post and pray", "write like the main character", "start typing before the cringe hits",
+            "insert midnight thoughts", "say it louder for the lurkers", "this box can’t handle your aura", "type your daily delusion",
+            "one post away from fame", "internet historians are watching", "type with dramatic music playing", "go full sigma",
+            "the council awaits your message", "release the dopamine", "type like it’s 3am", "your intrusive thoughts called",
+            "enter chaos mode", "drop the coldest take possible", "become viral accidentally", "type something oddly specific",
+            "your enemies might read this", "make the algorithm proud", "type like a sleep deprived genius", "enter your cinematic monologue",
+            "say something lowkey iconic", "the void wants your opinion", "warning: peak content only", "type with unnecessary confidence",
+            "bro definitely has something to say", "start your comeback story", "internet moment loading...", "type here before reality loads",
+            "unleash the yapper within", "this textbox has trust issues", "write history or nonsense", "type your plot twist",
+            "send vibes only", "type your rarest thought", "enter emotional damage here", "go ahead, overshare", "this post might age terribly",
+            "type like you’re in an edit", "say something that starts drama", "your aura increases per letter", "keyboard warrior mode activated",
+            "type now, think later", "this box runs on attention", "enter your daily nonsense", "the timeline needs content",
+            "type something dangerously relatable", "feed the algorithm", "drop a legendary comment", "internet addiction starts here",
+            "type with rizz", "this could’ve stayed in drafts", "say something chronically online", "type your shower thoughts",
+            "reality is optional here", "type like the camera zooms in after", "post something your gc would roast", "enter elite level yapping",
+            "type your “hear me out”", "become the meme", "write like you already went viral", "type your last two braincells fighting",
+            "this box smells like energy drinks", "type something illegally funny", "post certified nonsense", "say something that needs context",
+            "enter your random side quest", "type like the edits depend on it", "drop peak fiction", "type something lowkey cursed",
+            "your followers aren’t ready", "enter sigma headquarters", "type your chaotic masterpiece", "say something with main character energy",
+            "your wifi carried you here", "type your next bad decision", "enter thoughts.exe", "this textbox survives on drama",
+            "type before your confidence expires", "drop internet gold", "the world wasn’t ready for this post"
+        ];
+        
+        const mainInput = document.getElementById('txBarEngine');
+        if(mainInput) {
+            setInterval(() => {
+                const randomText = chaoticThoughts[Math.floor(Math.random() * chaoticThoughts.length)];
+                mainInput.setAttribute('placeholder', randomText);
+            }, 3500);
+        }
     </script>
 </body></html>`;
 };
@@ -253,7 +291,7 @@ app.get('/dashboard', async (req, res) => {
     const postForm = `<div class="card">
         ${!user ? `<button class="create-btn" onclick="location.href='/login'">SYNC TO TRANSMIT</button>` : `
             <form action="/addpost" method="POST" enctype="multipart/form-data">
-                <textarea name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px;" placeholder="${activeSector==='confessions'?'Share a secret ghost signal...':'Transmit a signal...'}" required></textarea>
+                <textarea id="txBarEngine" name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px;" placeholder="Transmit a signal..." required></textarea>
                 <input type="hidden" name="sector" value="${activeSector}">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
                     <div style="display:flex; gap:20px; align-items:center;">
