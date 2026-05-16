@@ -1,5 +1,5 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V75 [THE REAL-TIME FLUID THREAD ENGINE // TIME CAPSULE SCHEDULED POSTS]
+    🚀 XAVIROX COSMIC OS - V76 [BUG FIX PATCH // SECURITY + STABILITY OVERHAUL]
     STATUS: MASTER REFACTOR + ASYNCHRONOUS COMMENTING + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
     - LOGO INTEGRATION: Successfully embedded XAVIROX Logo & Gemini AI Gateway branding into UI framework.
     - FIXED CRITICAL BUG: Completely stopped full page refresh on interaction nodes & comment submissions.
@@ -17,6 +17,10 @@
     - FEATURE ADDED: Time Capsule Engine - Schedule signals/posts for the future seamlessly.
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
     - SECURITY FIX V65: MongoDB URI, Session Secret & Gemini APIs locked into Environment Variables.
+    - BUG FIX V76: Fixed interact() missing event param, renderCommentTree null parentId mismatch,
+                   session user aura sync after login & post, ghost msg missing auth check,
+                   MOCK_KEY removed from AI init, orphaned comments deleted with post,
+                   interact save branch no longer calls post.save() unnecessarily.
 ==================================================================================================== */
 
 const express = require('express');
@@ -33,8 +37,8 @@ const app = express();
 // ✅ SECURITY FIX: Environment Variables Setup
 const dbURI = process.env.MONGODB_URI;
 
-// --- [AI INITIALIZATION] ---
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'MOCK_KEY' });
+// --- [AI INITIALIZATION] --- (MOCK_KEY removed - will fail safely if key missing)
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // --- [DATABASE] ---
 let isConnected = false;
@@ -193,19 +197,13 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .del-engine-container { margin-left: auto; display: flex; align-items: center; justify-content: center; }
         .cosmic-del-btn { background: linear-gradient(135deg, #d300c5, #7000ff); border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-radius 0.3s ease; box-shadow: 0 0 10px rgba(112, 0, 255, 0.4); }
         .cosmic-del-btn:hover { transform: scale(1.1); box-shadow: 0 0 15px #d300c5; }
-        
         .cosmic-del-btn .trash-ico { color: #fff; font-size: 13px; z-index: 2; pointer-events: none; }
         .cosmic-del-btn .del-text-track { display: none; opacity: 0; white-space: nowrap; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 900; color: #fff; letter-spacing: 1.5px; margin-left: 8px; z-index: 2; pointer-events: none; }
-        
-        /* Expanded Capsule Layout States */
         .cosmic-del-btn.is-primed { width: 105px; border-radius: 20px; justify-content: flex-start; padding-left: 12px; }
         .cosmic-del-btn.is-primed .del-text-track { display: inline-flex; opacity: 1; }
-        
-        /* Explosion Particle Setup */
         .del-char { display: inline-block; transform-origin: center bottom; }
         .cosmic-del-btn.is-destroying .del-char { animation: explosionScattered 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
         .cosmic-del-btn.is-destroying .trash-ico { animation: trashVibeShake 0.15s ease-in-out infinite alternate; }
-
         @keyframes explosionScattered {
             0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
             40% { transform: translateY(-12px) rotate(var(--rot)) scale(1.1); opacity: 0.9; }
@@ -220,17 +218,14 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 15px; border-radius: 20px; font-weight: 900; cursor: pointer; font-size: 11px; text-transform: uppercase; text-decoration: none; text-align: center; }
         .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
         .bento-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 20px; padding: 20px; text-align: center; }
-
         .ghost-msg-node { background: rgba(112, 0, 255, 0.03); padding: 16px; border-radius: 20px; border: 1px solid rgba(112, 0, 255, 0.2); margin-bottom: 12px; box-shadow: inset 0 0 15px rgba(112, 0, 255, 0.05); }
         .ghost-input { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 14px; border-radius: 16px; margin-bottom: 12px; outline: none; font-size: 13px; font-weight: 600; }
         .ghost-input:focus { border-color: var(--v); box-shadow: 0 0 15px rgba(112, 0, 255, 0.3); }
-
         .cosmic-footer { background: rgba(0, 0, 0, 0.6); border-top: 1px solid var(--border); backdrop-filter: blur(20px); width: 100%; padding: 25px 20px; text-align: center; margin-top: auto; }
         .footer-links { display: flex; justify-content: center; gap: 30px; margin-bottom: 12px; flex-wrap: wrap; }
         .footer-link { color: rgba(255, 255, 255, 0.6); text-decoration: none; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
         .footer-link:hover { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
         .footer-link span { color: var(--p); }
-
         .auth-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 15px; border-radius: 18px; color: #fff; outline: none; font-size: 14px; margin-bottom: 15px; }
         .auth-input:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
 
@@ -242,21 +237,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             .nav-row { padding: 4px; gap: 6px; border-radius: 16px; }
             .nav-btn-circle { width: 38px; height: 38px; border-radius: 12px; font-size: 14px; }
             .icon-label { display: none !important; }
-
             .dynamic-island { top: 75px; width: 90%; height: 42px; font-size: 9px; letter-spacing: 1px; }
             .dynamic-island:hover { width: 92%; height: 60px; }
-
             .main-container { margin: 140px auto 30px auto; flex-direction: column; gap: 15px; padding: 0 12px; }
             .feed { order: 1; width: 100%; }
             .sidebar { order: 2; width: 100%; }
-            
             .card { padding: 20px; border-radius: 24px; margin-bottom: 15px; }
             .bento-grid { gap: 10px; }
             .bento-item { padding: 12px; border-radius: 14px; }
-            
             .interaction-bar { gap: 12px; justify-content: space-between; }
             .action-btn { font-size: 11px; gap: 4px; }
-            
             .footer-links { gap: 15px; }
             .footer-link { font-size: 10px; letter-spacing: 0.5px; }
             .comment-node.nested { margin-left: 12px; }
@@ -286,9 +276,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <div class="card">
                 <div class="brand-logo-container">
                     <span style="font-weight: 900; font-size: 20px; letter-spacing: 2px; color: #fff;">XAVIROX</span>
-                    <div class="gemini-shield-badge">
-                        <i class="fas fa-brain"></i> GEMINI 2.5
-                    </div>
+                    <div class="gemini-shield-badge"><i class="fas fa-brain"></i> GEMINI 2.5</div>
                 </div>
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:20px;">SECTORS / COMMUNITIES</h4>
                 <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:15px; text-decoration:none; font-weight:900;">🌏 GLOBAL</a>
@@ -311,7 +299,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V75 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V76 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -325,8 +313,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             container.appendChild(star);
         }
         
-        // 🛠️ REPAIRED INTERACTION AJAX PIPELINE (No Refresh Like/Dislike/Save)
-        async function interact(postId, type) {
+        // 🐛 BUG FIX: interact() now properly receives event as first parameter
+        async function interact(event, postId, type) {
             try {
                 const res = await fetch('/interact', { 
                     method: 'POST', 
@@ -336,9 +324,20 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                 if(res.status === 200) {
                     const targetBtn = event ? event.currentTarget : null;
                     if (targetBtn) {
-                        targetBtn.classList.toggle('active-w', type === 'like');
-                        targetBtn.classList.toggle('active-l', type === 'dislike');
-                        targetBtn.classList.toggle('active-save', type === 'save');
+                        if(type === 'like') {
+                            targetBtn.classList.toggle('active-w');
+                            const dislikeBtn = targetBtn.parentElement.querySelector('.dislike-btn');
+                            if(dislikeBtn) dislikeBtn.classList.remove('active-l');
+                        } else if(type === 'dislike') {
+                            targetBtn.classList.toggle('active-l');
+                            const likeBtn = targetBtn.parentElement.querySelector('.like-btn');
+                            if(likeBtn) likeBtn.classList.remove('active-w');
+                        } else if(type === 'save') {
+                            targetBtn.classList.toggle('active-save');
+                            targetBtn.innerHTML = targetBtn.classList.contains('active-save') 
+                                ? '<i class="fas fa-bookmark"></i> ARCHIVED' 
+                                : '<i class="fas fa-bookmark"></i> SAVE';
+                        }
                     } else {
                         window.location.reload(); 
                     }
@@ -353,13 +352,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             }
         }
 
-        // Variable escaping logic corrected here (Escaped inside Node.js string block to prevent breakdown)
         function toggleReplyForm(commentId) {
             const form = document.getElementById('form-' + commentId);
             if(form) form.style.display = form.style.display === 'block' ? 'none' : 'block';
         }
 
-        // 🎯 AJAX PIPELINE: Submit comments dynamically without reloading the webpage
+        // 🎯 AJAX PIPELINE: Submit comments dynamically without reloading
         async function submitCommentAjax(event, formElement, appendTargetId) {
             event.preventDefault();
             const formData = new FormData(formElement);
@@ -375,20 +373,18 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 
                 if (response.ok) {
                     const result = await response.json();
-                    
                     const newNode = document.createElement('div');
-                    newNode.className = `comment-node \${data.parentCommentId ? 'nested' : ''}`;
-                    newNode.innerHTML = `
-                        <div style="font-size:11px; opacity:0.8; font-weight:bold; color:var(--cyan)">
-                            @\${result.author} 
-                            <span style="opacity:0.4; font-weight:normal; margin-left:10px;">Just Now</span>
-                        </div>
-                        <p style="font-size:13px; margin-top:4px; color:#ddd;">\${result.content}</p>
-                    `;
+                    newNode.className = 'comment-node ' + (data.parentCommentId ? 'nested' : '');
+                    newNode.innerHTML = 
+                        '<div style="font-size:11px; opacity:0.8; font-weight:bold; color:var(--cyan)">@' + result.author + 
+                        '<span style="opacity:0.4; font-weight:normal; margin-left:10px;">Just Now</span></div>' +
+                        '<p style="font-size:13px; margin-top:4px; color:#ddd;">' + result.content + '</p>';
                     
-                    const container = document.getElementById(appendTargetId);
-                    if(container) {
-                        container.appendChild(newNode);
+                    const targetContainer = document.getElementById(appendTargetId);
+                    if(targetContainer) {
+                        const noThreadsMsg = targetContainer.querySelector('.no-threads-prompt');
+                        if(noThreadsMsg) noThreadsMsg.remove();
+                        targetContainer.appendChild(newNode);
                         formElement.reset();
                         if(data.parentCommentId) formElement.parentElement.style.display = 'none';
                     } else {
@@ -404,26 +400,19 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 
         // 🛠️ REPAIRED DELETION ANIMATION LOGIC ENGINE
         async function triggerDynamicDelete(event, btnElement, postId) {
-            if(event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            
+            if(event) { event.preventDefault(); event.stopPropagation(); }
             if(!btnElement.classList.contains('is-primed')) {
                 btnElement.classList.add('is-primed');
                 return;
             }
-            
             btnElement.classList.add('is-destroying');
             await new Promise(resolve => setTimeout(resolve, 600));
-            
             try {
                 const res = await fetch('/delete-post', { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify({ postId: postId }) 
                 });
-                
                 if(res.status === 200) {
                     btnElement.closest('.p-node').remove(); 
                 } else {
@@ -469,7 +458,7 @@ app.get('/dashboard', async (req, res) => {
     const activeSector = req.query.sector || 'Global';
     const currentTime = new Date();
 
-    // ⏳ TIME CAPSULE AGGREGATION: Schedule logic inject filter (Future posts tab tak hidden rahengi jab tak unka time na ho)
+    // ⏳ TIME CAPSULE AGGREGATION: Future posts hidden until their time
     const feedFilter = activeSector !== 'Global' ? { sector: activeSector } : {};
     feedFilter.$or = [
         { scheduledFor: null },
@@ -493,7 +482,6 @@ app.get('/dashboard', async (req, res) => {
                             <div class="switch-track"><div class="switch-thumb"></div></div>
                             <span style="font-size:11px; font-weight:900; color:#aaa; letter-spacing:1px;">GHOST MODE</span>
                         </label>
-                        
                         <div class="time-capsule-input-wrapper">
                             <i class="fas fa-hourglass-start" style="font-size:11px; color:var(--cyan);"></i>
                             <input type="datetime-local" name="scheduledTime" class="cosmic-datetime" title="Schedule inside Time Capsule">
@@ -507,7 +495,13 @@ app.get('/dashboard', async (req, res) => {
     const allComments = await Comment.find({ postId: { $in: posts.map(p => p._id) } }).sort({ date: 1 });
 
     function renderCommentTree(commentsList, parentId = null, isNested = false) {
-        const targetNodes = commentsList.filter(c => String(c.parentCommentId) === String(parentId));
+        // 🐛 BUG FIX: Proper null comparison for root-level comments
+        const targetNodes = commentsList.filter(c => {
+            if (parentId === null) {
+                return c.parentCommentId === null || c.parentCommentId === undefined;
+            }
+            return String(c.parentCommentId) === String(parentId);
+        });
         if (targetNodes.length === 0) return '';
 
         return targetNodes.map(c => {
@@ -518,7 +512,6 @@ app.get('/dashboard', async (req, res) => {
                     <span style="opacity:0.4; font-weight:normal; margin-left:10px;">${new Date(c.date).toLocaleTimeString()}</span>
                 </div>
                 <p style="font-size:13px; margin-top:4px; color:#ddd;">${c.content}</p>
-                
                 ${user ? `
                 <button type="button" class="reply-trigger-btn" onclick="toggleReplyForm('${c._id}')"><i class="fas fa-reply"></i> Reply</button>
                 <div class="reply-form-wrapper" id="form-${c._id}">
@@ -528,7 +521,6 @@ app.get('/dashboard', async (req, res) => {
                         <input type="text" name="content" class="comment-mini-input" placeholder="Type reply execution..." required>
                     </form>
                 </div>` : ''}
-                
                 <div id="tree-container-${c._id}">
                     ${renderCommentTree(commentsList, c._id, true)}
                 </div>
@@ -541,12 +533,11 @@ app.get('/dashboard', async (req, res) => {
         const hasL = user && p.dislikes.includes(user.username);
         const isSaved = user && user.savedPosts && user.savedPosts.includes(p._id.toString());
         const postAuraColor = p.authorAura > 500 ? 'var(--cyan)' : p.authorAura < 50 ? '#ff0000' : 'var(--p)';
-        
         const showDelete = user && (user.username === p.author || user.username === 'xavirox');
-
         const postComments = allComments.filter(c => String(c.postId) === String(p._id));
         const commentsRenderedTree = renderCommentTree(postComments, null, false);
 
+        // 🐛 BUG FIX: interact() now passes event as first argument in onclick
         return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}">
             <div style="display:flex; align-items:center;">
                 <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:13px; letter-spacing:0.5px;">
@@ -571,17 +562,15 @@ app.get('/dashboard', async (req, res) => {
             <p style="margin-top:12px; font-size:16px;">${p.content}</p>
             ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);">` : ''}
             <div class="interaction-bar">
-                <button type="button" onclick="interact('${p._id.toString()}', 'like')" class="action-btn ${hasW ? 'active-w' : ''}"><i class="fas fa-crown"></i> ${p.likes.length} W</button>
-                <button type="button" onclick="interact('${p._id.toString()}', 'dislike')" class="action-btn ${hasL ? 'active-l' : ''}"><i class="fas fa-skull"></i> ${p.dislikes.length} L</button>
-                <button type="button" onclick="interact('${p._id.toString()}', 'save')" class="action-btn ${isSaved ? 'active-save' : ''}"><i class="fas fa-bookmark"></i> ${isSaved ? 'ARCHIVED' : 'SAVE'}</button>
+                <button type="button" onclick="interact(event, '${p._id.toString()}', 'like')" class="action-btn like-btn ${hasW ? 'active-w' : ''}"><i class="fas fa-crown"></i> ${p.likes.length} W</button>
+                <button type="button" onclick="interact(event, '${p._id.toString()}', 'dislike')" class="action-btn dislike-btn ${hasL ? 'active-l' : ''}"><i class="fas fa-skull"></i> ${p.dislikes.length} L</button>
+                <button type="button" onclick="interact(event, '${p._id.toString()}', 'save')" class="action-btn save-btn ${isSaved ? 'active-save' : ''}"><i class="fas fa-bookmark"></i> ${isSaved ? 'ARCHIVED' : 'SAVE'}</button>
             </div>
-
             <div class="comments-section-container">
                 <h5 style="font-size:10px; opacity:0.4; letter-spacing:2px; margin-bottom:10px;">TRANSMITTED THREADS</h5>
                 <div id="root-comment-box-${p._id}">
                     ${commentsRenderedTree || '<p style="font-size:11px; opacity:0.2; padding-left:5px;" class="no-threads-prompt">No structural threads running.</p>'}
                 </div>
-                
                 ${user ? `
                 <form onsubmit="submitCommentAjax(event, this, 'root-comment-box-${p._id}')" style="margin-top:15px; display: flex; gap: 10px;">
                     <input type="hidden" name="postId" value="${p._id}">
@@ -599,11 +588,9 @@ app.get('/dashboard', async (req, res) => {
 app.post('/add-comment-ajax', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: "Unauthorized" });
     const { postId, parentCommentId, content } = req.body;
-
     try {
         const user = await User.findOne({ username: req.session.user.username });
         if (!user) return res.status(404).json({ error: "User identity synced out." });
-        
         const newComment = await new Comment({
             postId: postId,
             parentCommentId: parentCommentId || null, 
@@ -612,12 +599,7 @@ app.post('/add-comment-ajax', async (req, res) => {
             content: content,
             isAnonymous: false
         }).save();
-
-        return res.status(200).json({
-            author: newComment.author,
-            content: newComment.content,
-            id: newComment._id
-        });
+        return res.status(200).json({ author: newComment.author, content: newComment.content, id: newComment._id });
     } catch(err) {
         console.error(err);
         return res.status(500).json({ error: "Internal Pipeline Failed" });
@@ -631,7 +613,7 @@ app.get('/login', (req, res) => {
         <div class="card" style="max-width:450px; margin: 40px auto; border-color: var(--cyan);">
             <h2 style="text-align:center; margin-bottom:20px; letter-spacing:2px; color: var(--cyan);">SYNC ACCOUNT</h2>
             <form action="/login" method="POST">
-                <input type="text" name="username" class="auth-input" placeholder="Enter @username" required lowercase>
+                <input type="text" name="username" class="auth-input" placeholder="Enter @username" required>
                 <input type="password" name="password" class="auth-input" placeholder="Enter Password" required>
                 <button class="create-btn" style="margin-top:10px;">ESTABLISH SYNC</button>
             </form>
@@ -648,7 +630,8 @@ app.post('/login', async (req, res) => {
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.send("<script>alert('SYNC FAILED: Invalid Aura Keys or Identity Unknown 💀'); window.history.back();</script>");
         }
-        req.session.user = { username: user.username };
+        // 🐛 BUG FIX: Store aura in session so dynamic island shows correct value
+        req.session.user = { username: user.username, aura: user.aura };
         res.redirect('/dashboard');
     } catch (err) {
         res.send("<script>alert('SYSTEM ERROR during handshake.'); window.history.back();</script>");
@@ -661,7 +644,7 @@ app.get('/register', (req, res) => {
         <div class="card" style="max-width:450px; margin: 40px auto; border-color: var(--p);">
             <h2 style="text-align:center; margin-bottom:20px; letter-spacing:2px; color: var(--p);">GENERATE IDENTITY</h2>
             <form action="/register" method="POST">
-                <input type="text" name="username" class="auth-input" placeholder="Choose @username" required lowercase>
+                <input type="text" name="username" class="auth-input" placeholder="Choose @username" required>
                 <input type="password" name="password" class="auth-input" placeholder="Secure Password" required>
                 <button class="create-btn" style="margin-top:10px; background: linear-gradient(45deg, var(--p), #000);">BUILD MATRIX</button>
             </form>
@@ -680,7 +663,8 @@ app.post('/register', async (req, res) => {
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await new User({ username: username.toLowerCase().trim(), password: hashedPassword }).save();
-        req.session.user = { username: newUser.username };
+        // 🐛 BUG FIX: Store aura in session on register too
+        req.session.user = { username: newUser.username, aura: newUser.aura };
         res.redirect('/dashboard');
     } catch (err) {
         res.send("<script>alert('INITIALIZATION FAILED: Matrix error.'); window.history.back();</script>");
@@ -693,18 +677,24 @@ app.get('/logout', (req, res) => {
 });
 
 // --- [GHOST INBOX ENGINE] ---
+// 🐛 BUG FIX: Added auth check + target user validation
 app.post('/send-ghost-msg', async (req, res) => {
+    if (!req.session.user) return res.send("<script>alert('Login required to send ghost signals.'); window.location.href='/login';</script>");
     const { targetUser, message } = req.body;
-    if (targetUser) {
+    if (!targetUser || !message) return res.send("<script>alert('Target and message required.'); window.history.back();</script>");
+    try {
+        const target = await User.findOne({ username: targetUser.toLowerCase().trim() });
+        if (!target) return res.send("<script>alert('Target identity not found in the void.'); window.history.back();</script>");
         await User.findOneAndUpdate({ username: targetUser.toLowerCase().trim() }, { $push: { ghostMessages: { content: message } } });
+        res.send("<script>alert('GHOST SIGNAL INJECTED UNTRACEABLE 🧠'); window.history.back();</script>");
+    } catch(err) {
+        res.send("<script>alert('Ghost signal failed.'); window.history.back();</script>");
     }
-    res.send("<script>alert('GHOST SIGNAL INJECTED UNTRACEABLE 🧠'); window.history.back();</script>");
 });
 
 app.get('/portfolio', async (req, res) => {
     const user = req.session.user;
     if(!user) return res.send("<script>alert('MADE A ACC LIL BRO 💀'); window.location.href='/login';</script>");
-    
     const dbUser = await User.findOne({ username: user.username });
     if (!dbUser) return res.send("<script>alert('Identity drop. Login again.'); window.location.href='/login';</script>");
     const sectors = await Sector.find();
@@ -733,17 +723,14 @@ app.get('/portfolio', async (req, res) => {
                 <div class="bento-item"><i class="fas fa-ghost"></i><p style="font-size:10px;">${dbUser.ghostMessages.length} GHOSTS</p></div>
             </div>
         </div>
-        
         <div class="card" style="border-color:#ffea00;">
             <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:#ffea00;">📁 SAVED CHANNELS & VAULT</h4>
             ${savedFeedHtml || '<p style="opacity:0.2; font-size:12px; text-align:center;">NO ARCHIVED FILES FOUND</p>'}
         </div>
-
         <div class="card ghost-card">
             <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--v); font-weight:900;">📥 INCOGNITO GHOST VOID</h4>
             ${ghostInbox || '<p style="opacity:0.3; font-size:12px; text-align:center; padding:10px;">GHOST VOID IS EMPTY</p>'}
         </div>
-
         <div class="card" style="border-color: rgba(255,255,255,0.15);">
             <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--p); font-weight:900;">💥 DROP AN ANONYMOUS BOMB</h4>
             <form action="/send-ghost-msg" method="POST">
@@ -772,21 +759,10 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
             const imagePart = fileToGenerativePart(req.file.buffer, req.file.mimetype);
             aiContents.push(imagePart);
         }
+        if (textContent) { aiContents.push(textContent); }
+        aiContents.push("Analyze this user-submitted content. Respond with ONLY 'SAFE' or 'TOXIC'. Check for explicit adult content, severe abuse, cyberbullying, or intense hate speech in English, Urdu, or Roman Urdu.");
 
-        if (textContent) {
-            aiContents.push(textContent);
-        }
-
-        aiContents.push(
-            "Analyze this user-submitted content. Respond with ONLY 'SAFE' or 'TOXIC'. Check for explicit adult content, severe abuse, cyberbullying, or intense hate speech in English, Urdu, or Roman Urdu."
-        );
-
-        // Updated for correct API model selection orchestration
-        const aiResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: aiContents
-        });
-
+        const aiResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: aiContents });
         const gatekeeperVerdict = aiResponse.text.trim().toUpperCase();
 
         if (gatekeeperVerdict === 'TOXIC') {
@@ -797,13 +773,10 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
 
         let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
         
-        // ⏳ TIME CAPSULE: Parsing schedule execution pipeline
         let finalScheduledDate = null;
         if (req.body.scheduledTime) {
             const parsedTime = new Date(req.body.scheduledTime);
-            if (parsedTime > new Date()) {
-                finalScheduledDate = parsedTime;
-            }
+            if (parsedTime > new Date()) finalScheduledDate = parsedTime;
         }
 
         await new Post({ 
@@ -812,33 +785,35 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
             scheduledFor: finalScheduledDate
         }).save();
         
-        if(!isAnon) { user.aura += 15; await user.save(); }
+        if(!isAnon) { 
+            user.aura += 15; 
+            await user.save();
+            // 🐛 BUG FIX: Sync session aura after post so dynamic island updates live
+            req.session.user.aura = user.aura;
+        }
         res.redirect('back');
 
     } catch (aiError) {
         console.error("⚠️ GATEKEEPER ENGINE ERROR:", aiError);
-        
         const isAnon = req.body.isAnonymous === 'on';
         const user = await User.findOne({ username: req.session.user.username });
         if (!user) return res.redirect('/login');
-        
         let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
-        
         let finalScheduledDate = null;
         if (req.body.scheduledTime) {
             const parsedTime = new Date(req.body.scheduledTime);
-            if (parsedTime > new Date()) {
-                finalScheduledDate = parsedTime;
-            }
+            if (parsedTime > new Date()) finalScheduledDate = parsedTime;
         }
-
         await new Post({ 
             author: user.username, authorAura: user.aura, content: req.body.content, 
             sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon,
             scheduledFor: finalScheduledDate
         }).save();
-        
-        if(!isAnon) { user.aura += 15; await user.save(); }
+        if(!isAnon) { 
+            user.aura += 15; 
+            await user.save();
+            req.session.user.aura = user.aura;
+        }
         res.redirect('back');
     }
 });
@@ -847,16 +822,15 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
 app.post('/delete-post', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const { postId } = req.body;
-
     try {
         const post = await Post.findById(postId);
         if (!post) return res.status(404).json({ error: 'Post not found' });
-
         if (post.author !== req.session.user.username && req.session.user.username !== 'xavirox') {
             return res.status(403).json({ error: 'Forbidden' });
         }
-
         await Post.findByIdAndDelete(postId);
+        // 🐛 BUG FIX: Delete orphaned comments when post is deleted
+        await Comment.deleteMany({ postId: postId });
         return res.sendStatus(200);
     } catch (err) {
         console.error(err);
@@ -869,11 +843,9 @@ app.post('/interact', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const { postId, type } = req.body;
     const username = req.session.user.username;
-
     try {
         const post = await Post.findById(postId);
         if (!post) return res.status(404).json({ error: 'Post not found' });
-
         const user = await User.findOne({ username });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -884,6 +856,7 @@ app.post('/interact', async (req, res) => {
                 post.likes.push(username);
                 post.dislikes = post.dislikes.filter(u => u !== username);
             }
+            await post.save();
         } else if (type === 'dislike') {
             if (post.dislikes.includes(username)) {
                 post.dislikes = post.dislikes.filter(u => u !== username);
@@ -891,7 +864,9 @@ app.post('/interact', async (req, res) => {
                 post.dislikes.push(username);
                 post.likes = post.likes.filter(u => u !== username);
             }
+            await post.save();
         } else if (type === 'save') {
+            // 🐛 BUG FIX: save only modifies user, not post — no post.save() needed
             if (user.savedPosts.includes(postId)) {
                 user.savedPosts = user.savedPosts.filter(id => id !== postId);
             } else {
@@ -900,7 +875,6 @@ app.post('/interact', async (req, res) => {
             await user.save();
         }
 
-        await post.save();
         return res.sendStatus(200);
     } catch (err) {
         console.error(err);
@@ -923,5 +897,5 @@ app.get('/create-sector', async (req, res) => {
 // Server Initialization
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log("🚀 COSMIC ENGINE V75 LIVE ON PORT " + PORT);
+    console.log("🚀 COSMIC ENGINE V76 LIVE ON PORT " + PORT);
 });
