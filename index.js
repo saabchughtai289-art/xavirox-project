@@ -1,5 +1,5 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V71 [THE NESTED THREADED REPLIES ENGINE]
+    🚀 XAVIROX COSMIC OS - V72 [THE INTEGRATED COMMENTING FIELD & THREAD ENGINE]
     STATUS: MASTER REFACTOR + NESTED COMMENTS PIPELINE + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
     - REPAIRED: Clean Event Propagation for all interaction nodes (W, L, Save, Delete)
     - INTEGRATED: Premium Fluid Delete Micro-Interaction CSS/JS Engine (Based on user interaction sample)
@@ -285,7 +285,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V71 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V72 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -437,7 +437,7 @@ app.get('/dashboard', async (req, res) => {
                     <form action="/add-comment" method="POST">
                         <input type="hidden" name="postId" value="${c.postId}">
                         <input type="hidden" name="parentCommentId" value="${c._id}">
-                        <input type="text" name="content" class="comment-mini-input" placeholder="Type reply execution..." required>
+                        <input type="text" name="comment-mini-input" placeholder="Type reply execution..." required>
                     </form>
                 </div>` : ''}
                 
@@ -493,10 +493,11 @@ app.get('/dashboard', async (req, res) => {
                 ${commentsRenderedTree || '<p style="font-size:11px; opacity:0.2; padding-left:5px;">No structural threads running.</p>'}
                 
                 ${user ? `
-                <form action="/add-comment" method="POST" style="margin-top:15px;">
+                <form action="/add-comment" method="POST" style="margin-top:15px; display: flex; gap: 10px;">
                     <input type="hidden" name="postId" value="${p._id}">
                     <input type="text" name="content" class="comment-mini-input" placeholder="Inject thoughts into thread..." required>
-                </form>` : ''}
+                    <button class="create-btn" style="width: auto; padding: 0 20px; border-radius: 12px; font-size: 10px;">COMMENT</button>
+                </form>` : `<p style="font-size:11px; opacity:0.4; margin-top:10px;">⚠️ <a href="/login" style="color:var(--cyan); text-decoration:none;">Sync identity</a> to comment on this thread.</p>`}
             </div>
         </div>`
     }).join('');
@@ -798,5 +799,5 @@ app.get('/create-sector', async (req, res) => {
 // Server Initialization
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log("🚀 COSMIC ENGINE V71 LIVE ON PORT " + PORT);
+    console.log("🚀 COSMIC ENGINE V72 LIVE ON PORT " + PORT);
 });
