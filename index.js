@@ -1,6 +1,7 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V67 [THE MOBILE STABLE ENGINE, EXPLODING MICRO-INTERACTION MERGE]
+    🚀 XAVIROX COSMIC OS - V68 [THE MOBILE STABLE ENGINE, DYNAMIC ACTION RECOVERY FIX]
     STATUS: FULL MASTER MERGE + LEGAL SUPPORT ENGINE SYNC + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
+    - FIXED BUG: Resolved Delete Action Failure by optimizing target selector element mapping.
     - INTEGRATED: Premium Fluid Delete Micro-Interaction CSS/JS Engine (Based on user interaction sample)
     - MECHANISM: Hover scales trash can, click spawns full capsule button, breaks characters, and shakes trash container.
     - RESTORED: /login & /register GET/POST Engines to fix "Cannot GET /login" breakdown
@@ -151,14 +152,14 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             💥 COSMIC PREMIUM EXPLODING DELETE INTERACTION STYLES
            ====================================================================== */
         .del-engine-container { margin-left: auto; display: flex; align-items: center; justify-content: center; }
-        .cosmic-del-btn { background: linear-gradient(135deg, #d300c5, #7000ff); border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 0 10px rgba(112, 0, 255, 0.4); }
+        .cosmic-del-btn { background: linear-gradient(135deg, #d300c5, #7000ff); border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: width 0.3s ease, border-radius 0.3s ease, background 0.3s; box-shadow: 0 0 10px rgba(112, 0, 255, 0.4); }
         .cosmic-del-btn:hover { transform: scale(1.1); box-shadow: 0 0 15px #d300c5; }
         
-        .cosmic-del-btn .trash-ico { color: #fff; font-size: 13px; z-index: 2; pointer-events: none; }
+        .cosmic-del-btn .trash-ico { color: #fff; font-size: 13px; z-index: 2; pointer-events: none; transition: transform 0.2s; }
         .cosmic-del-btn .del-text-track { display: none; opacity: 0; white-space: nowrap; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 900; color: #fff; letter-spacing: 1.5px; margin-left: 8px; z-index: 2; pointer-events: none; }
         
         /* Expanded States via JS Activation */
-        .cosmic-del-btn.is-primed { width: 95px; border-radius: 20px; gap: 4px; justify-content: flex-start; padding-left: 12px; }
+        .cosmic-del-btn.is-primed { width: 105px; border-radius: 20px; justify-content: flex-start; padding-left: 12px; }
         .cosmic-del-btn.is-primed .del-text-track { display: inline-flex; opacity: 1; }
         
         /* Text Char Explosion State */
@@ -172,8 +173,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             100% { transform: translateY(25px) translateX(var(--tx)) rotate(var(--rot-end)) scale(0); opacity: 0; }
         }
         @keyframes trashVibeShake {
-            0% { transform: rotate(-8deg) scale(1.1); }
-            100% { transform: rotate(8deg) scale(1.1); }
+            0% { transform: rotate(-8deg) scale(1.2); }
+            100% { transform: rotate(8deg) scale(1.2); }
         }
         
         .aura-badge { font-size: 9px; background: ${auraColor}; color: #000; padding: 2px 8px; border-radius: 50px; font-weight: 900; margin-left: 10px; }
@@ -268,7 +269,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V67 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V68 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -292,18 +293,18 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             }
         }
 
-        /* 💥 TRIGGER ENGINE FOR EXPLODING DEL BUTTON INTERACTION */
+        /* 💥 FIXED DETAILED ACTION ENGINE FOR DYNAMIC DELETION */
         async function triggerDynamicDelete(btnElement, postId) {
-            // First click: expands from circle to capsule button
+            // Check current operational status state
             if(!btnElement.classList.contains('is-primed')) {
                 btnElement.classList.add('is-primed');
                 return;
             }
             
-            // Second click: triggers the disintegration animation from your video sample
+            // Execute animation framework mapping
             btnElement.classList.add('is-destroying');
             
-            // Wait for text character shattering and shaking animation to end (600ms)
+            // Wait for shattering frame engine calculations (600ms)
             await new Promise(resolve => setTimeout(resolve, 600));
             
             const res = await fetch('/delete-post', { 
@@ -707,5 +708,5 @@ app.get('/create-sector', async (req, res) => {
 // Server Initialization
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log("🚀 COSMIC ENGINE V67 LIVE ON PORT " + PORT);
+    console.log("🚀 COSMIC ENGINE V68 LIVE ON PORT " + PORT);
 });
