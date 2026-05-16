@@ -1,6 +1,7 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V77 [VERCEL SERVERLESS DEPLOYMENT & ROOT ROUTE PATCH]
+    🚀 XAVIROX COSMIC OS - V78 [LEADERBOARD MATRIX EDITION & VERCEL LAYER PROTECTED]
     STATUS: MASTER REFACTOR + ASYNCHRONOUS COMMENTING + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
+    - INTEGRATED: Premium GenZ Aura Leaderboard tracking system showcasing top network profiles.
     - LOGO INTEGRATION: Successfully embedded XAVIROX Logo & Gemini AI Gateway branding into UI framework.
     - FIXED CRITICAL BUG: Completely stopped full page refresh on interaction nodes & comment submissions.
     - MECHANISM: Integrated AJAX Fetch interception on all comment forms to visually inject threads on the fly.
@@ -17,10 +18,6 @@
     - FEATURE ADDED: Time Capsule Engine - Schedule signals/posts for the future seamlessly.
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
     - SECURITY FIX V65: MongoDB URI, Session Secret & Gemini APIs locked into Environment Variables.
-    - BUG FIX V76: Fixed interact() missing event param, renderCommentTree null parentId mismatch,
-                   session user aura sync after login & post, ghost msg missing auth check.
-    - BUG FIX V77: Added explicit app.get('/') root redirect to stop Vercel Cannot GET / crashes.
-                   Converted app.listen to module.exports for Vercel Serverless Function compatibility.
 ==================================================================================================== */
 
 const express = require('express');
@@ -265,11 +262,26 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .auth-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 15px; border-radius: 18px; color: #fff; outline: none; font-size: 14px; margin-bottom: 15px; }
         .auth-input:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
 
+        /* 👑 AURA LEADERBOARD SPECIFIC ENGINE DESIGN STYLES */
+        .podium-container { display: flex; justify-content: center; align-items: flex-end; gap: 20px; margin-bottom: 40px; padding-top: 20px; }
+        .podium-card { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); border-radius: 24px; padding: 20px; text-align: center; position: relative; display: flex; flex-direction: column; align-items: center; }
+        .podium-card.rank-1 { height: 190px; border-color: #ffea00; box-shadow: 0 0 20px rgba(255, 234, 0, 0.2); width: 35%; }
+        .podium-card.rank-2 { height: 160px; border-color: #ccc; width: 30%; }
+        .podium-card.rank-3 { height: 145px; border-color: #cd7f32; width: 30%; }
+        .podium-crown { font-size: 24px; margin-bottom: 5px; animation: pulseCapsule 1.5s infinite alternate; }
+        .podium-rank-badge { position: absolute; bottom: -15px; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #000; }
+        .rank-1 .podium-rank-badge { background: #ffea00; box-shadow: 0 0 10px #ffea00; }
+        .rank-2 .podium-rank-badge { background: #ccc; }
+        .rank-3 .podium-rank-badge { background: #cd7f32; }
+        .leaderboard-row { display: flex; align-items: center; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); padding: 14px 20px; border-radius: 20px; margin-bottom: 12px; }
+        .leaderboard-row:hover { border-color: var(--cyan); transform: translateX(5px); background: rgba(0, 242, 255, 0.02); }
+        .row-rank { font-weight: 900; font-size: 14px; width: 40px; color: rgba(255,255,255,0.4); }
+
         /* 📱 MOBILE ARCHITECTURE OVERRIDES */
         @media (max-width: 768px) {
             .top-left-nav { position: absolute; top: 15px; left: 10px; right: 10px; width: calc(100% - 20px); justify-content: space-between; gap: 5px; }
-            .genz-search { width: 45%; padding: 10px; font-size: 10px; }
-            .genz-search:focus { width: 55%; }
+            .genz-search { width: 35%; padding: 10px; font-size: 10px; }
+            .genz-search:focus { width: 45%; }
             .nav-row { padding: 4px; gap: 6px; border-radius: 16px; }
             .nav-btn-circle { width: 38px; height: 38px; border-radius: 12px; font-size: 14px; }
             .icon-label { display: none !important; }
@@ -287,6 +299,9 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             .footer-link { font-size: 10px; letter-spacing: 0.5px; }
             .comment-node.nested { margin-left: 12px; }
             .genz-time-capsule { width: 100%; justify-content: flex-start; }
+            .podium-container { flex-direction: column; align-items: center; gap: 25px; }
+            .podium-card.rank-1, .podium-card.rank-2, .podium-card.rank-3 { width: 100%; height: auto; padding: 25px 20px; }
+            .podium-rank-badge { bottom: unset; right: 20px; top: 20px; }
         }
     </style>
 </head>
@@ -296,6 +311,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         <input type="text" class="genz-search" placeholder="SEARCH THE VOID..." onkeyup="searchVoid(this.value)">
         <div class="nav-row">
             <div class="nav-item"><a href="/dashboard" class="nav-btn-circle"><i class="fas fa-rocket"></i></a><span class="icon-label">Orbit</span></div>
+            <div class="nav-item"><a href="/leaderboard" class="nav-btn-circle" style="color: #ffea00;"><i class="fas fa-trophy"></i></a><span class="icon-label">Leaderboard</span></div>
             <div class="nav-item"><a href="/portfolio" class="nav-btn-circle"><i class="fas fa-fingerprint"></i></a><span class="icon-label">Identity</span></div>
             ${!isGuest ? `<div class="nav-item"><a href="/logout" class="nav-btn-circle" style="color:var(--p)"><i class="fas fa-power-off"></i></a><span class="icon-label">Eject</span></div>` : ''}
         </div>
@@ -335,7 +351,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V77 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V78 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -494,6 +510,74 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 // 🎯 VERCEL ROOT ROUTE PATCH: Redirects traffic from / to /dashboard cleanly
 app.get('/', (req, res) => {
     res.redirect('/dashboard');
+});
+
+// 👑 LEADERBOARD ROUTE: Fetches top 10 aura profiles and renders custom grid framework
+app.get('/leaderboard', async (req, res) => {
+    try {
+        const topUsers = await User.find({}).sort({ aura: -1 }).limit(10);
+        const sectors = await Sector.find();
+        const user = req.session.user;
+
+        // Extracting top 3 users safely for premium podium mapping
+        const rank1User = topUsers[0] || { username: 'void_ghost', aura: 0 };
+        const rank2User = topUsers[1] || { username: 'void_ghost', aura: 0 };
+        const rank3User = topUsers[2] || { username: 'void_ghost', aura: 0 };
+
+        // Rest list framework for ranks 4 to 10
+        const remainingUsersHtml = topUsers.slice(3).map((u, index) => {
+            const currentRank = index + 4;
+            const postAuraColor = u.aura > 500 ? 'var(--cyan)' : u.aura < 50 ? '#ff0000' : 'var(--p)';
+            return `
+            <div class="leaderboard-row">
+                <span class="row-rank">#${currentRank}</span>
+                <span style="font-weight: 800; font-size: 14px; color: #fff;">@${u.username}</span>
+                <span style="margin-left: auto; font-weight: 900; font-size: 13px; color: ${postAuraColor}; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 50px; border: 1px solid var(--border);">${u.aura} AURA</span>
+            </div>`;
+        }).join('');
+
+        const leaderboardContent = `
+        <div class="card" style="border-color: var(--cyan); background: rgba(0, 242, 255, 0.01);">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <span style="font-size: 10px; font-weight: 900; letter-spacing: 3px; color: var(--cyan); text-transform: uppercase;">AURA MATRIX PROTOCOL</span>
+                <h1 style="font-size: 28px; font-weight: 900; letter-spacing: 1px; margin-top: 5px;">NETWORK LEADERBOARD</h1>
+                <p style="font-size: 12px; opacity: 0.5; margin-top: 6px;">Top profiles certified by overall matrix aura weight</p>
+            </div>
+
+            <div class="podium-container">
+                <div class="podium-card rank-2">
+                    <div style="font-size: 18px; color: #ccc; margin-bottom: 8px;"><i class="fas fa-shield-halved"></i></div>
+                    <span style="font-weight: 800; font-size: 14px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank2User.username}</span>
+                    <span style="font-size: 12px; font-weight: 900; color: var(--p); margin-top: 6px;">${rank2User.aura} AURA</span>
+                    <div class="podium-rank-badge">2</div>
+                </div>
+
+                <div class="podium-card rank-1">
+                    <div class="podium-crown" style="color: #ffea00;"><i class="fas fa-crown"></i></div>
+                    <span style="font-weight: 900; font-size: 16px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank1User.username}</span>
+                    <span style="font-size: 13px; font-weight: 900; color: var(--cyan); margin-top: 6px;">${rank1User.aura} AURA</span>
+                    <div class="podium-rank-badge">1</div>
+                </div>
+
+                <div class="podium-card rank-3">
+                    <div style="font-size: 16px; color: #cd7f32; margin-bottom: 8px;"><i class="fas fa-medal"></i></div>
+                    <span style="font-weight: 800; font-size: 13px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank3User.username}</span>
+                    <span style="font-size: 11px; font-weight: 900; color: var(--v); margin-top: 6px;">${rank3User.aura} AURA</span>
+                    <div class="podium-rank-badge">3</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="font-size: 10px; opacity: 0.4; letter-spacing: 2px; margin-bottom: 15px; text-transform: uppercase;">Matrix Contenders</h4>
+                ${remainingUsersHtml || '<p style="text-align:center; font-size:12px; opacity:0.3; padding: 20px;">No further structural matrix records found.</p>'}
+            </div>
+        </div>`;
+
+        res.send(MASTER_UI(leaderboardContent, user, sectors, 'Leaderboard'));
+    } catch (err) {
+        console.error("Leaderboard engine crash:", err);
+        res.redirect('/dashboard');
+    }
 });
 
 app.get('/dashboard', async (req, res) => {
@@ -947,7 +1031,7 @@ app.get('/create-sector', async (req, res) => {
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
-        console.log("🚀 COSMIC ENGINE V77 LIVE ON PORT " + PORT);
+        console.log("🚀 COSMIC ENGINE V78 LIVE ON PORT " + PORT);
     });
 }
 module.exports = app;
