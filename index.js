@@ -9,6 +9,7 @@
     - FIXED BUG: Interaction Sync Glitch for Live W/L/Save System for Authenticated Sessions
     - ENHANCED: Added 100+ GenZ Chaos Strings inside Input Textbar Rotator Engine.
     - AI SAFETY ENGINE: Gemini 2.5 Flash Gatekeeper (Scans text & image upload buffers simultaneously)
+    - NEW FEATURE: Dynamic Post Deletion Engine (Strictly for Authors only, preserves layout)
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
     - SECURITY FIX V65: MongoDB URI & Session Secret moved to Environment Variables
 ==================================================================================================== */
@@ -106,6 +107,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
         
+        /* 🌟 KOTHE STARS BACKGROUND ENGINE */
         .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: #000; }
         .star { position: absolute; background: #fff; border-radius: 50%; opacity: 0.3; animation: twinkle var(--d) infinite; }
         @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.7; transform: scale(1.2); } }
@@ -121,6 +123,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .icon-label { position: absolute; top: 60px; background: var(--cyan); color: #000; font-size: 9px; font-weight: 900; padding: 4px 10px; border-radius: 8px; opacity: 0; transform: translateY(-10px); pointer-events: none; text-transform: uppercase; letter-spacing: 1px; }
         .nav-item:hover .icon-label { opacity: 1; transform: translateY(0); }
         
+        /* 👤 GUEST PROFILE SYSTEM IN ISLAND */
         .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 260px; height: 45px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; letter-spacing: 2px; cursor: pointer; overflow: hidden; }
         .dynamic-island:hover { width: 400px; height: 70px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); }
         
@@ -142,6 +145,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .active-w { color: var(--cyan); opacity: 1; text-shadow: 0 0 10px var(--cyan); } 
         .active-l { color: var(--p); opacity: 1; text-shadow: 0 0 10px var(--p); } 
         .active-save { color: #ffea00; opacity: 1; text-shadow: 0 0 10px #ffea00; }
+        .delete-btn { color: #ff3b30; margin-left: auto; font-size: 12px; font-weight: 900; background: transparent; border: none; cursor: pointer; opacity: 0.5; }
+        .delete-btn:hover { opacity: 1; text-shadow: 0 0 8px #ff3b30; }
         
         .aura-badge { font-size: 9px; background: ${auraColor}; color: #000; padding: 2px 8px; border-radius: 50px; font-weight: 900; margin-left: 10px; }
         .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 15px; border-radius: 20px; font-weight: 900; cursor: pointer; font-size: 11px; text-transform: uppercase; text-decoration: none; text-align: center; }
@@ -259,6 +264,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             }
         }
 
+        async function deletePost(postId) {
+            if(!confirm('Are you sure you want to delete this transmission from the void?')) return;
+            const res = await fetch('/delete-post', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId }) });
+            if(res.status === 200) {
+                location.reload();
+            } else {
+                alert('Ejection failed: Unauthorized or database out of sync.');
+            }
+        }
+
         function searchVoid(query) {
             let cards = document.querySelectorAll('.feed .card');
             cards.forEach(card => {
@@ -338,12 +353,18 @@ app.get('/dashboard', async (req, res) => {
         const hasL = user && p.dislikes.includes(user.username);
         const isSaved = user && user.savedPosts && user.savedPosts.includes(p._id.toString());
         const postAuraColor = p.authorAura > 500 ? 'var(--cyan)' : p.authorAura < 50 ? '#ff0000' : 'var(--p)';
+        
+        // Only show delete button if current user is the author of this post
+        const showDelete = user && user.username === p.author;
 
         return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}">
-            <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:13px; letter-spacing:0.5px;">
-                ${p.isAnonymous ? '👻 GHOST_SIGNAL' : '@'+p.author} 
-                ${!p.isAnonymous ? `<span class="aura-badge">${p.authorAura}</span>` : ''}
-            </b>
+            <div style="display:flex; align-items:center;">
+                <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:13px; letter-spacing:0.5px;">
+                    ${p.isAnonymous ? '👻 GHOST_SIGNAL' : '@'+p.author} 
+                    ${!p.isAnonymous ? `<span class="aura-badge">${p.authorAura}</span>` : ''}
+                </b>
+                ${showDelete ? `<button onclick="deletePost('${p._id}')" class="delete-btn"><i class="fas fa-trash-can"></i></button>` : ''}
+            </div>
             <p style="margin-top:12px; font-size:16px;">${p.content}</p>
             ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);">` : ''}
             <div class="interaction-bar">
@@ -544,6 +565,28 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         
         if(!isAnon) { user.aura += 15; await user.save(); }
         res.redirect('back');
+    }
+});
+
+// --- [POST DELETION ROUTE] ---
+app.post('/delete-post', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
+    const { postId } = req.body;
+
+    try {
+        const post = await Post.findById(postId);
+        if (!post) return res.status(404).json({ error: 'Post not found' });
+
+        // Security check: Only post creator can execute delete
+        if (post.author !== req.session.user.username) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        await Post.findByIdAndDelete(postId);
+        return res.sendStatus(200);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
