@@ -1,5 +1,5 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V76 [BUG FIX PATCH // SECURITY + STABILITY OVERHAUL]
+    🚀 XAVIROX COSMIC OS - V77 [VERCEL SERVERLESS DEPLOYMENT & ROOT ROUTE PATCH]
     STATUS: MASTER REFACTOR + ASYNCHRONOUS COMMENTING + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
     - LOGO INTEGRATION: Successfully embedded XAVIROX Logo & Gemini AI Gateway branding into UI framework.
     - FIXED CRITICAL BUG: Completely stopped full page refresh on interaction nodes & comment submissions.
@@ -18,9 +18,9 @@
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
     - SECURITY FIX V65: MongoDB URI, Session Secret & Gemini APIs locked into Environment Variables.
     - BUG FIX V76: Fixed interact() missing event param, renderCommentTree null parentId mismatch,
-                   session user aura sync after login & post, ghost msg missing auth check,
-                   MOCK_KEY removed from AI init, orphaned comments deleted with post,
-                   interact save branch no longer calls post.save() unnecessarily.
+                   session user aura sync after login & post, ghost msg missing auth check.
+    - BUG FIX V77: Added explicit app.get('/') root redirect to stop Vercel Cannot GET / crashes.
+                   Converted app.listen to module.exports for Vercel Serverless Function compatibility.
 ==================================================================================================== */
 
 const express = require('express');
@@ -299,7 +299,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V76 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V77 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -454,6 +454,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 };
 
 // --- [CORE ROUTES & FEEDS] ---
+
+// 🎯 VERCEL ROOT ROUTE PATCH: Redirects traffic from / to /dashboard cleanly
+app.get('/', (req, res) => {
+    res.redirect('/dashboard');
+});
+
 app.get('/dashboard', async (req, res) => {
     const activeSector = req.query.sector || 'Global';
     const currentTime = new Date();
@@ -894,8 +900,12 @@ app.get('/create-sector', async (req, res) => {
     res.redirect('/dashboard');
 });
 
-// Server Initialization
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log("🚀 COSMIC ENGINE V76 LIVE ON PORT " + PORT);
-});
+// --- [SERVERLESS EXPORT CONFIGURATION] ---
+// 🎯 VERCEL COMPLIANCE: Use module.exports for Vercel, app.listen only for local testing
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log("🚀 COSMIC ENGINE V77 LIVE ON PORT " + PORT);
+    });
+}
+module.exports = app;
