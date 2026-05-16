@@ -1,7 +1,7 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V70 [THE MOBILE STABLE ENGINE, DYNAMIC INTERACTION RECOVERY]
-    STATUS: FULL MASTER MERGE + LEGAL SUPPORT ENGINE SYNC + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
-    - REPAIRED CRITICAL BUG: Completely fixed W, L, Save, and Delete click execution loops.
+    🚀 XAVIROX COSMIC OS - V71 [THE NESTED THREADED REPLIES ENGINE]
+    STATUS: MASTER REFACTOR + NESTED COMMENTS PIPELINE + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
+    - REPAIRED: Clean Event Propagation for all interaction nodes (W, L, Save, Delete)
     - INTEGRATED: Premium Fluid Delete Micro-Interaction CSS/JS Engine (Based on user interaction sample)
     - MECHANISM: Hover scales trash can, click spawns full capsule button, breaks characters, and shakes trash container.
     - RESTORED: /login & /register GET/POST Engines to fix "Cannot GET /login" breakdown
@@ -10,8 +10,10 @@
     - FIXED: Mobile Layout Breakdown (Added CSS Media Queries for Stacked Mobile Flow & Adaptive Padding)
     - RETAINED: GenZ Style Anonymous Message Center, Cyber Drop Boxes, V61 Void Search, Toggles
     - AI SAFETY ENGINE: Gemini 2.5 Flash Gatekeeper (Scans text & image upload buffers simultaneously)
+    - INTEGRATED: Full Scalable Threaded Reply System (Comments on posts + infinite nested replies)
+    - STRUCTURE: Self-referencing schema hierarchy tree rendering for dynamic sub-layer feeds.
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
-    - SECURITY FIX V65: MongoDB URI & Session Secret moved to Environment Variables
+    - SECURITY FIX V65: MongoDB URI, Session Secret & Gemini APIs locked into Environment Variables.
 ==================================================================================================== */
 
 const express = require('express');
@@ -60,6 +62,17 @@ const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema(
     date: { type: Date, default: Date.now },
     likes: { type: [String], default: [] },
     dislikes: { type: [String], default: [] }
+}));
+
+// 💬 SELF-REFERENCING NESTED COMMENTS SCHEMA
+const Comment = mongoose.models.Comment || mongoose.model('Comment', new mongoose.Schema({
+    postId: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', required: true },
+    parentCommentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Comment', default: null }, // Null points to root comments
+    author: String,
+    authorAura: { type: Number, default: 100 },
+    content: String,
+    isAnonymous: { type: Boolean, default: false },
+    date: { type: Date, default: Date.now }
 }));
 
 const Sector = mongoose.models.Sector || mongoose.model('Sector', new mongoose.Schema({ 
@@ -145,6 +158,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .active-l { color: var(--p) !important; opacity: 1 !important; text-shadow: 0 0 10px var(--p); } 
         .active-save { color: #ffea00 !important; opacity: 1 !important; text-shadow: 0 0 10px #ffea00; }
 
+        /* 💬 THREADED REPLIES VISUAL FRAMEWORK */
+        .comments-section-container { margin-top: 20px; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); }
+        .comment-node { background: rgba(255, 255, 255, 0.02); border-left: 2px solid var(--v); margin-top: 12px; padding: 12px 16px; border-radius: 0 16px 16px 0; position: relative; }
+        .comment-node.nested { margin-left: 25px; border-left-color: var(--cyan); background: rgba(0, 242, 255, 0.01); }
+        .reply-trigger-btn { font-size: 11px; background: transparent; border: none; color: var(--cyan); cursor: pointer; font-weight: bold; margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; opacity: 0.7; }
+        .reply-trigger-btn:hover { opacity: 1; text-shadow: 0 0 8px var(--cyan); }
+        .reply-form-wrapper { display: none; margin-top: 10px; padding-left: 10px; }
+        .comment-mini-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 12px; padding: 10px 15px; color: #fff; font-size: 12px; outline: none; }
+        .comment-mini-input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
+
         /* ======================================================================
             💥 COSMIC PREMIUM EXPLODING DELETE INTERACTION STYLES
            ====================================================================== */
@@ -217,6 +240,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             
             .footer-links { gap: 15px; }
             .footer-link { font-size: 10px; letter-spacing: 0.5px; }
+            .comment-node.nested { margin-left: 12px; }
         }
     </style>
 </head>
@@ -261,7 +285,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V70 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V71 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -295,6 +319,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                 console.error(err);
                 alert('Connection timeout to the matrix void.');
             }
+        }
+
+        function toggleReplyForm(commentId) {
+            const form = document.getElementById('form-' + commentId);
+            if(form) form.style.display = form.style.display === 'block' ? 'none' : 'block';
         }
 
         // 🛠️ REPAIRED DELETION ANIMATION LOGIC ENGINE
@@ -385,6 +414,38 @@ app.get('/dashboard', async (req, res) => {
             </form>`}
     </div>`;
 
+    // Fetch all comments linked to the current post feed context
+    const allComments = await Comment.find({ postId: { $in: posts.map(p => p._id) } }).sort({ date: 1 });
+
+    // 🔄 RECURSIVE FUNCTION: Tree compiling process for Nested Layout Comments
+    function renderCommentTree(commentsList, parentId = null, isNested = false) {
+        const targetNodes = commentsList.filter(c => String(c.parentCommentId) === String(parentId));
+        if (targetNodes.length === 0) return '';
+
+        return targetNodes.map(c => {
+            return `
+            <div class="comment-node ${isNested ? 'nested' : ''}">
+                <div style="font-size:11px; opacity:0.8; font-weight:bold; color:var(--cyan)">
+                    ${c.isAnonymous ? '👻 GHOST' : '@' + c.author} 
+                    <span style="opacity:0.4; font-weight:normal; margin-left:10px;">${new Date(c.date).toLocaleTimeString()}</span>
+                </div>
+                <p style="font-size:13px; margin-top:4px; color:#ddd;">${c.content}</p>
+                
+                ${user ? `
+                <button type="button" class="reply-trigger-btn" onclick="toggleReplyForm('${c._id}')"><i class="fas fa-reply"></i> Reply</button>
+                <div class="reply-form-wrapper" id="form-${c._id}">
+                    <form action="/add-comment" method="POST">
+                        <input type="hidden" name="postId" value="${c.postId}">
+                        <input type="hidden" name="parentCommentId" value="${c._id}">
+                        <input type="text" name="content" class="comment-mini-input" placeholder="Type reply execution..." required>
+                    </form>
+                </div>` : ''}
+                
+                ${renderCommentTree(commentsList, c._id, true)}
+            </div>`;
+        }).join('');
+    }
+
     const html = posts.map(p => {
         const hasW = user && p.likes.includes(user.username);
         const hasL = user && p.dislikes.includes(user.username);
@@ -393,6 +454,10 @@ app.get('/dashboard', async (req, res) => {
         
         // Security check: Only author or site admin can view deletion trigger engine
         const showDelete = user && (user.username === p.author || user.username === 'xavirox');
+
+        // Compile Root Comments for this specific Post Object
+        const postComments = allComments.filter(c => String(c.postId) === String(p._id));
+        const commentsRenderedTree = renderCommentTree(postComments, null, false);
 
         return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}">
             <div style="display:flex; align-items:center;">
@@ -422,10 +487,46 @@ app.get('/dashboard', async (req, res) => {
                 <button type="button" onclick="interact('${p._id.toString()}', 'dislike')" class="action-btn ${hasL ? 'active-l' : ''}"><i class="fas fa-skull"></i> ${p.dislikes.length} L</button>
                 <button type="button" onclick="interact('${p._id.toString()}', 'save')" class="action-btn ${isSaved ? 'active-save' : ''}"><i class="fas fa-bookmark"></i> ${isSaved ? 'ARCHIVED' : 'SAVE'}</button>
             </div>
+
+            <div class="comments-section-container">
+                <h5 style="font-size:10px; opacity:0.4; letter-spacing:2px; margin-bottom:10px;">TRANSMITTED THREADS</h5>
+                ${commentsRenderedTree || '<p style="font-size:11px; opacity:0.2; padding-left:5px;">No structural threads running.</p>'}
+                
+                ${user ? `
+                <form action="/add-comment" method="POST" style="margin-top:15px;">
+                    <input type="hidden" name="postId" value="${p._id}">
+                    <input type="text" name="content" class="comment-mini-input" placeholder="Inject thoughts into thread..." required>
+                </form>` : ''}
+            </div>
         </div>`
     }).join('');
 
     res.send(MASTER_UI(postForm + html, user, sectors, activeSector));
+});
+
+// --- [💬 NEW ENDPOINT: ADD COMMENT & NESTED THREADED REPLY ROUTE] ---
+app.post('/add-comment', async (req, res) => {
+    if (!req.session.user) return res.status(401).send("Unauthorized Access Protocol Rejected.");
+    const { postId, parentCommentId, content } = req.body;
+
+    try {
+        const user = await User.findOne({ username: req.session.user.username });
+        
+        // Structure alignment instantiation
+        await new Comment({
+            postId: postId,
+            parentCommentId: parentCommentId || null, // Direct post comments will be flagged as null
+            author: user.username,
+            authorAura: user.aura,
+            content: content,
+            isAnonymous: false
+        }).save();
+
+        res.redirect('back');
+    } catch(err) {
+        console.error(err);
+        res.status(500).send("Handshake structural loop failed.");
+    }
 });
 
 // --- [RESTORED AUTH ENGINES] ---
@@ -697,5 +798,5 @@ app.get('/create-sector', async (req, res) => {
 // Server Initialization
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log("🚀 COSMIC ENGINE V70 LIVE ON PORT " + PORT);
+    console.log("🚀 COSMIC ENGINE V71 LIVE ON PORT " + PORT);
 });
