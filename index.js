@@ -1,19 +1,20 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V74 [THE REAL-TIME FLUID THREAD ENGINE // NO REFRESH INDEX]
+    🚀 XAVIROX COSMIC OS - V75 [THE REAL-TIME FLUID THREAD ENGINE // TIME CAPSULE SCHEDULED POSTS]
     STATUS: MASTER REFACTOR + ASYNCHRONOUS COMMENTING + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
     - LOGO INTEGRATION: Successfully embedded XAVIROX Logo & Gemini AI Gateway branding into UI framework.
     - FIXED CRITICAL BUG: Completely stopped full page refresh on interaction nodes & comment submissions.
     - MECHANISM: Integrated AJAX Fetch interception on all comment forms to visually inject threads on the fly.
     - REPAIRED NAME MISMATCH: Changed input field name from 'comment-mini-input' to 'content' to match backend.
-    - PRESERVED: Premium Fluid Delete Micro-Interaction CSS/JS Engine (Based on user interaction sample)
-    - RESTORED: /login & /register GET/POST Engines to fix "Cannot GET /login" breakdown
-    - INTEGRATED: GenZ Cyber Footer (Support, DMCA & Content Removal -> xavirox.co@gmail.com)
-    - INTEGRATED: Futuristic Glassmorphism Auth Screen UI (Neon Cyan App Theme & Fixed Account Creation)
-    - FIXED: Mobile Layout Breakdown (Added CSS Media Queries for Stacked Mobile Flow & Adaptive Padding)
-    - RETAINED: GenZ Style Anonymous Message Center, Cyber Drop Boxes, V61 Void Search, Toggles
-    - AI SAFETY ENGINE: Gemini 2.5 Flash Gatekeeper (Scans text & image upload buffers simultaneously)
-    - INTEGRATED: Full Scalable Threaded Reply System (Comments on posts + infinite nested replies)
+    - PRESERVED: Premium Fluid Delete Micro-Interaction CSS/JS Engine (Based on user interaction sample).
+    - RESTORED: /login & /register GET/POST Engines to fix "Cannot GET /login" breakdown.
+    - INTEGRATED: GenZ Cyber Footer (Support, DMCA & Content Removal -> xavirox.co@gmail.com).
+    - INTEGRATED: Futuristic Glassmorphism Auth Screen UI (Neon Cyan App Theme & Fixed Account Creation).
+    - FIXED: Mobile Layout Breakdown (Added CSS Media Queries for Stacked Mobile Flow & Adaptive Padding).
+    - RETAINED: GenZ Style Anonymous Message Center, Cyber Drop Boxes, V61 Void Search, Toggles.
+    - AI SAFETY ENGINE: Gemini 2.5 Flash Gatekeeper (Scans text & image upload buffers simultaneously).
+    - INTEGRATED: Full Scalable Threaded Reply System (Comments on posts + infinite nested replies).
     - STRUCTURE: Self-referencing schema hierarchy tree rendering for dynamic sub-layer feeds.
+    - FEATURE ADDED: Time Capsule Engine - Schedule signals/posts for the future seamlessly.
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
     - SECURITY FIX V65: MongoDB URI, Session Secret & Gemini APIs locked into Environment Variables.
 ==================================================================================================== */
@@ -66,6 +67,7 @@ const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema(
     sector: { type: String, default: 'Global' }, 
     isAnonymous: { type: Boolean, default: false }, 
     date: { type: Date, default: Date.now },
+    scheduledFor: { type: Date, default: null }, // ⏳ TIME CAPSULE INFRASTRUCTURE FIELD
     likes: { type: [String], default: [] },
     dislikes: { type: [String], default: [] }
 }));
@@ -162,6 +164,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         input[type="checkbox"]:checked + .switch-track { background: var(--v); border-color: var(--p); box-shadow: 0 0 10px var(--v); }
         input[type="checkbox"]:checked + .switch-track .switch-thumb { left: 22px; background: #fff; box-shadow: 0 0 8px #fff; }
 
+        /* TIME CAPSULE GLITCH INPUT STYLES */
+        .time-capsule-input-wrapper { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.04); padding: 6px 12px; border-radius: 14px; border: 1px solid var(--border); }
+        .time-capsule-input-wrapper:focus-within { border-color: var(--cyan); }
+        .cosmic-datetime { background: transparent; border: none; color: #fff; font-family: 'Inter', sans-serif; font-size: 11px; outline: none; font-weight: bold; cursor: pointer; }
+        .cosmic-datetime::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; }
+
         .interaction-bar { display: flex; gap: 20px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); }
         .action-btn { background: transparent; border: none; color: #fff; font-size: 13px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 8px; opacity: 0.6; padding: 5px 10px; border-radius: 8px; }
         .action-btn:hover { opacity: 1; color: var(--cyan); background: rgba(255,255,255,0.05); }
@@ -252,6 +260,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             .footer-links { gap: 15px; }
             .footer-link { font-size: 10px; letter-spacing: 0.5px; }
             .comment-node.nested { margin-left: 12px; }
+            .time-capsule-input-wrapper { width: 100%; justify-content: center; }
         }
     </style>
 </head>
@@ -302,7 +311,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V74 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V75 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -458,7 +467,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 // --- [CORE ROUTES & FEEDS] ---
 app.get('/dashboard', async (req, res) => {
     const activeSector = req.query.sector || 'Global';
-    const posts = await Post.find(activeSector !== 'Global' ? { sector: activeSector } : {}).sort({ date: -1 });
+    const currentTime = new Date();
+
+    // ⏳ TIME CAPSULE AGGREGATION: Schedule logic inject filter (Future posts tab tak hidden rahengi jab tak unka time na ho)
+    const feedFilter = activeSector !== 'Global' ? { sector: activeSector } : {};
+    feedFilter.$or = [
+        { scheduledFor: null },
+        { scheduledFor: { $lte: currentTime } }
+    ];
+
+    const posts = await Post.find(feedFilter).sort({ date: -1 });
     const sectors = await Sector.find();
     const user = req.session.user;
 
@@ -467,14 +485,19 @@ app.get('/dashboard', async (req, res) => {
             <form action="/addpost" method="POST" enctype="multipart/form-data">
                 <textarea id="txBarEngine" name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px;" placeholder="Transmit a signal..." required></textarea>
                 <input type="hidden" name="sector" value="${activeSector}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
-                    <div style="display:flex; gap:20px; align-items:center;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                    <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
                         <label style="cursor:pointer; opacity:0.7;"><i class="fas fa-camera fa-lg"></i><input type="file" name="media" hidden></label>
                         <label class="fancy-ghost-container">
                             <input type="checkbox" name="isAnonymous" id="ghostToggle" ${activeSector==='confessions'?'checked':''} style="display:none;">
                             <div class="switch-track"><div class="switch-thumb"></div></div>
                             <span style="font-size:11px; font-weight:900; color:#aaa; letter-spacing:1px;">GHOST MODE</span>
                         </label>
+                        
+                        <div class="time-capsule-input-wrapper">
+                            <i class="fas fa-hourglass-start" style="font-size:11px; color:var(--cyan);"></i>
+                            <input type="datetime-local" name="scheduledTime" class="cosmic-datetime" title="Schedule inside Time Capsule">
+                        </div>
                     </div>
                     <button class="create-btn" style="width:auto; padding:10px 30px;">TRANSMIT</button>
                 </div>
@@ -774,9 +797,19 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
 
         let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
         
+        // ⏳ TIME CAPSULE: Parsing schedule execution pipeline
+        let finalScheduledDate = null;
+        if (req.body.scheduledTime) {
+            const parsedTime = new Date(req.body.scheduledTime);
+            if (parsedTime > new Date()) {
+                finalScheduledDate = parsedTime;
+            }
+        }
+
         await new Post({ 
             author: user.username, authorAura: user.aura, content: textContent, 
-            sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon 
+            sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon,
+            scheduledFor: finalScheduledDate
         }).save();
         
         if(!isAnon) { user.aura += 15; await user.save(); }
@@ -791,9 +824,18 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         
         let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
         
+        let finalScheduledDate = null;
+        if (req.body.scheduledTime) {
+            const parsedTime = new Date(req.body.scheduledTime);
+            if (parsedTime > new Date()) {
+                finalScheduledDate = parsedTime;
+            }
+        }
+
         await new Post({ 
             author: user.username, authorAura: user.aura, content: req.body.content, 
-            sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon 
+            sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon,
+            scheduledFor: finalScheduledDate
         }).save();
         
         if(!isAnon) { user.aura += 15; await user.save(); }
@@ -881,5 +923,5 @@ app.get('/create-sector', async (req, res) => {
 // Server Initialization
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log("🚀 COSMIC ENGINE V74 LIVE ON PORT " + PORT);
+    console.log("🚀 COSMIC ENGINE V75 LIVE ON PORT " + PORT);
 });
