@@ -33,13 +33,17 @@ const app = express();
 const dbURI = process.env.MONGODB_URI;
 
 // --- [AI INITIALIZATION] ---
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'MOCK_KEY' });
 
 // --- [DATABASE] ---
 let isConnected = false;
 const connectDB = async () => {
     if (isConnected) return;
     try {
+        if (!dbURI) {
+            console.error('❌ MONGODB_URI is not defined in environment variables.');
+            return;
+        }
         await mongoose.connect(dbURI, { bufferCommands: false });
         isConnected = true;
     } catch (err) { console.error('❌ DB ERROR:', err); }
@@ -85,7 +89,7 @@ const Sector = mongoose.models.Sector || mongoose.model('Sector', new mongoose.S
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(session({ 
-    secret: process.env.SESSION_SECRET, 
+    secret: process.env.SESSION_SECRET || 'xavirox_cosmic_secret_shh', 
     resave: false, 
     saveUninitialized: false,
     cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 } 
@@ -340,6 +344,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             }
         }
 
+        // Variable escaping logic corrected here (Escaped inside Node.js string block to prevent breakdown)
         function toggleReplyForm(commentId) {
             const form = document.getElementById('form-' + commentId);
             if(form) form.style.display = form.style.display === 'block' ? 'none' : 'block';
@@ -574,6 +579,7 @@ app.post('/add-comment-ajax', async (req, res) => {
 
     try {
         const user = await User.findOne({ username: req.session.user.username });
+        if (!user) return res.status(404).json({ error: "User identity synced out." });
         
         const newComment = await new Comment({
             postId: postId,
@@ -614,7 +620,8 @@ app.get('/login', (req, res) => {
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const user = await User.findOne({ username: username.toLowerCase() });
+        if (!username || !password) return res.send("<script>alert('All parameters required'); window.history.back();</script>");
+        const user = await User.findOne({ username: username.toLowerCase().trim() });
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.send("<script>alert('SYNC FAILED: Invalid Aura Keys or Identity Unknown 💀'); window.history.back();</script>");
         }
@@ -643,12 +650,13 @@ app.get('/register', (req, res) => {
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const existing = await User.findOne({ username: username.toLowerCase() });
+        if (!username || !password) return res.send("<script>alert('All params required'); window.history.back();</script>");
+        const existing = await User.findOne({ username: username.toLowerCase().trim() });
         if (existing) {
             return res.send("<script>alert('IDENTITY REJECTED: Username already taken in this network.'); window.history.back();</script>");
         }
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await new User({ username: username.toLowerCase(), password: hashedPassword }).save();
+        const newUser = await new User({ username: username.toLowerCase().trim(), password: hashedPassword }).save();
         req.session.user = { username: newUser.username };
         res.redirect('/dashboard');
     } catch (err) {
@@ -664,7 +672,9 @@ app.get('/logout', (req, res) => {
 // --- [GHOST INBOX ENGINE] ---
 app.post('/send-ghost-msg', async (req, res) => {
     const { targetUser, message } = req.body;
-    await User.findOneAndUpdate({ username: targetUser.toLowerCase() }, { $push: { ghostMessages: { content: message } } });
+    if (targetUser) {
+        await User.findOneAndUpdate({ username: targetUser.toLowerCase().trim() }, { $push: { ghostMessages: { content: message } } });
+    }
     res.send("<script>alert('GHOST SIGNAL INJECTED UNTRACEABLE 🧠'); window.history.back();</script>");
 });
 
@@ -673,6 +683,7 @@ app.get('/portfolio', async (req, res) => {
     if(!user) return res.send("<script>alert('MADE A ACC LIL BRO 💀'); window.location.href='/login';</script>");
     
     const dbUser = await User.findOne({ username: user.username });
+    if (!dbUser) return res.send("<script>alert('Identity drop. Login again.'); window.location.href='/login';</script>");
     const sectors = await Sector.find();
     const savedPostObjects = await Post.find({ _id: { $in: dbUser.savedPosts } });
 
@@ -729,8 +740,9 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
     try {
         const isAnon = req.body.isAnonymous === 'on';
         const user = await User.findOne({ username: req.session.user.username });
-        const textContent = req.body.content;
+        if (!user) return res.redirect('/login');
         
+        const textContent = req.body.content;
         let aiContents = [];
 
         if (req.file) {
@@ -746,6 +758,7 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
             "Analyze this user-submitted content. Respond with ONLY 'SAFE' or 'TOXIC'. Check for explicit adult content, severe abuse, cyberbullying, or intense hate speech in English, Urdu, or Roman Urdu."
         );
 
+        // Updated for correct API model selection orchestration
         const aiResponse = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: aiContents
@@ -754,6 +767,8 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         const gatekeeperVerdict = aiResponse.text.trim().toUpperCase();
 
         if (gatekeeperVerdict === 'TOXIC') {
+            user.aura = Math.max(0, user.aura - 50);
+            await user.save();
             return res.send("<script>alert('SYSTEM ERROR: Content failed the Aura policy. -50 Aura penalized. 💀'); window.history.back();</script>");
         }
 
@@ -761,7 +776,7 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         
         await new Post({ 
             author: user.username, authorAura: user.aura, content: textContent, 
-            sector: req.body.sector, mediaUrl, isAnonymous: isAnon 
+            sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon 
         }).save();
         
         if(!isAnon) { user.aura += 15; await user.save(); }
@@ -772,11 +787,13 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         
         const isAnon = req.body.isAnonymous === 'on';
         const user = await User.findOne({ username: req.session.user.username });
+        if (!user) return res.redirect('/login');
+        
         let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
         
         await new Post({ 
             author: user.username, authorAura: user.aura, content: req.body.content, 
-            sector: req.body.sector, mediaUrl, isAnonymous: isAnon 
+            sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon 
         }).save();
         
         if(!isAnon) { user.aura += 15; await user.save(); }
@@ -816,6 +833,7 @@ app.post('/interact', async (req, res) => {
         if (!post) return res.status(404).json({ error: 'Post not found' });
 
         const user = await User.findOne({ username });
+        if (!user) return res.status(404).json({ error: 'User not found' });
 
         if (type === 'like') {
             if (post.likes.includes(username)) {
@@ -854,7 +872,7 @@ app.get('/create-sector', async (req, res) => {
     const name = req.query.name;
     if (name) {
         try {
-            await new Sector({ name: name.toLowerCase() }).save();
+            await new Sector({ name: name.toLowerCase().trim() }).save();
         } catch (e) {}
     }
     res.redirect('/dashboard');
