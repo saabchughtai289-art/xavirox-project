@@ -168,11 +168,47 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         input[type="checkbox"]:checked + .switch-track { background: var(--v); border-color: var(--p); box-shadow: 0 0 10px var(--v); }
         input[type="checkbox"]:checked + .switch-track .switch-thumb { left: 22px; background: #fff; box-shadow: 0 0 8px #fff; }
 
-        /* TIME CAPSULE GLITCH INPUT STYLES */
-        .time-capsule-input-wrapper { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.04); padding: 6px 12px; border-radius: 14px; border: 1px solid var(--border); }
-        .time-capsule-input-wrapper:focus-within { border-color: var(--cyan); }
-        .cosmic-datetime { background: transparent; border: none; color: #fff; font-family: 'Inter', sans-serif; font-size: 11px; outline: none; font-weight: bold; cursor: pointer; }
-        .cosmic-datetime::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; }
+        /* 🚀 VIP GENZ TIME CAPSULE AESTHETIC INTEGRATION */
+        .genz-time-capsule {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(0, 242, 255, 0.05);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            border-radius: 30px;
+            padding: 4px 14px 4px 4px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
+        }
+        .genz-time-capsule:hover, .genz-time-capsule:focus-within {
+            background: rgba(0, 242, 255, 0.1);
+            border-color: var(--cyan);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.25);
+            transform: translateY(-2px);
+        }
+        .capsule-icon-box {
+            background: var(--cyan);
+            color: #000;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            margin-right: 10px;
+            box-shadow: 0 0 10px var(--cyan);
+            animation: pulseCapsule 2s infinite alternate;
+        }
+        @keyframes pulseCapsule {
+            0% { transform: scale(1); box-shadow: 0 0 8px var(--cyan); }
+            100% { transform: scale(1.1); box-shadow: 0 0 18px var(--cyan); }
+        }
+        .capsule-text { display: flex; flex-direction: column; justify-content: center; }
+        .capsule-label { font-size: 8px; font-weight: 900; letter-spacing: 1.5px; color: var(--cyan); text-transform: uppercase; margin-bottom: 2px; opacity: 0.8; }
+        .genz-datetime { background: transparent; border: none; color: #fff; font-family: 'Inter', sans-serif; font-size: 12px; outline: none; font-weight: 800; cursor: pointer; }
+        .genz-datetime::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.8; cursor: pointer; transition: 0.3s; }
+        .genz-datetime::-webkit-calendar-picker-indicator:hover { opacity: 1; filter: invert(1) drop-shadow(0 0 5px #fff); }
 
         .interaction-bar { display: flex; gap: 20px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); }
         .action-btn { background: transparent; border: none; color: #fff; font-size: 13px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 8px; opacity: 0.6; padding: 5px 10px; border-radius: 8px; }
@@ -250,7 +286,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             .footer-links { gap: 15px; }
             .footer-link { font-size: 10px; letter-spacing: 0.5px; }
             .comment-node.nested { margin-left: 12px; }
-            .time-capsule-input-wrapper { width: 100%; justify-content: center; }
+            .genz-time-capsule { width: 100%; justify-content: flex-start; }
         }
     </style>
 </head>
@@ -488,10 +524,16 @@ app.get('/dashboard', async (req, res) => {
                             <div class="switch-track"><div class="switch-thumb"></div></div>
                             <span style="font-size:11px; font-weight:900; color:#aaa; letter-spacing:1px;">GHOST MODE</span>
                         </label>
-                        <div class="time-capsule-input-wrapper">
-                            <i class="fas fa-hourglass-start" style="font-size:11px; color:var(--cyan);"></i>
-                            <input type="datetime-local" name="scheduledTime" class="cosmic-datetime" title="Schedule inside Time Capsule">
-                        </div>
+                        
+                        <label class="genz-time-capsule" title="Drop this signal in the future...">
+                            <div class="capsule-icon-box">
+                                <i class="fas fa-meteor"></i>
+                            </div>
+                            <div class="capsule-text">
+                                <span class="capsule-label">TIME CAPSULE</span>
+                                <input type="datetime-local" name="scheduledTime" class="genz-datetime">
+                            </div>
+                        </label>
                     </div>
                     <button class="create-btn" style="width:auto; padding:10px 30px;">TRANSMIT</button>
                 </div>
