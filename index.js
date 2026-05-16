@@ -155,7 +155,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .footer-link span { color: var(--p); }
 
         /* ======================================================================
-           📱 STRICT 2026 MOBILE RESPONSIVE ENGINE (MEDIA QUERIES)
+            📱 STRICT 2026 MOBILE RESPONSIVE ENGINE (MEDIA QUERIES)
            ====================================================================== */
         @media (max-width: 768px) {
             .top-left-nav { position: absolute; top: 15px; left: 10px; right: 10px; width: calc(100% - 20px); justify-content: space-between; gap: 5px; }
@@ -258,7 +258,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             });
         }
 
-        // --- DYNAMIC INTRUSIVE THOUGHTS ROTATOR ENGINE ---
         const chaoticThoughts = [
             "type something unhinged...", "drop your hot take here", "bro is thinking...", "enter your villain arc thoughts",
             "type before the motivation disappears", "the internet is listening 👀", "cooked or cooking?", "say something legendary",
@@ -420,23 +419,20 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         
         let aiContents = [];
 
-        // 1. Agar Image buffer maujood hai, toh usay base64 mein convert karke array mein add karo
         if (req.file) {
             const imagePart = fileToGenerativePart(req.file.buffer, req.file.mimetype);
             aiContents.push(imagePart);
         }
 
-        // 2. Agar Text content maujood hai, toh usay array mein inject karo
         if (textContent) {
             aiContents.push(textContent);
         }
 
-        // 3. Strict System Instruction as a payload part send karein
         aiContents.push(
             "Analyze this user-submitted content. Respond with ONLY 'SAFE' or 'TOXIC'. Check for explicit adult content, severe abuse, cyberbullying, or intense hate speech in English, Urdu, or Roman Urdu."
         );
 
-        // 4. Live request dispatch to Gemini 2.5 Flash Engine
+        // [FIXED SDK METHOD CALL FOR @google/genai]
         const aiResponse = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: aiContents
@@ -444,12 +440,10 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
 
         const gatekeeperVerdict = aiResponse.text.trim().toUpperCase();
 
-        // 5. Intercept and block submission if Content validation criteria fails
         if (gatekeeperVerdict === 'TOXIC') {
             return res.send("<script>alert('SYSTEM ERROR: Content failed the Aura policy. -50 Aura penalized. 💀'); window.history.back();</script>");
         }
 
-        // [ORIGINAL RETAINED POST ENGINE LOGIC]
         let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
         
         await new Post({ 
@@ -461,7 +455,6 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         res.redirect('back');
 
     } catch (aiError) {
-        // Fallback safety layer: Agar AI network glitch ho, toh upload breakdown na ho
         console.error("⚠️ GATEKEEPER ENGINE ERROR:", aiError);
         
         const isAnon = req.body.isAnonymous === 'on';
@@ -478,62 +471,94 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
     }
 });
 
+// --- [INTERACTION & AUTH ROUTES RECOVERY] ---
 app.post('/interact', async (req, res) => {
-    if (!req.session.user) return res.status(401).send();
+    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const { postId, type } = req.body;
     const username = req.session.user.username;
-    const post = await Post.findById(postId);
-    if (!post) return res.sendStatus(404);
-    
-    const dbUser = await User.findOne({ username });
-    const author = await User.findOne({ username: post.author });
 
-    if (type === 'like') {
-        if (post.likes.includes(username)) { 
-            post.likes = post.likes.filter(u => u !== username); 
-            if(author) author.aura -= 10; 
-        } else { 
-            post.likes.push(username); 
-            post.dislikes = post.dislikes.filter(u => u !== username); 
-            if(author) author.aura += 10; 
+    try {
+        const post = await Post.findById(postId);
+        if (!post) return res.status(404).json({ error: 'Post not found' });
+
+        if (type === 'like') {
+            if (post.likes.includes(username)) {
+                post.likes = post.likes.filter(u => u !== username);
+            } else {
+                post.likes.push(username);
+                post.dislikes = post.dislikes.filter(u => u !== username);
+            }
+        } else if (type === 'dislike') {
+            if (post.dislikes.includes(username)) {
+                post.dislikes = post.dislikes.filter(u => u !== username);
+            } else {
+                post.dislikes.push(username);
+                post.likes = post.likes.filter(u => u !== username);
+            }
+        } else if (type === 'save') {
+            const user = await User.findOne({ username });
+            if (user.savedPosts.includes(postId)) {
+                user.savedPosts = user.savedPosts.filter(id => id !== postId);
+            } else {
+                user.savedPosts.push(postId);
+            }
+            await user.save();
         }
-    } else if (type === 'dislike') {
-        if (post.dislikes.includes(username)) { 
-            post.dislikes = post.dislikes.filter(u => u !== username); 
-            if(author) author.aura += 5; 
-        } else { 
-            post.dislikes.push(username); 
-            post.likes = post.likes.filter(u => u !== username); 
-            if(author) author.aura -= 5; 
-        }
-    } else if (type === 'save' && dbUser) {
-        if (dbUser.savedPosts.includes(postId)) {
-            dbUser.savedPosts = dbUser.savedPosts.filter(id => id !== postId);
-        } else {
-            dbUser.savedPosts.push(postId);
-        }
-        await dbUser.save();
+
+        await post.save();
+        res.sendStatus(200);
+    } catch (err) {
+        res.status(500).json({ error: 'Database out of sync' });
     }
-    
-    if(author) await author.save();
-    post.authorAura = author ? author.aura : 100;
-    await post.save();
-    res.sendStatus(200);
 });
 
 app.get('/create-sector', async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
-    const name = req.query.name?.toLowerCase().trim();
-    if (name) await new Sector({ name }).save().catch(()=>{});
-    res.redirect('/dashboard?sector=' + (name || 'Global'));
+    const name = req.query.name;
+    if (name) {
+        try {
+            await new Sector({ name: name.toLowerCase() }).save();
+        } catch (e) {}
+    }
+    res.redirect('/dashboard');
 });
 
-// --- [AUTH] ---
 app.get('/login', (req, res) => {
-    res.send(`<body style="background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; padding:15px;">
-        <div style="background:rgba(255,255,255,0.05); padding:35px 20px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); text-align:center; backdrop-filter:blur(20px); width:100%; max-width:400px;">
-            <h2 style="letter-spacing:5px; margin-bottom:10px;">XAVIROX</h2>
-            <form action="/login" method="POST">
-                <input name="username" placeholder="IDENTITY" required style="display:block; margin:15px auto; padding:15px; width:100%; background:#111; border:1px solid #333; color:#fff; border-radius:15px; outline:none; font-size:14px;">
-                <input name="password" type="password" placeholder="ACCESS KEY" required style="display:block; margin:15px auto; padding:15px; width:100%; background:#111; border:1px solid #333;`);
+    res.send(`
+        <body style="background:#000; color:#fff; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
+            <div style="background:rgba(255,255,255,0.05); padding:4px; border-radius:24px; border:1px solid rgba(255,255,255,0.1);">
+                <form action="/login" method="POST" style="padding:30px; display:flex; flex-direction:column; gap:15px; width:300px;">
+                    <h2 style="text-align:center; color:#00f2ff; letter-spacing:2px; font-size:16px;">XAVIROX CORE SYNC</h2>
+                    <input name="username" placeholder="Username" style="padding:12px; background:#111; border:1px solid #333; color:#fff; border-radius:10px; outline:none;" required>
+                    <input type="password" name="password" placeholder="Password" style="padding:12px; background:#111; border:1px solid #333; color:#fff; border-radius:10px; outline:none;" required>
+                    <button style="padding:12px; background:linear-gradient(45deg, #ff007f, #7000ff); border:none; color:#fff; border-radius:10px; font-weight:bold; cursor:pointer;">CONNECT IDENTITY</button>
+                </form>
+            </div>
+        </body>
+    `);
 });
+
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    let user = await User.findOne({ username: username.toLowerCase() });
+    if (!user) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user = await new User({ username: username.toLowerCase(), password: hashedPassword }).save();
+    } else {
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) return res.send("<script>alert('INVALID IDENTITY SIGNATURE 💀'); window.history.back();</script>");
+    }
+    req.session.user = { username: user.username };
+    res.redirect('/dashboard');
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/dashboard');
+});
+
+// Fallback Route for Vercel Serverless Mapping
+app.use((req, res) => { res.redirect('/dashboard'); });
+
+// --- [VERCEL EXPORT ENGINE] ---
+module.exports = app;
