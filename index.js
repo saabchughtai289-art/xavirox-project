@@ -1,6 +1,7 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V73 [THE REAL-TIME FLUID THREAD ENGINE // NO REFRESH INDEX]
+    🚀 XAVIROX COSMIC OS - V74 [THE REAL-TIME FLUID THREAD ENGINE // NO REFRESH INDEX]
     STATUS: MASTER REFACTOR + ASYNCHRONOUS COMMENTING + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
+    - LOGO INTEGRATION: Successfully embedded XAVIROX Logo & Gemini AI Gateway branding into UI framework.
     - FIXED CRITICAL BUG: Completely stopped full page refresh on interaction nodes & comment submissions.
     - MECHANISM: Integrated AJAX Fetch interception on all comment forms to visually inject threads on the fly.
     - REPAIRED NAME MISMATCH: Changed input field name from 'comment-mini-input' to 'content' to match backend.
@@ -140,6 +141,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 260px; height: 45px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; letter-spacing: 2px; cursor: pointer; overflow: hidden; }
         .dynamic-island:hover { width: 400px; height: 70px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); }
         
+        /* XAVIROX & GEMINI INTEGRATION UI */
+        .brand-logo-container { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+        .xavirox-logo-img { height: 32px; filter: drop-shadow(0 0 8px var(--cyan)); }
+        .gemini-shield-badge { background: linear-gradient(45deg, #4285f4, #9b51e0); padding: 4px 8px; border-radius: 8px; font-size: 9px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.2); }
+
         .main-container { max-width: 1100px; margin: 130px auto 50px auto; display: flex; gap: 35px; padding: 0 20px; flex: 1; width: 100%; }
         .feed { flex: 2; } .sidebar { flex: 1; }
         .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 32px; padding: 30px; margin-bottom: 25px; position: relative; }
@@ -265,6 +271,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         <div class="feed" id="feedContainer">${content}</div>
         <div class="sidebar">
             <div class="card">
+                <div class="brand-logo-container">
+                    <span style="font-weight: 900; font-size: 20px; letter-spacing: 2px; color: #fff;">XAVIROX</span>
+                    <div class="gemini-shield-badge">
+                        <i class="fas fa-brain"></i> GEMINI 2.5
+                    </div>
+                </div>
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:20px;">SECTORS / COMMUNITIES</h4>
                 <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:15px; text-decoration:none; font-weight:900;">🌏 GLOBAL</a>
                 <a href="/dashboard?sector=confessions" style="display:block; color:#ffea00; margin-bottom:15px; text-decoration:none; font-weight:900;">👻 #CONFESSIONS</a>
@@ -286,7 +298,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V73 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V74 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -309,7 +321,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                     body: JSON.stringify({ postId: postId, type: type }) 
                 });
                 if(res.status === 200) {
-                    // Update only specific button visual active states instead of full reload
                     const targetBtn = event ? event.currentTarget : null;
                     if (targetBtn) {
                         targetBtn.classList.toggle('active-w', type === 'like');
@@ -325,7 +336,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                     alert('Database context routing failed.');
                 }
             } catch(err) {
-                // Fail-safe graceful update trigger
                 window.location.reload();
             }
         }
@@ -352,7 +362,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                 if (response.ok) {
                     const result = await response.json();
                     
-                    // Create fluid domestic comment card item node
                     const newNode = document.createElement('div');
                     newNode.className = `comment-node \${data.parentCommentId ? 'nested' : ''}`;
                     newNode.innerHTML = `
@@ -402,7 +411,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                 });
                 
                 if(res.status === 200) {
-                    btnElement.closest('.p-node').remove(); // Instantly wipe card structure seamlessly
+                    btnElement.closest('.p-node').remove(); 
                 } else {
                     alert('Ejection failed: Access key signature invalid.');
                     btnElement.classList.remove('is-destroying', 'is-primed');
@@ -467,10 +476,8 @@ app.get('/dashboard', async (req, res) => {
             </form>`}
     </div>`;
 
-    // Fetch all comments linked to the current post feed context
     const allComments = await Comment.find({ postId: { $in: posts.map(p => p._id) } }).sort({ date: 1 });
 
-    // 🔄 RECURSIVE FUNCTION: Tree compiling process for Nested Layout Comments
     function renderCommentTree(commentsList, parentId = null, isNested = false) {
         const targetNodes = commentsList.filter(c => String(c.parentCommentId) === String(parentId));
         if (targetNodes.length === 0) return '';
@@ -507,10 +514,8 @@ app.get('/dashboard', async (req, res) => {
         const isSaved = user && user.savedPosts && user.savedPosts.includes(p._id.toString());
         const postAuraColor = p.authorAura > 500 ? 'var(--cyan)' : p.authorAura < 50 ? '#ff0000' : 'var(--p)';
         
-        // Security check: Only author or site admin can view deletion trigger engine
         const showDelete = user && (user.username === p.author || user.username === 'xavirox');
 
-        // Compile Root Comments for this specific Post Object
         const postComments = allComments.filter(c => String(c.postId) === String(p._id));
         const commentsRenderedTree = renderCommentTree(postComments, null, false);
 
@@ -579,7 +584,6 @@ app.post('/add-comment-ajax', async (req, res) => {
             isAnonymous: false
         }).save();
 
-        // Return core metadata so frontend can map the node live without reload
         return res.status(200).json({
             author: newComment.author,
             content: newComment.content,
@@ -859,5 +863,5 @@ app.get('/create-sector', async (req, res) => {
 // Server Initialization
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log("🚀 COSMIC ENGINE V73 LIVE ON PORT " + PORT);
+    console.log("🚀 COSMIC ENGINE V74 LIVE ON PORT " + PORT);
 });
