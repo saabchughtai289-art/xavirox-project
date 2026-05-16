@@ -1,6 +1,8 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V66 [THE MOBILE STABLE ENGINE, FULL AUTH ENGINE RESTORATION]
+    🚀 XAVIROX COSMIC OS - V67 [THE MOBILE STABLE ENGINE, EXPLODING MICRO-INTERACTION MERGE]
     STATUS: FULL MASTER MERGE + LEGAL SUPPORT ENGINE SYNC + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
+    - INTEGRATED: Premium Fluid Delete Micro-Interaction CSS/JS Engine (Based on user interaction sample)
+    - MECHANISM: Hover scales trash can, click spawns full capsule button, breaks characters, and shakes trash container.
     - RESTORED: /login & /register GET/POST Engines to fix "Cannot GET /login" breakdown
     - INTEGRATED: GenZ Cyber Footer (Support, DMCA & Content Removal -> xavirox.co@gmail.com)
     - INTEGRATED: Futuristic Glassmorphism Auth Screen UI (Neon Cyan App Theme & Fixed Account Creation)
@@ -9,7 +11,6 @@
     - FIXED BUG: Interaction Sync Glitch for Live W/L/Save System for Authenticated Sessions
     - ENHANCED: Added 100+ GenZ Chaos Strings inside Input Textbar Rotator Engine.
     - AI SAFETY ENGINE: Gemini 2.5 Flash Gatekeeper (Scans text & image upload buffers simultaneously)
-    - NEW FEATURE: Dynamic Post Deletion Engine (Strictly for Authors only, preserves layout)
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
     - SECURITY FIX V65: MongoDB URI & Session Secret moved to Environment Variables
 ==================================================================================================== */
@@ -145,8 +146,35 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .active-w { color: var(--cyan); opacity: 1; text-shadow: 0 0 10px var(--cyan); } 
         .active-l { color: var(--p); opacity: 1; text-shadow: 0 0 10px var(--p); } 
         .active-save { color: #ffea00; opacity: 1; text-shadow: 0 0 10px #ffea00; }
-        .delete-btn { color: #ff3b30; margin-left: auto; font-size: 12px; font-weight: 900; background: transparent; border: none; cursor: pointer; opacity: 0.5; }
-        .delete-btn:hover { opacity: 1; text-shadow: 0 0 8px #ff3b30; }
+
+        /* ======================================================================
+            💥 COSMIC PREMIUM EXPLODING DELETE INTERACTION STYLES
+           ====================================================================== */
+        .del-engine-container { margin-left: auto; display: flex; align-items: center; justify-content: center; }
+        .cosmic-del-btn { background: linear-gradient(135deg, #d300c5, #7000ff); border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 0 10px rgba(112, 0, 255, 0.4); }
+        .cosmic-del-btn:hover { transform: scale(1.1); box-shadow: 0 0 15px #d300c5; }
+        
+        .cosmic-del-btn .trash-ico { color: #fff; font-size: 13px; z-index: 2; pointer-events: none; }
+        .cosmic-del-btn .del-text-track { display: none; opacity: 0; white-space: nowrap; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 900; color: #fff; letter-spacing: 1.5px; margin-left: 8px; z-index: 2; pointer-events: none; }
+        
+        /* Expanded States via JS Activation */
+        .cosmic-del-btn.is-primed { width: 95px; border-radius: 20px; gap: 4px; justify-content: flex-start; padding-left: 12px; }
+        .cosmic-del-btn.is-primed .del-text-track { display: inline-flex; opacity: 1; }
+        
+        /* Text Char Explosion State */
+        .del-char { display: inline-block; transform-origin: center bottom; }
+        .cosmic-del-btn.is-destroying .del-char { animation: explosionScattered 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        .cosmic-del-btn.is-destroying .trash-ico { animation: trashVibeShake 0.15s ease-in-out infinite alternate; }
+
+        @keyframes explosionScattered {
+            0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+            40% { transform: translateY(-12px) rotate(var(--rot)) scale(1.1); opacity: 0.9; }
+            100% { transform: translateY(25px) translateX(var(--tx)) rotate(var(--rot-end)) scale(0); opacity: 0; }
+        }
+        @keyframes trashVibeShake {
+            0% { transform: rotate(-8deg) scale(1.1); }
+            100% { transform: rotate(8deg) scale(1.1); }
+        }
         
         .aura-badge { font-size: 9px; background: ${auraColor}; color: #000; padding: 2px 8px; border-radius: 50px; font-weight: 900; margin-left: 10px; }
         .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 15px; border-radius: 20px; font-weight: 900; cursor: pointer; font-size: 11px; text-transform: uppercase; text-decoration: none; text-align: center; }
@@ -240,7 +268,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V66 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V67 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -264,13 +292,31 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             }
         }
 
-        async function deletePost(postId) {
-            if(!confirm('Are you sure you want to delete this transmission from the void?')) return;
-            const res = await fetch('/delete-post', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId }) });
+        /* 💥 TRIGGER ENGINE FOR EXPLODING DEL BUTTON INTERACTION */
+        async function triggerDynamicDelete(btnElement, postId) {
+            // First click: expands from circle to capsule button
+            if(!btnElement.classList.contains('is-primed')) {
+                btnElement.classList.add('is-primed');
+                return;
+            }
+            
+            // Second click: triggers the disintegration animation from your video sample
+            btnElement.classList.add('is-destroying');
+            
+            // Wait for text character shattering and shaking animation to end (600ms)
+            await new Promise(resolve => setTimeout(resolve, 600));
+            
+            const res = await fetch('/delete-post', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ postId }) 
+            });
+            
             if(res.status === 200) {
                 location.reload();
             } else {
-                alert('Ejection failed: Unauthorized or database out of sync.');
+                alert('Ejection failed: Unauthorized access keys.');
+                btnElement.classList.remove('is-destroying', 'is-primed');
             }
         }
 
@@ -354,7 +400,7 @@ app.get('/dashboard', async (req, res) => {
         const isSaved = user && user.savedPosts && user.savedPosts.includes(p._id.toString());
         const postAuraColor = p.authorAura > 500 ? 'var(--cyan)' : p.authorAura < 50 ? '#ff0000' : 'var(--p)';
         
-        // Only show delete button if current user is the author of this post
+        // Security check: Only author can interact with deletion
         const showDelete = user && user.username === p.author;
 
         return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}">
@@ -363,7 +409,20 @@ app.get('/dashboard', async (req, res) => {
                     ${p.isAnonymous ? '👻 GHOST_SIGNAL' : '@'+p.author} 
                     ${!p.isAnonymous ? `<span class="aura-badge">${p.authorAura}</span>` : ''}
                 </b>
-                ${showDelete ? `<button onclick="deletePost('${p._id}')" class="delete-btn"><i class="fas fa-trash-can"></i></button>` : ''}
+                ${showDelete ? `
+                <div class="del-engine-container">
+                    <button onclick="triggerDynamicDelete(this, '${p._id}')" class="cosmic-del-btn">
+                        <i class="fas fa-trash-can trash-ico"></i>
+                        <span class="del-text-track">
+                            <span class="del-char" style="--rot:-15deg; --tx:-30px; --rot-end:-90deg;">D</span>
+                            <span class="del-char" style="--rot:10deg; --tx:-15px; --rot-end:45deg;">e</span>
+                            <span class="del-char" style="--rot:-20deg; --tx:5px; --rot-end:-60deg;">l</span>
+                            <span class="del-char" style="--rot:25deg; --tx:15px; --rot-end:120deg;">e</span>
+                            <span class="del-char" style="--rot:-10deg; --tx:25px; --rot-end:-30deg;">t</span>
+                            <span class="del-char" style="--rot:15deg; --tx:40px; --rot-end:80deg;">e</span>
+                        </span>
+                    </button>
+                </div>` : ''}
             </div>
             <p style="margin-top:12px; font-size:16px;">${p.content}</p>
             ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);">` : ''}
@@ -648,5 +707,5 @@ app.get('/create-sector', async (req, res) => {
 // Server Initialization
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log("🚀 COSMIC ENGINE V66 LIVE ON PORT " + PORT);
+    console.log("🚀 COSMIC ENGINE V67 LIVE ON PORT " + PORT);
 });
