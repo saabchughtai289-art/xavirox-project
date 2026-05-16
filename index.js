@@ -1,7 +1,7 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V68 [THE MOBILE STABLE ENGINE, DYNAMIC ACTION RECOVERY FIX]
+    🚀 XAVIROX COSMIC OS - V69 [THE MOBILE STABLE ENGINE, TOTAL INTERACTION PATCHeD]
     STATUS: FULL MASTER MERGE + LEGAL SUPPORT ENGINE SYNC + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
-    - FIXED BUG: Resolved Delete Action Failure by optimizing target selector element mapping.
+    - CRITICAL FIX: Fixed W, L, Save, and Delete click actions by adding explicit action wrappers.
     - INTEGRATED: Premium Fluid Delete Micro-Interaction CSS/JS Engine (Based on user interaction sample)
     - MECHANISM: Hover scales trash can, click spawns full capsule button, breaks characters, and shakes trash container.
     - RESTORED: /login & /register GET/POST Engines to fix "Cannot GET /login" breakdown
@@ -9,8 +9,6 @@
     - INTEGRATED: Futuristic Glassmorphism Auth Screen UI (Neon Cyan App Theme & Fixed Account Creation)
     - FIXED: Mobile Layout Breakdown (Added CSS Media Queries for Stacked Mobile Flow & Adaptive Padding)
     - RETAINED: GenZ Style Anonymous Message Center, Cyber Drop Boxes, V61 Void Search, Toggles
-    - FIXED BUG: Interaction Sync Glitch for Live W/L/Save System for Authenticated Sessions
-    - ENHANCED: Added 100+ GenZ Chaos Strings inside Input Textbar Rotator Engine.
     - AI SAFETY ENGINE: Gemini 2.5 Flash Gatekeeper (Scans text & image upload buffers simultaneously)
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
     - SECURITY FIX V65: MongoDB URI & Session Secret moved to Environment Variables
@@ -144,18 +142,18 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .interaction-bar { display: flex; gap: 20px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); }
         .action-btn { background: transparent; border: none; color: #fff; font-size: 13px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 8px; opacity: 0.6; }
         .action-btn:hover { opacity: 1; color: var(--cyan); }
-        .active-w { color: var(--cyan); opacity: 1; text-shadow: 0 0 10px var(--cyan); } 
-        .active-l { color: var(--p); opacity: 1; text-shadow: 0 0 10px var(--p); } 
-        .active-save { color: #ffea00; opacity: 1; text-shadow: 0 0 10px #ffea00; }
+        .active-w { color: var(--cyan) !important; opacity: 1 !important; text-shadow: 0 0 10px var(--cyan); } 
+        .active-l { color: var(--p) !important; opacity: 1 !important; text-shadow: 0 0 10px var(--p); } 
+        .active-save { color: #ffea00 !important; opacity: 1 !important; text-shadow: 0 0 10px #ffea00; }
 
         /* ======================================================================
             💥 COSMIC PREMIUM EXPLODING DELETE INTERACTION STYLES
            ====================================================================== */
         .del-engine-container { margin-left: auto; display: flex; align-items: center; justify-content: center; }
-        .cosmic-del-btn { background: linear-gradient(135deg, #d300c5, #7000ff); border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: width 0.3s ease, border-radius 0.3s ease, background 0.3s; box-shadow: 0 0 10px rgba(112, 0, 255, 0.4); }
+        .cosmic-del-btn { background: linear-gradient(135deg, #d300c5, #7000ff); border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-radius 0.3s ease; box-shadow: 0 0 10px rgba(112, 0, 255, 0.4); }
         .cosmic-del-btn:hover { transform: scale(1.1); box-shadow: 0 0 15px #d300c5; }
         
-        .cosmic-del-btn .trash-ico { color: #fff; font-size: 13px; z-index: 2; pointer-events: none; transition: transform 0.2s; }
+        .cosmic-del-btn .trash-ico { color: #fff; font-size: 13px; z-index: 2; pointer-events: none; }
         .cosmic-del-btn .del-text-track { display: none; opacity: 0; white-space: nowrap; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 900; color: #fff; letter-spacing: 1.5px; margin-left: 8px; z-index: 2; pointer-events: none; }
         
         /* Expanded States via JS Activation */
@@ -252,12 +250,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                 <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:15px; text-decoration:none; font-weight:900;">🌏 GLOBAL</a>
                 <a href="/dashboard?sector=confessions" style="display:block; color:#ffea00; margin-bottom:15px; text-decoration:none; font-weight:900;">👻 #CONFESSIONS</a>
                 ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#ccc; font-size:13px; text-decoration:none; margin-top:12px;"># ${s.name.toUpperCase()}</a>`).join('')}
-                ${!isGuest ? `<button class="create-btn" style="margin-top:20px;" onclick="let n=prompt('Community / Sector Name?'); if(n) location.href='/create-sector?name='+n">+ BUILD COMMUNITY</button>` : ''}
+                ${!isGuest ? `<button type="button" class="create-btn" style="margin-top:20px;" onclick="let n=prompt('Community / Sector Name?'); if(n) location.href='/create-sector?name='+n">+ BUILD COMMUNITY</button>` : ''}
             </div>
             <div class="card">
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px;">FEEDBACK</h4>
                 <textarea id="fbTxt" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #222; border-radius:15px; color:#fff; padding:15px; margin-top:12px; outline:none; font-size:12px;" rows="2" placeholder="Signal thoughts..."></textarea>
-                <button onclick="this.innerText='SENT!'" class="create-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); margin-top:10px;">SEND</button>
+                <button type="button" onclick="this.innerText='SENT!'" class="create-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); margin-top:10px;">SEND</button>
             </div>
         </div>
     </div>
@@ -269,7 +267,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V68 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V69 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -283,40 +281,56 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         }
         
         async function interact(postId, type) {
-            const res = await fetch('/interact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId, type }) });
-            if(res.status === 200) {
-                location.reload();
-            } else if(res.status === 401) {
-                alert('MADE A ACC LIL BRO 💀');
-            } else {
-                alert('Database network out of sync. Try again!');
+            try {
+                const res = await fetch('/interact', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ postId, type }) 
+                });
+                if(res.status === 200) {
+                    location.reload();
+                } else if(res.status === 401) {
+                    alert('MADE A ACC LIL BRO 💀');
+                } else {
+                    alert('Database network out of sync.');
+                }
+            } catch(err) {
+                console.error(err);
+                alert('Connection timeout.');
             }
         }
 
-        /* 💥 FIXED DETAILED ACTION ENGINE FOR DYNAMIC DELETION */
-        async function triggerDynamicDelete(btnElement, postId) {
-            // Check current operational status state
+        /* 💥 FIXED ACTION HANDLING LOGIC FOR DELETION */
+        async function triggerDynamicDelete(event, btnElement, postId) {
+            if(event) event.preventDefault();
+            
+            // Toggle capsule conversion layout state
             if(!btnElement.classList.contains('is-primed')) {
                 btnElement.classList.add('is-primed');
                 return;
             }
             
-            // Execute animation framework mapping
+            // Execute premium explosion animation sequencing
             btnElement.classList.add('is-destroying');
             
-            // Wait for shattering frame engine calculations (600ms)
+            // Allow animation frames to complete calculations smoothly (600ms)
             await new Promise(resolve => setTimeout(resolve, 600));
             
-            const res = await fetch('/delete-post', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ postId }) 
-            });
-            
-            if(res.status === 200) {
-                location.reload();
-            } else {
-                alert('Ejection failed: Unauthorized access keys.');
+            try {
+                const res = await fetch('/delete-post', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ postId }) 
+                });
+                
+                if(res.status === 200) {
+                    location.reload();
+                } else {
+                    alert('Ejection failed: Unauthorized access keys.');
+                    btnElement.classList.remove('is-destroying', 'is-primed');
+                }
+            } catch(err) {
+                alert('Server error.');
                 btnElement.classList.remove('is-destroying', 'is-primed');
             }
         }
@@ -377,7 +391,7 @@ app.get('/dashboard', async (req, res) => {
     const user = req.session.user;
 
     const postForm = `<div class="card">
-        ${!user ? `<button class="create-btn" onclick="location.href='/login'">SYNC TO TRANSMIT</button>` : `
+        ${!user ? `<button type="button" class="create-btn" onclick="location.href='/login'">SYNC TO TRANSMIT</button>` : `
             <form action="/addpost" method="POST" enctype="multipart/form-data">
                 <textarea id="txBarEngine" name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px;" placeholder="Transmit a signal..." required></textarea>
                 <input type="hidden" name="sector" value="${activeSector}">
@@ -412,7 +426,7 @@ app.get('/dashboard', async (req, res) => {
                 </b>
                 ${showDelete ? `
                 <div class="del-engine-container">
-                    <button onclick="triggerDynamicDelete(this, '${p._id}')" class="cosmic-del-btn">
+                    <button type="button" onclick="triggerDynamicDelete(event, this, '${p._id}')" class="cosmic-del-btn">
                         <i class="fas fa-trash-can trash-ico"></i>
                         <span class="del-text-track">
                             <span class="del-char" style="--rot:-15deg; --tx:-30px; --rot-end:-90deg;">D</span>
@@ -428,9 +442,9 @@ app.get('/dashboard', async (req, res) => {
             <p style="margin-top:12px; font-size:16px;">${p.content}</p>
             ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);">` : ''}
             <div class="interaction-bar">
-                <button onclick="interact('${p._id}', 'like')" class="action-btn ${hasW ? 'active-w' : ''}"><i class="fas fa-crown"></i> ${p.likes.length} W</button>
-                <button onclick="interact('${p._id}', 'dislike')" class="action-btn ${hasL ? 'active-l' : ''}"><i class="fas fa-skull"></i> ${p.dislikes.length} L</button>
-                <button onclick="interact('${p._id}', 'save')" class="action-btn ${isSaved ? 'active-save' : ''}"><i class="fas fa-bookmark"></i> ${isSaved ? 'ARCHIVED' : 'SAVE'}</button>
+                <button type="button" onclick="interact('${p._id}', 'like')" class="action-btn ${hasW ? 'active-w' : ''}"><i class="fas fa-crown"></i> ${p.likes.length} W</button>
+                <button type="button" onclick="interact('${p._id}', 'dislike')" class="action-btn ${hasL ? 'active-l' : ''}"><i class="fas fa-skull"></i> ${p.dislikes.length} L</button>
+                <button type="button" onclick="interact('${p._id}', 'save')" class="action-btn ${isSaved ? 'active-save' : ''}"><i class="fas fa-bookmark"></i> ${isSaved ? 'ARCHIVED' : 'SAVE'}</button>
             </div>
         </div>`
     }).join('');
@@ -495,7 +509,7 @@ app.post('/register', async (req, res) => {
         req.session.user = { username: newUser.username };
         res.redirect('/dashboard');
     } catch (err) {
-        res.send("<script>alert('INITIALIZATION FAILED: Matrix error.'); window.history.back();</script>");
+        res.send("<script>alert('IDENTITY SETUP REJECTED: Matrix execution fault.'); window.history.back();</script>");
     }
 });
 
@@ -708,5 +722,5 @@ app.get('/create-sector', async (req, res) => {
 // Server Initialization
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log("🚀 COSMIC ENGINE V68 LIVE ON PORT " + PORT);
+    console.log("🚀 COSMIC ENGINE V69 LIVE ON PORT " + PORT);
 });
