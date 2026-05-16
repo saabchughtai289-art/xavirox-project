@@ -2,12 +2,13 @@
   "name": "reddit-pakistan",
   "version": "1.0.0",
   "description": "Xavirox Neural Core",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@google/genai": "^2.3.0",
     "bcryptjs": "^2.4.3",
     "connect-mongo": "^6.0.0",
     "express": "^4.22.2",
