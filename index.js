@@ -1,6 +1,7 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V64 [THE MOBILE STABLE ENGINE, FOOTER AUDIT & FIXED AUTH SYSTEM]
+    🚀 XAVIROX COSMIC OS - V66 [THE MOBILE STABLE ENGINE, FULL AUTH ENGINE RESTORATION]
     STATUS: FULL MASTER MERGE + LEGAL SUPPORT ENGINE SYNC + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
+    - RESTORED: /login & /register GET/POST Engines to fix "Cannot GET /login" breakdown
     - INTEGRATED: GenZ Cyber Footer (Support, DMCA & Content Removal -> xavirox.co@gmail.com)
     - INTEGRATED: Futuristic Glassmorphism Auth Screen UI (Neon Cyan App Theme & Fixed Account Creation)
     - FIXED: Mobile Layout Breakdown (Added CSS Media Queries for Stacked Mobile Flow & Adaptive Padding)
@@ -159,6 +160,10 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .footer-link:hover { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
         .footer-link span { color: var(--p); }
 
+        /* AUTH FORMS GLOW */
+        .auth-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 15px; border-radius: 18px; color: #fff; outline: none; font-size: 14px; margin-bottom: 15px; }
+        .auth-input:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
+
         /* ======================================================================
             📱 STRICT 2026 MOBILE RESPONSIVE ENGINE (MEDIA QUERIES)
            ====================================================================== */
@@ -230,7 +235,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V65 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V66 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -325,7 +330,7 @@ app.get('/dashboard', async (req, res) => {
                     </div>
                     <button class="create-btn" style="width:auto; padding:10px 30px;">TRANSMIT</button>
                 </div>
-            </form> profile`}
+            </form>`}
     </div>`;
 
     const html = posts.map(p => {
@@ -350,6 +355,72 @@ app.get('/dashboard', async (req, res) => {
     }).join('');
 
     res.send(MASTER_UI(postForm + html, user, sectors, activeSector));
+});
+
+// --- [RESTORED AUTH ENGINES] ---
+app.get('/login', (req, res) => {
+    if (req.session.user) return res.redirect('/dashboard');
+    const loginForm = `
+        <div class="card" style="max-width:450px; margin: 40px auto; border-color: var(--cyan);">
+            <h2 style="text-align:center; margin-bottom:20px; letter-spacing:2px; color: var(--cyan);">SYNC ACCOUNT</h2>
+            <form action="/login" method="POST">
+                <input type="text" name="username" class="auth-input" placeholder="Enter @username" required lowercase>
+                <input type="password" name="password" class="auth-input" placeholder="Enter Password" required>
+                <button class="create-btn" style="margin-top:10px;">ESTABLISH SYNC</button>
+            </form>
+            <p style="text-align:center; margin-top:20px; font-size:12px; opacity:0.6;">New to the void? <a href="/register" style="color:var(--p); text-decoration:none; font-weight:bold;">Create Identity</a></p>
+        </div>`;
+    res.send(MASTER_UI(loginForm, null, [], 'Login'));
+});
+
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const user = await User.findOne({ username: username.toLowerCase() });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.send("<script>alert('SYNC FAILED: Invalid Aura Keys or Identity Unknown 💀'); window.history.back();</script>");
+        }
+        req.session.user = { username: user.username };
+        res.redirect('/dashboard');
+    } catch (err) {
+        res.send("<script>alert('SYSTEM ERROR during handshake.'); window.history.back();</script>");
+    }
+});
+
+app.get('/register', (req, res) => {
+    if (req.session.user) return res.redirect('/dashboard');
+    const registerForm = `
+        <div class="card" style="max-width:450px; margin: 40px auto; border-color: var(--p);">
+            <h2 style="text-align:center; margin-bottom:20px; letter-spacing:2px; color: var(--p);">GENERATE IDENTITY</h2>
+            <form action="/register" method="POST">
+                <input type="text" name="username" class="auth-input" placeholder="Choose @username" required lowercase>
+                <input type="password" name="password" class="auth-input" placeholder="Secure Password" required>
+                <button class="create-btn" style="margin-top:10px; background: linear-gradient(45deg, var(--p), #000);">BUILD MATRIX</button>
+            </form>
+            <p style="text-align:center; margin-top:20px; font-size:12px; opacity:0.6;">Already verified? <a href="/login" style="color:var(--cyan); text-decoration:none; font-weight:bold;">Login</a></p>
+        </div>`;
+    res.send(MASTER_UI(registerForm, null, [], 'Register'));
+});
+
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const existing = await User.findOne({ username: username.toLowerCase() });
+        if (existing) {
+            return res.send("<script>alert('IDENTITY REJECTED: Username already taken in this network.'); window.history.back();</script>");
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = await new User({ username: username.toLowerCase(), password: hashedPassword }).save();
+        req.session.user = { username: newUser.username };
+        res.redirect('/dashboard');
+    } catch (err) {
+        res.send("<script>alert('INITIALIZATION FAILED: Matrix error.'); window.history.back();</script>");
+    }
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/dashboard');
 });
 
 // --- [GHOST INBOX ENGINE] ---
@@ -519,8 +590,20 @@ app.post('/interact', async (req, res) => {
     }
 });
 
+// Sector Construction Endpoint
+app.get('/create-sector', async (req, res) => {
+    if (!req.session.user) return res.status(401).send("Unauthorized Access");
+    const name = req.query.name;
+    if (name) {
+        try {
+            await new Sector({ name: name.toLowerCase() }).save();
+        } catch (e) {}
+    }
+    res.redirect('/dashboard');
+});
+
 // Server Initialization
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 COSMIC ENGINE V65 LIVE ON PORT ${PORT}`);
+    console.log("🚀 COSMIC ENGINE V66 LIVE ON PORT " + PORT);
 });
