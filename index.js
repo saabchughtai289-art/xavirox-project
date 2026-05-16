@@ -325,7 +325,7 @@ app.get('/dashboard', async (req, res) => {
                     </div>
                     <button class="create-btn" style="width:auto; padding:10px 30px;">TRANSMIT</button>
                 </div>
-            </form>`}
+            </form> profile`}
     </div>`;
 
     const html = posts.map(p => {
@@ -486,6 +486,8 @@ app.post('/interact', async (req, res) => {
         const post = await Post.findById(postId);
         if (!post) return res.status(404).json({ error: 'Post not found' });
 
+        const user = await User.findOne({ username });
+
         if (type === 'like') {
             if (post.likes.includes(username)) {
                 post.likes = post.likes.filter(u => u !== username);
@@ -501,181 +503,24 @@ app.post('/interact', async (req, res) => {
                 post.likes = post.likes.filter(u => u !== username);
             }
         } else if (type === 'save') {
-            const user = await User.findOne({ username });
             if (user.savedPosts.includes(postId)) {
                 user.savedPosts = user.savedPosts.filter(id => id !== postId);
             } else {
                 user.savedPosts.push(postId);
             }
             await user.save();
-            return res.sendStatus(200);
         }
 
         await post.save();
-        res.sendStatus(200);
+        return res.sendStatus(200);
     } catch (err) {
-        res.status(500).json({ error: 'Database desync' });
+        console.error(err);
+        return res.status(500).json({ error: 'Database context sync failed' });
     }
 });
 
-app.get('/create-sector', async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    const name = req.query.name;
-    if (name) {
-        try {
-            await new Sector({ name: name.toLowerCase() }).save();
-        } catch (e) {}
-    }
-    res.redirect('/dashboard');
+// Server Initialization
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 COSMIC ENGINE V65 LIVE ON PORT ${PORT}`);
 });
-
-// ======================================================================
-// 🔥 NEW GEN-Z GLASSMORPHISM AUTH PAGES ENGINE (CONNECTED TO DB LOGIC)
-// ======================================================================
-
-// [GET ROUTE: PREMIUM LOGIN SCREEN]
-app.get('/login', (req, res) => {
-    res.send(`
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAVROX | LOGIN PROTOCOL</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-</head>
-<body class="relative flex min-h-screen items-center justify-center bg-[#020708] px-4 font-sans overflow-hidden">
-  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-cyan-500/20 blur-[120px] rounded-full rotate-45 pointer-events-none"></div>
-  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-teal-500/10 blur-[150px] rounded-full -rotate-45 pointer-events-none"></div>
-
-  <div class="relative w-full max-w-[440px] rounded-[40px] border border-cyan-400/30 bg-white/5 p-10 backdrop-blur-xl shadow-[0_0_50px_rgba(6,182,212,0.15)]">
-    <div class="text-center mb-8">
-      <h1 class="text-4xl font-extrabold tracking-[0.2em] text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.6)] uppercase">XAVROX</h1>
-      <p class="mt-4 text-xl font-medium tracking-wide text-cyan-100/80">Welcome Back</p>
-    </div>
-
-    <form action="/login" method="POST" class="space-y-6">
-      <div>
-        <label class="block text-xs font-medium tracking-wider text-cyan-200/70 uppercase mb-2 ml-1">Username / Identification</label>
-        <input type="text" name="username" required placeholder="enter username..." class="w-full rounded-2xl border border-cyan-400/30 bg-black/40 px-5 py-3.5 text-sm text-cyan-100 placeholder-cyan-700/60 outline-none transition-all duration-300 focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] focus:bg-black/60"/>
-      </div>
-      <div>
-        <label class="block text-xs font-medium tracking-wider text-cyan-200/70 uppercase mb-2 ml-1">Password</label>
-        <input type="password" name="password" required placeholder="••••••••••••" class="w-full rounded-2xl border border-cyan-400/30 bg-black/40 px-5 py-3.5 text-sm text-cyan-100 placeholder-cyan-700/60 outline-none transition-all duration-300 focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] focus:bg-black/60"/>
-      </div>
-
-      <div class="pt-2">
-        <button type="button" onclick="window.location.href='/dashboard'" class="w-full group relative overflow-hidden rounded-2xl border-2 border-cyan-400 bg-cyan-950/40 py-3 px-4 font-bold tracking-wider text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.2)] transition-all duration-300 hover:scale-[1.02] hover:bg-cyan-400 hover:text-black hover:shadow-[0_0_25px_rgba(34,211,238,0.5)] cursor-pointer">
-          <span class="flex items-center justify-center gap-2">👀 BROWSE AS GUEST <span class="opacity-60 group-hover:opacity-100">|</span> ⚡ NO ACCOUNT NEEDED</span>
-        </button>
-        <p class="text-[10px] text-center text-cyan-500/70 mt-1.5 tracking-wide">*Instantly explore posts & communities. Vote & post require login.</p>
-      </div>
-
-      <div class="pt-2">
-        <button type="submit" class="w-full rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-500 py-3.5 font-semibold text-lg text-white shadow-[0_4px_20px_rgba(6,182,212,0.3)] transition-all duration-300 hover:opacity-90 hover:shadow-[0_4px_25px_rgba(6,182,212,0.5)] active:scale-98 cursor-pointer">Login</button>
-      </div>
-      <div class="text-center pt-4 text-xs tracking-wider text-cyan-200/50">Are You New Member ? <a href="/signup" class="font-bold text-cyan-300 hover:text-cyan-100 transition-colors ml-1">Sign UP</a></div>
-    </form>
-  </div>
-</body>
-</html>`);
-});
-
-// [GET ROUTE: PREMIUM SIGNUP SCREEN]
-app.get('/signup', (req, res) => {
-    res.send(`
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAVROX | CREATE IDENTITY</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-</head>
-<body class="relative flex min-h-screen items-center justify-center bg-[#020708] px-4 font-sans overflow-hidden">
-  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-purple-500/10 blur-[120px] rounded-full rotate-45 pointer-events-none"></div>
-  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-cyan-500/15 blur-[150px] rounded-full -rotate-45 pointer-events-none"></div>
-
-  <div class="relative w-full max-w-[440px] rounded-[40px] border border-purple-500/30 bg-white/5 p-10 backdrop-blur-xl shadow-[0_0_50px_rgba(168,85,247,0.15)]">
-    <div class="text-center mb-8">
-      <h1 class="text-4xl font-extrabold tracking-[0.2em] text-purple-400 drop-shadow-[0_0_12px_rgba(168,85,247,0.6)] uppercase">XAVROX</h1>
-      <p class="mt-4 text-xl font-medium tracking-wide text-purple-100/80">Create Profile Void</p>
-    </div>
-
-    <form action="/signup" method="POST" class="space-y-6">
-      <div>
-        <label class="block text-xs font-medium tracking-wider text-purple-200/70 uppercase mb-2 ml-1">Desired Username</label>
-        <input type="text" name="username" required placeholder="pick a rare username..." class="w-full rounded-2xl border border-purple-400/30 bg-black/40 px-5 py-3.5 text-sm text-purple-100 placeholder-purple-700/60 outline-none transition-all duration-300 focus:border-purple-400 focus:shadow-[0_0_15px_rgba(168,85,247,0.2)] focus:bg-black/60"/>
-      </div>
-      <div>
-        <label class="block text-xs font-medium tracking-wider text-purple-200/70 uppercase mb-2 ml-1">Secure Password</label>
-        <input type="password" name="password" required placeholder="••••••••••••" class="w-full rounded-2xl border border-purple-400/30 bg-black/40 px-5 py-3.5 text-sm text-purple-100 placeholder-purple-700/60 outline-none transition-all duration-300 focus:border-purple-400 focus:shadow-[0_0_15px_rgba(168,85,247,0.2)] focus:bg-black/60"/>
-      </div>
-
-      <div class="pt-2">
-        <button type="submit" class="w-full rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-500 py-3.5 font-semibold text-lg text-white shadow-[0_4px_20px_rgba(168,85,247,0.3)] transition-all duration-300 hover:opacity-90 hover:shadow-[0_4px_25px_rgba(168,85,247,0.5)] active:scale-98 cursor-pointer">Generate Identity</button>
-      </div>
-      <div class="text-center pt-4 text-xs tracking-wider text-purple-200/50">Already Have an Identity ? <a href="/login" class="font-bold text-purple-300 hover:text-purple-100 transition-colors ml-1">Login</a></div>
-    </form>
-  </div>
-</body>
-</html>`);
-});
-
-// --- [BACKEND LOGIC: MOUNTED LOGIN ENGINE] ---
-app.post('/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        const user = await User.findOne({ username: username.toLowerCase() });
-        
-        if (!user) {
-            return res.send("<script>alert('ERROR: Identity does not exist in the Void.'); window.history.back();</script>");
-        }
-        
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.send("<script>alert('ERROR: Invalid access key/password.'); window.history.back();</script>");
-        }
-        
-        req.session.user = { username: user.username, aura: user.aura };
-        res.redirect('/dashboard');
-    } catch (err) {
-        res.send("<script>alert('SYSTEM OUT OF SYNC: Database connection timed out.'); window.history.back();</script>");
-    }
-});
-
-// --- [BACKEND LOGIC: MOUNTED SIGNUP ENGINE] ---
-app.post('/signup', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        const cleanUsername = username.toLowerCase().trim();
-        
-        const existingUser = await User.findOne({ username: cleanUsername });
-        if (existingUser) {
-            return res.send("<script>alert('ERROR: Username taken by another entity.'); window.history.back();</script>");
-        }
-        
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({
-            username: cleanUsername,
-            password: hashedPassword,
-            aura: 100,
-            savedPosts: [],
-            ghostMessages: []
-        });
-        
-        await newUser.save();
-        req.session.user = { username: newUser.username, aura: newUser.aura };
-        res.send("<script>alert('IDENTITY CREATED SUCCESSFULLY! Welcome to Xavrox.'); window.location.href='/dashboard';</script>");
-    } catch (err) {
-        res.send("<script>alert('SYSTEM OUT OF SYNC: Failed to securely write database profile.'); window.history.back();</script>");
-    }
-});
-
-// --- [LOGOUT ENGINE] ---
-app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/dashboard');
-});
-
-// --- [Vercel Execution Hook] ---
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Xavrox Engine Connected Dynamic Port: ${PORT}`));
