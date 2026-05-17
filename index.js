@@ -1,6 +1,7 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V78 [LEADERBOARD MATRIX EDITION & VERCEL LAYER PROTECTED]
+    🚀 XAVIROX COSMIC OS - V79 [AVATAR MATRIX & CUSTOM PFP IDENTITY UPDATE]
     STATUS: MASTER REFACTOR + ASYNCHRONOUS COMMENTING + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
+    - INTEGRATED: Custom Profile Picture / Avatar uploads visible cross-platform (Dashboard, Comments, Leaderboard).
     - INTEGRATED: Premium GenZ Aura Leaderboard tracking system showcasing top network profiles.
     - LOGO INTEGRATION: Successfully embedded XAVIROX Logo & Gemini AI Gateway branding into UI framework.
     - FIXED CRITICAL BUG: Completely stopped full page refresh on interaction nodes & comment submissions.
@@ -56,6 +57,7 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     username: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     aura: { type: Number, default: 100 },
+    avatarUrl: { type: String, default: null }, // 🧬 CUSTOM AVATAR/PFP INFRASTRUCTURE FIELD
     savedPosts: [String],
     ghostMessages: [{ content: String, date: { type: Date, default: Date.now } }]
 }));
@@ -63,6 +65,7 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
 const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema({
     author: String, 
     authorAura: { type: Number, default: 100 },
+    authorAvatar: { type: String, default: null }, // 🖼️ SNAPSHOT OF AVATAR AT TIME OF POST
     content: String, 
     mediaUrl: String, 
     sector: { type: String, default: 'Global' }, 
@@ -79,6 +82,7 @@ const Comment = mongoose.models.Comment || mongoose.model('Comment', new mongoos
     parentCommentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Comment', default: null }, 
     author: String,
     authorAura: { type: Number, default: 100 },
+    authorAvatar: { type: String, default: null }, // 🖼️ FAST FETCH AVATAR INSIDE THREAD NODES
     content: String,
     isAnonymous: { type: Boolean, default: false },
     date: { type: Date, default: Date.now }
@@ -115,6 +119,10 @@ function fileToGenerativePart(buffer, mimeType) {
 const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') => {
     const isGuest = !user;
     const auraColor = user ? (user.aura > 500 ? 'var(--cyan)' : user.aura < 50 ? '#ff0000' : 'var(--p)') : 'var(--p)';
+    const guestAvatar = `<div class="user-avatar-fallback" style="background: linear-gradient(45deg, #333, #111);"><i class="fas fa-ghost"></i></div>`;
+    const userAvatarHtml = user && user.avatarUrl 
+        ? `<img src="${user.avatarUrl}" class="global-navbar-avatar-frame" alt="pfp">` 
+        : (user ? `<div class="user-avatar-fallback" style="background: linear-gradient(45deg, var(--p), var(--v));">${user.username.charAt(0).toUpperCase()}</div>` : guestAvatar);
 
     return `
 <!DOCTYPE html>
@@ -144,11 +152,25 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .icon-label { position: absolute; top: 60px; background: var(--cyan); color: #000; font-size: 9px; font-weight: 900; padding: 4px 10px; border-radius: 8px; opacity: 0; transform: translateY(-10px); pointer-events: none; text-transform: uppercase; letter-spacing: 1px; }
         .nav-item:hover .icon-label { opacity: 1; transform: translateY(0); }
         
-        /* 👤 DYNAMIC ISLAND AURA TRACKER */
-        .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 260px; height: 45px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; letter-spacing: 2px; cursor: pointer; overflow: hidden; }
-        .dynamic-island:hover { width: 400px; height: 70px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); }
+        /* 👤 DYNAMIC ISLAND AURA TRACKER WITH LIVE PFP INTEGRATION */
+        .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 290px; height: 48px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; padding: 0 15px; gap: 12px; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; cursor: pointer; overflow: hidden; }
+        .dynamic-island:hover { width: 420px; height: 72px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); }
+        .global-navbar-avatar-frame { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+        .user-avatar-fallback { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #fff; flex-shrink: 0; }
         
-        /* XAVIROX & GEMINI INTEGRATION UI */
+        /* USER CLASSIFICATION PROFILES FOR AVATARS CROSS-PLATFORM */
+        .post-header-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
+        .post-avatar-fallback { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: #fff; }
+        .comment-header-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.15); }
+        .comment-avatar-fallback { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; }
+
+        /* PROFILE INTERACTIVE IMAGE GENERATOR PILL */
+        .interactive-pfp-uploader { width: 110px; height: 110px; border-radius: 35px; border: 2px dashed rgba(0, 242, 255, 0.4); margin: 0 auto; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(0,0,0,0.4); }
+        .interactive-pfp-uploader:hover { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0,242,255,0.2); }
+        .uploader-hover-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; font-size: 10px; font-weight: 900; color: var(--cyan); letter-spacing: 1px; }
+        .interactive-pfp-uploader:hover .uploader-hover-overlay { opacity: 1; }
+        .portfolio-pfp-render { width: 100%; height: 100%; object-fit: cover; }
+
         .brand-logo-container { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
         .xavirox-logo-img { height: 32px; filter: drop-shadow(0 0 8px var(--cyan)); }
         .gemini-shield-badge { background: linear-gradient(45deg, #4285f4, #9b51e0); padding: 4px 8px; border-radius: 8px; font-size: 9px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.2); }
@@ -265,17 +287,17 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         /* 👑 AURA LEADERBOARD SPECIFIC ENGINE DESIGN STYLES */
         .podium-container { display: flex; justify-content: center; align-items: flex-end; gap: 20px; margin-bottom: 40px; padding-top: 20px; }
         .podium-card { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); border-radius: 24px; padding: 20px; text-align: center; position: relative; display: flex; flex-direction: column; align-items: center; }
-        .podium-card.rank-1 { height: 190px; border-color: #ffea00; box-shadow: 0 0 20px rgba(255, 234, 0, 0.2); width: 35%; }
-        .podium-card.rank-2 { height: 160px; border-color: #ccc; width: 30%; }
-        .podium-card.rank-3 { height: 145px; border-color: #cd7f32; width: 30%; }
+        .podium-card.rank-1 { height: 210px; border-color: #ffea00; box-shadow: 0 0 20px rgba(255, 234, 0, 0.2); width: 35%; }
+        .podium-card.rank-2 { height: 180px; border-color: #ccc; width: 30%; }
+        .podium-card.rank-3 { height: 165px; border-color: #cd7f32; width: 30%; }
         .podium-crown { font-size: 24px; margin-bottom: 5px; animation: pulseCapsule 1.5s infinite alternate; }
         .podium-rank-badge { position: absolute; bottom: -15px; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #000; }
         .rank-1 .podium-rank-badge { background: #ffea00; box-shadow: 0 0 10px #ffea00; }
         .rank-2 .podium-rank-badge { background: #ccc; }
         .rank-3 .podium-rank-badge { background: #cd7f32; }
-        .leaderboard-row { display: flex; align-items: center; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); padding: 14px 20px; border-radius: 20px; margin-bottom: 12px; }
+        .leaderboard-row { display: flex; align-items: center; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); padding: 14px 20px; border-radius: 20px; margin-bottom: 12px; gap: 15px; }
         .leaderboard-row:hover { border-color: var(--cyan); transform: translateX(5px); background: rgba(0, 242, 255, 0.02); }
-        .row-rank { font-weight: 900; font-size: 14px; width: 40px; color: rgba(255,255,255,0.4); }
+        .row-rank { font-weight: 900; font-size: 14px; width: 30px; color: rgba(255,255,255,0.4); }
 
         /* 📱 MOBILE ARCHITECTURE OVERRIDES */
         @media (max-width: 768px) {
@@ -285,7 +307,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             .nav-row { padding: 4px; gap: 6px; border-radius: 16px; }
             .nav-btn-circle { width: 38px; height: 38px; border-radius: 12px; font-size: 14px; }
             .icon-label { display: none !important; }
-            .dynamic-island { top: 75px; width: 90%; height: 42px; font-size: 9px; letter-spacing: 1px; }
+            .dynamic-island { top: 75px; width: 90%; height: 44px; font-size: 9px; letter-spacing: 1px; }
             .dynamic-island:hover { width: 92%; height: 60px; }
             .main-container { margin: 140px auto 30px auto; flex-direction: column; gap: 15px; padding: 0 12px; }
             .feed { order: 1; width: 100%; }
@@ -317,8 +339,9 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         </div>
     </div>
     <div class="dynamic-island">
-        <div style="text-align:center;">
-            <div class="island-main">${isGuest ? "⚡ XAVIROX AURA: MADE A ACC LIL BRO 💀" : "⚡ XAVIROX AURA: " + user.aura}</div>
+        ${userAvatarHtml}
+        <div style="flex: 1;">
+            <div class="island-main">${isGuest ? "⚡ XAVIROX AURA: MAKE AN ACC LIL BRO 💀" : "⚡ XAVIROX AURA: " + user.aura}</div>
             <div class="island-detail">${isGuest ? "ACCESS REJECTED" : "SECURE RADAR STABLE"}</div>
         </div>
     </div>
@@ -351,7 +374,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V78 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V79 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -365,7 +388,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             container.appendChild(star);
         }
         
-        // 🐛 BUG FIX: interact() now properly receives event as first parameter
+        // Interaction logic engine
         async function interact(event, postId, type) {
             try {
                 const res = await fetch('/interact', { 
@@ -394,7 +417,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                         window.location.reload(); 
                     }
                 } else if(res.status === 401) {
-                    alert('MADE A ACC LIL BRO 💀');
+                    alert('MAKE AN ACC LIL BRO 💀');
                     window.location.href = '/login';
                 } else {
                     alert('Database context routing failed.');
@@ -427,10 +450,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                     const result = await response.json();
                     const newNode = document.createElement('div');
                     newNode.className = 'comment-node ' + (data.parentCommentId ? 'nested' : '');
+                    
+                    const avatarSnippet = result.authorAvatar 
+                        ? '<img src="' + result.authorAvatar + '" class="comment-header-avatar">'
+                        : '<div class="comment-avatar-fallback" style="background:linear-gradient(45deg, var(--p), var(--v))">' + result.author.charAt(0).toUpperCase() + '</div>';
+
                     newNode.innerHTML = 
-                        '<div style="font-size:11px; opacity:0.8; font-weight:bold; color:var(--cyan)">@' + result.author + 
-                        '<span style="opacity:0.4; font-weight:normal; margin-left:10px;">Just Now</span></div>' +
-                        '<p style="font-size:13px; margin-top:4px; color:#ddd;">' + result.content + '</p>';
+                        '<div style="display:flex; align-items:center; gap:8px; font-size:11px; opacity:0.8; font-weight:bold; color:var(--cyan)">' + 
+                        avatarSnippet + '<span>@' + result.author + '</span>' +
+                        '<span style="opacity:0.4; font-weight:normal; margin-left:5px;">Just Now</span></div>' +
+                        '<p style="font-size:13px; margin-top:6px; color:#ddd; padding-left:32px;">' + result.content + '</p>';
                     
                     const targetContainer = document.getElementById(appendTargetId);
                     if(targetContainer) {
@@ -450,7 +479,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             }
         }
 
-        // 🛠️ REPAIRED DELETION ANIMATION LOGIC ENGINE
+        // Deletion macro engine
         async function triggerDynamicDelete(event, btnElement, postId) {
             if(event) { event.preventDefault(); event.stopPropagation(); }
             if(!btnElement.classList.contains('is-primed')) {
@@ -507,30 +536,38 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 
 // --- [CORE ROUTES & FEEDS] ---
 
-// 🎯 VERCEL ROOT ROUTE PATCH: Redirects traffic from / to /dashboard cleanly
 app.get('/', (req, res) => {
     res.redirect('/dashboard');
 });
 
-// 👑 LEADERBOARD ROUTE: Fetches top 10 aura profiles and renders custom grid framework
+// 👑 LEADERBOARD ROUTE: Fetches top 10 aura profiles with integrated Custom Pfps
 app.get('/leaderboard', async (req, res) => {
     try {
         const topUsers = await User.find({}).sort({ aura: -1 }).limit(10);
         const sectors = await Sector.find();
         const user = req.session.user;
 
-        // Extracting top 3 users safely for premium podium mapping
-        const rank1User = topUsers[0] || { username: 'void_ghost', aura: 0 };
-        const rank2User = topUsers[1] || { username: 'void_ghost', aura: 0 };
-        const rank3User = topUsers[2] || { username: 'void_ghost', aura: 0 };
+        const rank1User = topUsers[0] || { username: 'void_ghost', aura: 0, avatarUrl: null };
+        const rank2User = topUsers[1] || { username: 'void_ghost', aura: 0, avatarUrl: null };
+        const rank3User = topUsers[2] || { username: 'void_ghost', aura: 0, avatarUrl: null };
 
-        // Rest list framework for ranks 4 to 10
+        const makePodiumAvatar = (u, fallbackColor) => {
+            return u.avatarUrl 
+                ? `<img src="${u.avatarUrl}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:2px solid ${fallbackColor};">`
+                : `<div style="width:55px; height:55px; border-radius:50%; background:linear-gradient(45deg, ${fallbackColor}, #000); margin-bottom:10px; display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff; font-size:16px;">${u.username.charAt(0).toUpperCase()}</div>`;
+        };
+
         const remainingUsersHtml = topUsers.slice(3).map((u, index) => {
             const currentRank = index + 4;
             const postAuraColor = u.aura > 500 ? 'var(--cyan)' : u.aura < 50 ? '#ff0000' : 'var(--p)';
+            const rowAvatar = u.avatarUrl 
+                ? `<img src="${u.avatarUrl}" style="width:28px; height:28px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.15);">`
+                : `<div style="width:28px; height:28px; border-radius:50%; background:linear-gradient(45deg, var(--p), var(--v)); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:900; color:#fff;">${u.username.charAt(0).toUpperCase()}</div>`;
+
             return `
             <div class="leaderboard-row">
                 <span class="row-rank">#${currentRank}</span>
+                ${rowAvatar}
                 <span style="font-weight: 800; font-size: 14px; color: #fff;">@${u.username}</span>
                 <span style="margin-left: auto; font-weight: 900; font-size: 13px; color: ${postAuraColor}; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 50px; border: 1px solid var(--border);">${u.aura} AURA</span>
             </div>`;
@@ -546,7 +583,7 @@ app.get('/leaderboard', async (req, res) => {
 
             <div class="podium-container">
                 <div class="podium-card rank-2">
-                    <div style="font-size: 18px; color: #ccc; margin-bottom: 8px;"><i class="fas fa-shield-halved"></i></div>
+                    ${makePodiumAvatar(rank2User, 'var(--p)')}
                     <span style="font-weight: 800; font-size: 14px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank2User.username}</span>
                     <span style="font-size: 12px; font-weight: 900; color: var(--p); margin-top: 6px;">${rank2User.aura} AURA</span>
                     <div class="podium-rank-badge">2</div>
@@ -554,13 +591,14 @@ app.get('/leaderboard', async (req, res) => {
 
                 <div class="podium-card rank-1">
                     <div class="podium-crown" style="color: #ffea00;"><i class="fas fa-crown"></i></div>
+                    ${makePodiumAvatar(rank1User, '#ffea00')}
                     <span style="font-weight: 900; font-size: 16px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank1User.username}</span>
                     <span style="font-size: 13px; font-weight: 900; color: var(--cyan); margin-top: 6px;">${rank1User.aura} AURA</span>
                     <div class="podium-rank-badge">1</div>
                 </div>
 
                 <div class="podium-card rank-3">
-                    <div style="font-size: 16px; color: #cd7f32; margin-bottom: 8px;"><i class="fas fa-medal"></i></div>
+                    ${makePodiumAvatar(rank3User, 'var(--v)')}
                     <span style="font-weight: 800; font-size: 13px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank3User.username}</span>
                     <span style="font-size: 11px; font-weight: 900; color: var(--v); margin-top: 6px;">${rank3User.aura} AURA</span>
                     <div class="podium-rank-badge">3</div>
@@ -575,7 +613,6 @@ app.get('/leaderboard', async (req, res) => {
 
         res.send(MASTER_UI(leaderboardContent, user, sectors, 'Leaderboard'));
     } catch (err) {
-        console.error("Leaderboard engine crash:", err);
         res.redirect('/dashboard');
     }
 });
@@ -584,7 +621,6 @@ app.get('/dashboard', async (req, res) => {
     const activeSector = req.query.sector || 'Global';
     const currentTime = new Date();
 
-    // ⏳ TIME CAPSULE AGGREGATION: Future posts hidden until their time
     const feedFilter = activeSector !== 'Global' ? { sector: activeSector } : {};
     feedFilter.$or = [
         { scheduledFor: null },
@@ -610,9 +646,7 @@ app.get('/dashboard', async (req, res) => {
                         </label>
                         
                         <label class="genz-time-capsule" title="Drop this signal in the future...">
-                            <div class="capsule-icon-box">
-                                <i class="fas fa-meteor"></i>
-                            </div>
+                            <div class="capsule-icon-box"><i class="fas fa-meteor"></i></div>
                             <div class="capsule-text">
                                 <span class="capsule-label">TIME CAPSULE</span>
                                 <input type="datetime-local" name="scheduledTime" class="genz-datetime">
@@ -627,7 +661,6 @@ app.get('/dashboard', async (req, res) => {
     const allComments = await Comment.find({ postId: { $in: posts.map(p => p._id) } }).sort({ date: 1 });
 
     function renderCommentTree(commentsList, parentId = null, isNested = false) {
-        // 🐛 BUG FIX: Proper null comparison for root-level comments
         const targetNodes = commentsList.filter(c => {
             if (parentId === null) {
                 return c.parentCommentId === null || c.parentCommentId === undefined;
@@ -637,16 +670,20 @@ app.get('/dashboard', async (req, res) => {
         if (targetNodes.length === 0) return '';
 
         return targetNodes.map(c => {
+            const nodeAvatarSnippet = c.authorAvatar 
+                ? `<img src="${c.authorAvatar}" class="comment-header-avatar">`
+                : `<div class="comment-avatar-fallback" style="background:linear-gradient(45deg, var(--p), var(--v))">${c.author.charAt(0).toUpperCase()}</div>`;
+
             return `
             <div class="comment-node ${isNested ? 'nested' : ''}">
-                <div style="font-size:11px; opacity:0.8; font-weight:bold; color:var(--cyan)">
-                    ${c.isAnonymous ? '👻 GHOST' : '@' + c.author} 
-                    <span style="opacity:0.4; font-weight:normal; margin-left:10px;">${new Date(c.date).toLocaleTimeString()}</span>
+                <div style="display:flex; align-items:center; gap:8px; font-size:11px; opacity:0.8; font-weight:bold; color:var(--cyan)">
+                    ${c.isAnonymous ? '<div class="comment-avatar-fallback" style="background:#222;"><i class="fas fa-mask"></i></div> <span>GHOST</span>' : nodeAvatarSnippet + '<span>@' + c.author + '</span>'} 
+                    <span style="opacity:0.4; font-weight:normal; margin-left:5px;">${new Date(c.date).toLocaleTimeString()}</span>
                 </div>
-                <p style="font-size:13px; margin-top:4px; color:#ddd;">${c.content}</p>
+                <p style="font-size:13px; margin-top:6px; color:#ddd; padding-left:32px;">${c.content}</p>
                 ${user ? `
-                <button type="button" class="reply-trigger-btn" onclick="toggleReplyForm('${c._id}')"><i class="fas fa-reply"></i> Reply</button>
-                <div class="reply-form-wrapper" id="form-${c._id}">
+                <button type="button" class="reply-trigger-btn" style="margin-left:32px;" onclick="toggleReplyForm('${c._id}')"><i class="fas fa-reply"></i> Reply</button>
+                <div class="reply-form-wrapper" id="form-${c._id}" style="padding-left:32px;">
                     <form onsubmit="submitCommentAjax(event, this, 'tree-container-${c._id}')">
                         <input type="hidden" name="postId" value="${c.postId}">
                         <input type="hidden" name="parentCommentId" value="${c._id}">
@@ -669,11 +706,15 @@ app.get('/dashboard', async (req, res) => {
         const postComments = allComments.filter(c => String(c.postId) === String(p._id));
         const commentsRenderedTree = renderCommentTree(postComments, null, false);
 
-        // 🐛 BUG FIX: interact() now passes event as first argument in onclick
+        const postAvatarSnippet = p.authorAvatar 
+            ? `<img src="${p.authorAvatar}" class="post-header-avatar">`
+            : `<div class="post-avatar-fallback" style="background:linear-gradient(45deg, var(--p), var(--v))">${p.author.charAt(0).toUpperCase()}</div>`;
+
         return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}">
-            <div style="display:flex; align-items:center;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                ${p.isAnonymous ? '<div class="post-avatar-fallback" style="background:#111; border:1px dashed #7000ff;"><i class="fas fa-mask" style="color:#7000ff;"></i></div>' : postAvatarSnippet}
                 <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:13px; letter-spacing:0.5px;">
-                    ${p.isAnonymous ? '👻 GHOST_SIGNAL' : '@'+p.author} 
+                    ${p.isAnonymous ? 'GHOST_SIGNAL' : '@'+p.author} 
                     ${!p.isAnonymous ? `<span class="aura-badge">${p.authorAura}</span>` : ''}
                 </b>
                 ${showDelete ? `
@@ -691,7 +732,7 @@ app.get('/dashboard', async (req, res) => {
                     </button>
                 </div>` : ''}
             </div>
-            <p style="margin-top:12px; font-size:16px;">${p.content}</p>
+            <p style="margin-top:12px; font-size:16px; padding-left: ${p.isAnonymous ? '0' : '0px'};">${p.content}</p>
             ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);">` : ''}
             <div class="interaction-bar">
                 <button type="button" onclick="interact(event, '${p._id.toString()}', 'like')" class="action-btn like-btn ${hasW ? 'active-w' : ''}"><i class="fas fa-crown"></i> ${p.likes.length} W</button>
@@ -716,7 +757,7 @@ app.get('/dashboard', async (req, res) => {
     res.send(MASTER_UI(postForm + html, user, sectors, activeSector));
 });
 
-// --- [💬 REAL-TIME ENDPOINT: AJAX COMPLIANT THREAD SAVER] ---
+// --- [💬 REAL-TIME ENDPOINT: AJAX COMPLIANT THREAD SAVER WITH AVATARS] ---
 app.post('/add-comment-ajax', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: "Unauthorized" });
     const { postId, parentCommentId, content } = req.body;
@@ -728,13 +769,38 @@ app.post('/add-comment-ajax', async (req, res) => {
             parentCommentId: parentCommentId || null, 
             author: user.username,
             authorAura: user.aura,
+            authorAvatar: user.avatarUrl,
             content: content,
             isAnonymous: false
         }).save();
-        return res.status(200).json({ author: newComment.author, content: newComment.content, id: newComment._id });
+        return res.status(200).json({ author: newComment.author, content: newComment.content, id: newComment._id, authorAvatar: newComment.authorAvatar });
     } catch(err) {
-        console.error(err);
         return res.status(500).json({ error: "Internal Pipeline Failed" });
+    }
+});
+
+// --- [UPLOAD AVATAR / PFP ENDPOINT] ---
+app.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
+    if (!req.session.user) return res.status(401).send("Unauthorized Matrix Action");
+    try {
+        if (!req.file) return res.send("<script>alert('No avatar asset selected.'); window.history.back();</script>");
+        
+        // Convert avatar buffer to base64 encoding scheme
+        const base64Avatar = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+        
+        // Update User Profile natively
+        const updatedUser = await User.findOneAndUpdate(
+            { username: req.session.user.username },
+            { $set: { avatarUrl: base64Avatar } },
+            { new: true }
+        );
+
+        // Sync session instance variables
+        req.session.user.avatarUrl = updatedUser.avatarUrl;
+        
+        res.send("<script>alert('MATRIX AVATAR SYNCED SUCCESSFULLY 🌟'); window.location.href='/portfolio';</script>");
+    } catch (err) {
+        res.send("<script>alert('Avatar system failure.'); window.history.back();</script>");
     }
 });
 
@@ -762,8 +828,7 @@ app.post('/login', async (req, res) => {
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.send("<script>alert('SYNC FAILED: Invalid Aura Keys or Identity Unknown 💀'); window.history.back();</script>");
         }
-        // 🐛 BUG FIX: Store aura in session so dynamic island shows correct value
-        req.session.user = { username: user.username, aura: user.aura };
+        req.session.user = { username: user.username, aura: user.aura, avatarUrl: user.avatarUrl };
         res.redirect('/dashboard');
     } catch (err) {
         res.send("<script>alert('SYSTEM ERROR during handshake.'); window.history.back();</script>");
@@ -795,8 +860,7 @@ app.post('/register', async (req, res) => {
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await new User({ username: username.toLowerCase().trim(), password: hashedPassword }).save();
-        // 🐛 BUG FIX: Store aura in session on register too
-        req.session.user = { username: newUser.username, aura: newUser.aura };
+        req.session.user = { username: newUser.username, aura: newUser.aura, avatarUrl: newUser.avatarUrl };
         res.redirect('/dashboard');
     } catch (err) {
         res.send("<script>alert('INITIALIZATION FAILED: Matrix error.'); window.history.back();</script>");
@@ -808,8 +872,6 @@ app.get('/logout', (req, res) => {
     res.redirect('/dashboard');
 });
 
-// --- [GHOST INBOX ENGINE] ---
-// 🐛 BUG FIX: Added auth check + target user validation
 app.post('/send-ghost-msg', async (req, res) => {
     if (!req.session.user) return res.send("<script>alert('Login required to send ghost signals.'); window.location.href='/login';</script>");
     const { targetUser, message } = req.body;
@@ -826,7 +888,7 @@ app.post('/send-ghost-msg', async (req, res) => {
 
 app.get('/portfolio', async (req, res) => {
     const user = req.session.user;
-    if(!user) return res.send("<script>alert('MADE A ACC LIL BRO 💀'); window.location.href='/login';</script>");
+    if(!user) return res.send("<script>alert('MAKE AN ACC LIL BRO 💀'); window.location.href='/login';</script>");
     const dbUser = await User.findOne({ username: user.username });
     if (!dbUser) return res.send("<script>alert('Identity drop. Login again.'); window.location.href='/login';</script>");
     const sectors = await Sector.find();
@@ -845,9 +907,23 @@ app.get('/portfolio', async (req, res) => {
             <p style="font-size:14px; margin-top:6px; color:#fff;">${sp.content}</p>
         </div>`).join('');
 
+    const portfolioAvatarRender = dbUser.avatarUrl 
+        ? `<img src="${dbUser.avatarUrl}" class="portfolio-pfp-render" id="pfpDisplayNode">`
+        : `<div style="font-size: 32px; font-weight:900; color:#fff;" id="pfpFallbackTxt">${dbUser.username.charAt(0).toUpperCase()}</div>`;
+
     const content = `
         <div class="card" style="text-align:center; border:2px solid var(--cyan);">
-            <div style="width: 80px; height: 80px; background: linear-gradient(45deg, var(--p), var(--v)); border-radius: 25px; margin: 0 auto; display: flex; align-items: center; justify-content: center;"><i class="fas fa-user-ninja fa-2x"></i></div>
+            <form action="/upload-avatar" method="POST" enctype="multipart/form-data" id="avatarUploadFormEngine">
+                <div class="interactive-pfp-uploader" onclick="document.getElementById('avatarFileInputNode').click();">
+                    ${portfolioAvatarRender}
+                    <div class="uploader-hover-overlay">
+                        <i class="fas fa-cloud-arrow-up fa-2x" style="margin-bottom:5px;"></i>
+                        <span>SYNC PFP</span>
+                    </div>
+                </div>
+                <input type="file" name="avatar" id="avatarFileInputNode" style="display:none;" accept="image/*" onchange="document.getElementById('avatarUploadFormEngine').submit();">
+            </form>
+            
             <h1 style="margin-top:15px;">@${dbUser.username}</h1>
             <div class="bento-grid">
                 <div class="bento-item" style="grid-column: span 2;"><h3 style="font-size:9px; opacity:0.5;">AURA STATUS</h3><p style="font-size:22px; color:var(--cyan); font-weight:900;">${dbUser.aura}</p></div>
@@ -912,7 +988,7 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         }
 
         await new Post({ 
-            author: user.username, authorAura: user.aura, content: textContent, 
+            author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl, content: textContent, 
             sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon,
             scheduledFor: finalScheduledDate
         }).save();
@@ -920,13 +996,11 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         if(!isAnon) { 
             user.aura += 15; 
             await user.save();
-            // 🐛 BUG FIX: Sync session aura after post so dynamic island updates live
             req.session.user.aura = user.aura;
         }
         res.redirect('back');
 
     } catch (aiError) {
-        console.error("⚠️ GATEKEEPER ENGINE ERROR:", aiError);
         const isAnon = req.body.isAnonymous === 'on';
         const user = await User.findOne({ username: req.session.user.username });
         if (!user) return res.redirect('/login');
@@ -937,7 +1011,7 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
             if (parsedTime > new Date()) finalScheduledDate = parsedTime;
         }
         await new Post({ 
-            author: user.username, authorAura: user.aura, content: req.body.content, 
+            author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl, content: req.body.content, 
             sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon,
             scheduledFor: finalScheduledDate
         }).save();
@@ -961,11 +1035,9 @@ app.post('/delete-post', async (req, res) => {
             return res.status(403).json({ error: 'Forbidden' });
         }
         await Post.findByIdAndDelete(postId);
-        // 🐛 BUG FIX: Delete orphaned comments when post is deleted
         await Comment.deleteMany({ postId: postId });
         return res.sendStatus(200);
     } catch (err) {
-        console.error(err);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 });
@@ -998,7 +1070,6 @@ app.post('/interact', async (req, res) => {
             }
             await post.save();
         } else if (type === 'save') {
-            // 🐛 BUG FIX: save only modifies user, not post — no post.save() needed
             if (user.savedPosts.includes(postId)) {
                 user.savedPosts = user.savedPosts.filter(id => id !== postId);
             } else {
@@ -1009,12 +1080,10 @@ app.post('/interact', async (req, res) => {
 
         return res.sendStatus(200);
     } catch (err) {
-        console.error(err);
         return res.status(500).json({ error: 'Database context sync failed' });
     }
 });
 
-// Sector Construction Endpoint
 app.get('/create-sector', async (req, res) => {
     if (!req.session.user) return res.status(401).send("Unauthorized Access");
     const name = req.query.name;
@@ -1027,11 +1096,10 @@ app.get('/create-sector', async (req, res) => {
 });
 
 // --- [SERVERLESS EXPORT CONFIGURATION] ---
-// 🎯 VERCEL COMPLIANCE: Use module.exports for Vercel, app.listen only for local testing
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
-        console.log("🚀 COSMIC ENGINE V78 LIVE ON PORT " + PORT);
+        console.log("🚀 COSMIC ENGINE V79 LIVE ON PORT " + PORT);
     });
 }
 module.exports = app;
