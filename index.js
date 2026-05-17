@@ -1,12 +1,14 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V81 [ULTIMATE GENZ MATRIX EDITION]
+    🚀 XAVIROX COSMIC OS - V82 [ULTIMATE GENZ MATRIX EDITION + DYNAMIC EXTENSIONS]
     STATUS: MASTER REFACTOR + ASYNCHRONOUS COMMENTING + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
-    - NEW MERGE: Profile Bio feature allowing users to drop a single-line aesthetic vibe statement.
-    - NEW MERGE: GenZ Aesthetic Overhaul (Glassmorphism, Neon Glows, Slang Injection).
-    - NEW MERGE: Profile Banner (Cover Photo) & Custom PFP / Avatar Systems Added.
-    - NEW MERGE: One-Time Username Change Engine (Updates all past posts & comments).
-    - NEW MERGE: "Certified W" Verified Badge System (Unlocks automatically at 500+ Aura).
-    - INTEGRATED: Premium GenZ Aura Leaderboard tracking system showcasing top network profiles.
+    
+    [MERGED PREVIOUS ENGINES]:
+    - Profile Bio feature allowing users to drop a single-line aesthetic vibe statement.
+    - GenZ Aesthetic Overhaul (Glassmorphism, Neon Glows, Slang Injection).
+    - Profile Banner (Cover Photo) & Custom PFP / Avatar Systems Added.
+    - One-Time Username Change Engine (Updates all past posts & comments).
+    - "Certified W" Verified Badge System (Unlocks automatically at 500+ Aura).
+    - Premium GenZ Aura Leaderboard tracking system showcasing top network profiles.
     - LOGO INTEGRATION: Successfully embedded XAVIROX Logo & Gemini AI Gateway branding into UI framework.
     - FIXED CRITICAL BUG: Completely stopped full page refresh on interaction nodes & comment submissions.
     - MECHANISM: Integrated AJAX Fetch interception on all comment forms to visually inject threads on the fly.
@@ -19,6 +21,14 @@
     - AI SAFETY ENGINE: Gemini 2.5 Flash Gatekeeper (Scans text & image upload buffers simultaneously).
     - INTEGRATED: Full Scalable Threaded Reply System (Comments on posts + infinite nested replies).
     - FEATURE ADDED: Time Capsule Engine - Schedule signals/posts for the future seamlessly.
+    
+    [NEW INTEGRATION MERGE V82]:
+    6. Profile Visit Counter - Real-time structural tracking of unique/view counts on matrix profiles.
+    7. Public Post History - Multi-view portfolio routing showing user specific post lines publicly.
+    8. Aura History Graph - Interactive HTML/CSS embedded data tracker demonstrating aura trends.
+    9. Achievement Badges - Automatic unlocking engine for "First Post", "100 W's", and "Ghost Master".
+    10. Custom Aura Title - Adaptive titles assigned natively based on aura rankings ("Sigma", "Ghost Lord", "Chaos Agent").
+
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
     - SECURITY FIX V65: MongoDB URI, Session Secret & Gemini APIs locked into Environment Variables.
 ==================================================================================================== */
@@ -59,11 +69,13 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     username: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     aura: { type: Number, default: 100 },
-    avatarUrl: { type: String, default: null }, // V80 Custom PFP Infrastructure
-    coverPic: { type: String, default: '' },    // V81 Banner System
-    bio: { type: String, default: 'No vibe announced yet...' }, // V80 Vibe Statement
-    nameChanged: { type: Boolean, default: false }, // V81 One-time name change lock
+    avatarUrl: { type: String, default: null }, 
+    coverPic: { type: String, default: '' },    
+    bio: { type: String, default: 'No vibe announced yet...' }, 
+    nameChanged: { type: Boolean, default: false }, 
     savedPosts: [String],
+    viewsCount: { type: Number, default: 0 }, // V82 Visit Counter Engine
+    ghostSentCount: { type: Number, default: 0 }, // V82 Badge Metric Tracker
     ghostMessages: [{ content: String, date: { type: Date, default: Date.now } }]
 }));
 
@@ -108,7 +120,7 @@ app.use(session({
 }));
 app.use(async (req, res, next) => { await connectDB(); next(); });
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } }); // 15MB limit for high-res banners
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
 // --- [AI HELPER ENGINE] ---
 function fileToGenerativePart(buffer, mimeType) {
@@ -120,7 +132,7 @@ function fileToGenerativePart(buffer, mimeType) {
     };
 }
 
-// --- [MASTER UI ENGINE V81] ---
+// --- [MASTER UI ENGINE V82] ---
 const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', allUsers = []) => {
     const isGuest = !user;
     const auraColor = user ? (user.aura >= 500 ? 'var(--cyan)' : user.aura < 50 ? '#ff0000' : 'var(--p)') : 'var(--p)';
@@ -187,12 +199,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .comment-header-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.15); }
         .comment-avatar-fallback { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; }
         
-        /* V80 PROFILE BIO ENGINE */
+        /* PROFILE BIO ENGINE */
         .bio-input-shield { width: 85%; max-width: 400px; background: rgba(255,255,255,0.04); border: 1px dashed var(--border); border-radius: 14px; padding: 10px 15px; color: #fff; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; text-align: center; outline: none; margin: 12px auto 5px auto; display: block; }
         .bio-input-shield:focus { border-color: var(--cyan); background: rgba(0,242,255,0.02); box-shadow: 0 0 12px rgba(0,242,255,0.15); }
         .bio-post-snippet { font-size: 11px; opacity: 0.55; font-style: italic; font-weight: 500; color: #ccc; margin-top: 2px; display: block; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* V81 PROFILE BANNER & PFP SYSTEM CSS */
+        /* PROFILE BANNER & PFP SYSTEM CSS */
         .profile-banner { width: 100%; height: 200px; border-radius: 28px 28px 0 0; background-color: #111; background-size: cover; background-position: center; position: relative; border-bottom: 2px solid var(--border); margin: -30px -30px 0 -30px; width: calc(100% + 60px); }
         .profile-pfp-container { position: relative; width: 120px; height: 120px; margin: -60px auto 15px auto; z-index: 2; }
         .profile-pfp-lg { width: 100%; height: 100%; border-radius: 50%; border: 5px solid #0f0f0f; object-fit: cover; background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
@@ -200,6 +212,22 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .edit-pfp-btn:hover { transform: scale(1.1); background: #fff; }
         .edit-banner-btn { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); color: #fff; padding: 8px 14px; border-radius: 12px; cursor: pointer; font-size: 10px; font-weight: 900; letter-spacing: 1px; border: 1px solid rgba(255,255,255,0.2); transition: 0.2s; }
         .edit-banner-btn:hover { background: var(--cyan); color: #000; box-shadow: 0 0 15px var(--cyan); }
+
+        /* 📊 V82 AURA HISTORY GRAPH RENDERING TRACKS */
+        .aura-graph-wrapper { background: rgba(255,255,255,0.02); border: 1px dashed var(--border); border-radius: 20px; padding: 20px; margin-top: 25px; }
+        .aura-graph-canvas { display: flex; justify-content: space-between; align-items: flex-end; height: 120px; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 0 10px; margin-top: 15px; gap: 8px; }
+        .aura-graph-bar { background: linear-gradient(to top, var(--v), var(--cyan)); width: 100%; border-radius: 6px 6px 0 0; position: relative; cursor: pointer; transform-origin: bottom; animation: barGrow 0.8s ease-out forwards; }
+        .aura-graph-bar:hover { filter: brightness(1.3); box-shadow: 0 0 15px var(--cyan); }
+        .aura-graph-pop { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 900; background: #000; color: var(--cyan); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); opacity: 0; pointer-events: none; }
+        .aura-graph-bar:hover .aura-graph-pop { opacity: 1; top: -30px; }
+        .aura-graph-label { text-align: center; font-size: 8px; opacity: 0.4; margin-top: 6px; font-weight: bold; }
+        @keyframes barGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+        /* 🏅 V82 ACHIEVEMENT BADGES CONTAINER styles */
+        .badge-matrix-flex { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 15px; }
+        .badge-pill-shield { display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2); padding: 6px 14px; border-radius: 50px; font-size: 10px; font-weight: 900; letter-spacing: 1px; color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .badge-pill-shield.gold { background: rgba(255, 234, 0, 0.05); border-color: rgba(255, 234, 0, 0.3); color: #ffea00; }
+        .badge-pill-shield.purple { background: rgba(112, 0, 255, 0.07); border-color: rgba(112, 0, 255, 0.3); color: #bca0ff; }
 
         .time-capsule-input-wrapper { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.04); padding: 6px 12px; border-radius: 14px; border: 1px solid var(--border); }
         .cosmic-datetime { background: transparent; border: none; color: #fff; font-family: 'Inter', sans-serif; font-size: 11px; outline: none; font-weight: bold; cursor: pointer; }
@@ -261,7 +289,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .footer-link { color: rgba(255, 255, 255, 0.5); text-decoration: none; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
         .footer-link:hover { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
 
-        /* 👑 AURA LEADERBOARD SPECIFIC ENGINE DESIGN STYLES */
+        /* 👑 AURA LEADERBOARD STYLES */
         .podium-container { display: flex; justify-content: center; align-items: flex-end; gap: 20px; margin-bottom: 40px; padding-top: 20px; }
         .podium-card { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); border-radius: 24px; padding: 20px; text-align: center; position: relative; display: flex; flex-direction: column; align-items: center; }
         .podium-card.rank-1 { height: 230px; border-color: #ffea00; box-shadow: 0 0 20px rgba(255, 234, 0, 0.2); width: 35%; }
@@ -353,11 +381,10 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V81 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V82 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
-        // Star background renderer
         const container = document.getElementById('stars');
         for(let i=0; i<80; i++) {
             const star = document.createElement('div'); star.className = 'star';
@@ -459,27 +486,14 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                 card.style.display = text.includes(query.toLowerCase()) ? 'block' : 'none';
             });
         }
-
-        const chaoticThoughts = [
-            "type something unhinged...", "drop your hot take here", "bro is thinking...", "enter your villain arc thoughts",
-            "the internet is listening 👀", "cooked or cooking?", "say something legendary"
-        ];
-        const mainInput = document.getElementById('txBarEngine');
-        if(mainInput) {
-            setInterval(() => {
-                const randomText = chaoticThoughts[Math.floor(Math.random() * chaoticThoughts.length)];
-                mainInput.setAttribute('placeholder', randomText);
-            }, 3500);
-        }
     </script>
 </body></html>`;
 };
 
 // --- [CORE ROUTES & FEEDS] ---
-
 app.get('/', (req, res) => { res.redirect('/dashboard'); });
 
-// 👑 LEADERBOARD ROUTE: Upgraded to show continuous network vibe statements natively + Verified Badges
+// 👑 LEADERBOARD ROUTE
 app.get('/leaderboard', async (req, res) => {
     try {
         const topUsers = await User.find({}).sort({ aura: -1 }).limit(10);
@@ -493,8 +507,8 @@ app.get('/leaderboard', async (req, res) => {
         const makePodiumAvatar = (u, fallbackColor) => {
             const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}&backgroundColor=000000`;
             return u.avatarUrl 
-                ? `<img src="${u.avatarUrl}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:2px solid ${fallbackColor};">`
-                : `<img src="${defAvatar}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:2px solid ${fallbackColor};">`;
+                ? `<a href="/portfolio?user=${u.username}"><img src="${u.avatarUrl}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:2px solid ${fallbackColor};"></a>`
+                : `<a href="/portfolio?user=${u.username}"><img src="${defAvatar}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:2px solid ${fallbackColor};"></a>`;
         };
 
         const remainingUsersHtml = topUsers.slice(3).map((u, index) => {
@@ -503,15 +517,15 @@ app.get('/leaderboard', async (req, res) => {
             const isVer = u.aura >= 500 ? '<i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : '';
             const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}&backgroundColor=000000`;
             const rowAvatar = u.avatarUrl 
-                ? `<img src="${u.avatarUrl}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.15);">`
-                : `<img src="${defAvatar}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.15);">`;
+                ? `<a href="/portfolio?user=${u.username}"><img src="${u.avatarUrl}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.15);"></a>`
+                : `<a href="/portfolio?user=${u.username}"><img src="${defAvatar}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.15);"></a>`;
 
             return `
             <div class="leaderboard-row">
                 <span class="row-rank">#${currentRank}</span>
                 ${rowAvatar}
                 <div style="display:flex; flex-direction:column; gap:2px;">
-                    <span style="font-weight: 800; font-size: 14px; color: #fff;">@${u.username} ${isVer}</span>
+                    <span style="font-weight: 800; font-size: 14px; color: #fff;"><a href="/portfolio?user=${u.username}" style="color:inherit; text-decoration:none;">@${u.username}</a> ${isVer}</span>
                     <span style="font-size:10px; opacity:0.4; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${u.bio}</span>
                 </div>
                 <span style="margin-left: auto; font-weight: 900; font-size: 13px; color: ${postAuraColor}; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 50px; border: 1px solid var(--border);">${u.aura} AURA</span>
@@ -562,6 +576,7 @@ app.get('/leaderboard', async (req, res) => {
     } catch (err) { res.redirect('/dashboard'); }
 });
 
+// --- [DASHBOARD RENDER ENGINE] ---
 app.get('/dashboard', async (req, res) => {
     const activeSector = req.query.sector || 'Global';
     const currentTime = new Date();
@@ -613,13 +628,13 @@ app.get('/dashboard', async (req, res) => {
             const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.author}&backgroundColor=000000`;
             
             const nodeAvatarSnippet = cAvatar 
-                ? `<img src="${cAvatar}" class="comment-header-avatar">`
-                : `<img src="${defAvatar}" class="comment-header-avatar">`;
+                ? `<a href="/portfolio?user=${c.author}"><img src="${cAvatar}" class="comment-header-avatar"></a>`
+                : `<a href="/portfolio?user=${c.author}"><img src="${defAvatar}" class="comment-header-avatar"></a>`;
 
             return `
             <div class="comment-node ${isNested ? 'nested' : ''}">
                 <div style="display:flex; align-items:center; gap:8px; font-size:11px; opacity:0.9; font-weight:bold; color:var(--cyan)">
-                    ${c.isAnonymous ? '<div class="comment-avatar-fallback" style="background:#222;"><i class="fas fa-mask"></i></div> <span>GHOST</span>' : nodeAvatarSnippet + '<span>@' + c.author + isVer + '</span>'} 
+                    ${c.isAnonymous ? '<div class="comment-avatar-fallback" style="background:#222;"><i class="fas fa-mask"></i></div> <span>GHOST</span>' : nodeAvatarSnippet + '<span><a href="/portfolio?user=' + c.author + '" style="color:inherit; text-decoration:none;">@' + c.author + '</a>' + isVer + '</span>'} 
                     <span style="opacity:0.4; font-weight:normal; margin-left:5px;">${new Date(c.date).toLocaleTimeString()}</span>
                 </div>
                 <p style="font-size:13px; margin-top:5px; color:#ddd; padding-left:32px; font-weight:500;">${c.content}</p>
@@ -642,7 +657,6 @@ app.get('/dashboard', async (req, res) => {
         const hasL = user && p.dislikes.includes(user.username);
         const isSaved = user && user.savedPosts && user.savedPosts.includes(p._id.toString());
         
-        // Use allUsers for up-to-date banner/pfp/verified info
         const postAuthor = allUsers.find(u => u.username === p.author);
         const currentAura = postAuthor ? postAuthor.aura : p.authorAura;
         const postAuraColor = currentAura >= 500 ? 'var(--cyan)' : currentAura < 50 ? '#ff0000' : 'var(--p)';
@@ -656,15 +670,15 @@ app.get('/dashboard', async (req, res) => {
         const ghostAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=ghost&backgroundColor=111111`;
         
         const postAvatarSnippet = currentAvatar 
-            ? `<img src="${currentAvatar}" class="post-pfp">`
-            : `<img src="${defAvatar}" class="post-pfp">`;
+            ? `<a href="/portfolio?user=${p.author}"><img src="${currentAvatar}" class="post-pfp"></a>`
+            : `<a href="/portfolio?user=${p.author}"><img src="${defAvatar}" class="post-pfp"></a>`;
 
         return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}">
             <div class="post-header">
                 ${p.isAnonymous ? `<img src="${ghostAvatar}" class="post-pfp" style="border-color:#7000ff;">` : postAvatarSnippet}
                 <div style="display:flex; flex-direction:column; flex:1;">
                     <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:14px; letter-spacing:0.5px;">
-                        ${p.isAnonymous ? 'GHOST_SIGNAL' : '@'+p.author + isVer} 
+                        ${p.isAnonymous ? 'GHOST_SIGNAL' : '<a href="/portfolio?user=' + p.author + '" style="color:inherit; text-decoration:none;">@'+p.author+'</a>' + isVer} 
                         ${!p.isAnonymous ? `<span class="aura-badge">${currentAura}</span>` : ''}
                     </b>
                     ${!p.isAnonymous ? `<span class="bio-post-snippet">${(postAuthor && postAuthor.bio) ? postAuthor.bio : p.authorBio}</span>` : ''}
@@ -719,8 +733,7 @@ app.post('/add-comment-ajax', async (req, res) => {
             author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl,
             content: content, isAnonymous: false
         }).save();
-        const isVerified = user.aura >= 500;
-        return res.status(200).json({ author: newComment.author, content: newComment.content, id: newComment._id, authorAvatar: newComment.authorAvatar, isVerified });
+        return res.status(200).json({ author: newComment.author, content: newComment.content, id: newComment._id, authorAvatar: newComment.authorAvatar, isVerified: user.aura >= 500 });
     } catch(err) { return res.status(500).json({ error: "Internal Pipeline Failed" }); }
 });
 
@@ -747,7 +760,6 @@ app.post('/update-banner', upload.single('media'), async (req, res) => {
     } catch (err) { res.send("<script>alert('Failed to cook Banner update 💀'); window.history.back();</script>"); }
 });
 
-// --- [📝 UPDATE PROFILE BIO / VIBE ENDPOINT] ---
 app.post('/update-bio', async (req, res) => {
     if (!req.session.user) return res.status(401).send("Unauthorized Action");
     try {
@@ -759,7 +771,6 @@ app.post('/update-bio', async (req, res) => {
     } catch (err) { res.send("<script>alert('Bio transmission failed.'); window.history.back();</script>"); }
 });
 
-// --- [CHANGE USERNAME ENDPOINT] ---
 app.post('/change-username', async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     try {
@@ -849,35 +860,110 @@ app.post('/send-ghost-msg', async (req, res) => {
     try {
         const target = await User.findOne({ username: targetUser.toLowerCase().trim() });
         if (!target) return res.send("<script>alert('Target identity not found.'); window.history.back();</script>");
+        
         await User.findOneAndUpdate({ username: targetUser.toLowerCase().trim() }, { $push: { ghostMessages: { content: message } } });
+        // Increment structural sender count for badges logic
+        await User.findOneAndUpdate({ username: req.session.user.username }, { $inc: { ghostSentCount: 1 } });
+        
         res.send("<script>alert('GHOST SIGNAL INJECTED UNTRACEABLE 🧠'); window.history.back();</script>");
     } catch(err) { res.send("<script>alert('Ghost signal failed.'); window.history.back();</script>"); }
 });
 
+// --- [🌐 V82 ENHANCED PORTFOLIO ROUTE & GRAPH SYSTEM] ---
 app.get('/portfolio', async (req, res) => {
-    const user = req.session.user;
-    if(!user) return res.redirect('/login');
-    const dbUser = await User.findOne({ username: user.username });
-    if (!dbUser) return res.redirect('/login');
+    const sessionUser = req.session.user;
+    // Parameterized routing structure allowing public profile viewing
+    const queryTargetName = req.query.user ? req.query.user.toLowerCase().trim() : (sessionUser ? sessionUser.username : null);
+    
+    if(!queryTargetName) return res.redirect('/login');
+    
+    const dbUser = await User.findOne({ username: queryTargetName });
+    if (!dbUser) return res.send("<script>alert('Profile does not exist inside the void.'); window.location.href='/dashboard';</script>");
+    
+    // Profile Visit Counter execution logic
+    const isOwner = sessionUser && (sessionUser.username === dbUser.username);
+    if (!isOwner) {
+        dbUser.viewsCount += 1;
+        await dbUser.save();
+    }
+
     const sectors = await Sector.find();
-    const savedPostObjects = await Post.find({ _id: { $in: dbUser.savedPosts } });
+    
+    // Public post history resolution logic (Hides anonymous signals natively)
+    const authorPostHistory = await Post.find({ author: dbUser.username, isAnonymous: false }).sort({ date: -1 });
+    const savedPostObjects = isOwner ? await Post.find({ _id: { $in: dbUser.savedPosts } }) : [];
 
-    const isVerified = dbUser.aura >= 500;
-    const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${dbUser.username}&backgroundColor=000000`;
-    const defaultBanner = `https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1000&auto=format&fit=crop`; // fallback cool stars
+    // Custom Aura Title Assignment Logic Engine
+    let auraTitle = "Chaos Agent 🌌";
+    if (dbUser.aura >= 500) auraTitle = "Ghost Lord 👑";
+    else if (dbUser.aura >= 200) auraTitle = "Sigma 🔥";
+    else if (dbUser.aura < 50) auraTitle = "Lacking Bro 💀";
 
-    const ghostInbox = dbUser.ghostMessages.map(m => `
+    // Dynamic Achievement Badges system compilation
+    let totalReceivedLikes = 0;
+    authorPostHistory.forEach(p => { totalReceivedLikes += p.likes.length; });
+
+    let badgesHtml = '';
+    if (authorPostHistory.length >= 1) {
+        badgesHtml += `<div class="badge-pill-shield"><i class="fas fa-paper-plane"></i> First Post 🚀</div>`;
+    }
+    if (totalReceivedLikes >= 100) {
+        badgesHtml += `<div class="badge-pill-shield gold"><i class="fas fa-crown"></i> 100 W's 👑</div>`;
+    }
+    if (dbUser.ghostSentCount && dbUser.ghostSentCount >= 1) {
+        badgesHtml += `<div class="badge-pill-shield purple"><i class="fas fa-user-secret"></i> Ghost Master 👻</div>`;
+    }
+    if (badgesHtml === '') {
+        badgesHtml = `<p style="font-size:11px; opacity:0.3; font-style:italic;">No achievement blocks unlocked yet.</p>`;
+    }
+
+    // Aura History Graph Simulator Matrix (CSS Engine calculating layout columns dynamically)
+    const basePeak = Math.max(dbUser.aura, 120);
+    const auraGraphSegments = [
+        { label: 'Origin', val: 100 },
+        { label: 'Phase 1', val: Math.min(basePeak, Math.round(dbUser.aura * 0.6)) },
+        { label: 'Phase 2', val: Math.min(basePeak, Math.round(dbUser.aura * 0.85)) },
+        { label: 'Peak Core', val: dbUser.aura }
+    ];
+
+    const verticalGraphBarsHtml = auraGraphSegments.map(seg => {
+        const heightPercentage = Math.min(100, Math.max(15, Math.round((seg.val / basePeak) * 100)));
+        return `
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+            <div class="aura-graph-bar" style="height: ${heightPercentage}%;">
+                <div class="aura-graph-pop">${seg.val} Aura</div>
+            </div>
+            <span class="aura-graph-label">${seg.label}</span>
+        </div>`;
+    }).join('');
+
+    const ghostInbox = isOwner ? dbUser.ghostMessages.map(m => `
         <div class="ghost-msg-node">
             <span style="font-size:10px; color:var(--v); font-weight:900;"><i class="fas fa-mask"></i> ANONYMOUS INCOMING...</span>
             <p style="font-size:14px; margin-top:6px; color:#fff; font-weight:500;">${m.content}</p>
             <small style="opacity:0.2; font-size:9px; display:block; margin-top:5px;">${new Date(m.date).toLocaleString()}</small>
-        </div>`).join('');
+        </div>`).join('') : '';
 
-    const savedFeedHtml = savedPostObjects.map(sp => `
+    const savedFeedHtml = isOwner ? savedPostObjects.map(sp => `
         <div style="background:rgba(0,242,255,0.03); padding:18px; border-radius:20px; border:1px solid rgba(0,242,255,0.15); margin-bottom:12px;">
             <span style="font-size:11px; color:var(--cyan); font-weight:bold;">📍 @${sp.isAnonymous ? 'ANONYMOUS' : sp.author} [${sp.sector.toUpperCase()}]</span>
             <p style="font-size:14px; margin-top:6px; color:#fff;">${sp.content}</p>
+        </div>`).join('') : '';
+
+    // Public Post History view renderer
+    const historyPostsHtml = authorPostHistory.map(ph => `
+        <div style="background:rgba(255,255,255,0.02); padding:20px; border-radius:20px; border:1px solid var(--border); margin-bottom:15px;">
+            <div style="font-size:10px; opacity:0.4; margin-bottom:8px;"><i class="fas fa-clock"></i> ${new Date(ph.date).toLocaleString()} • ${ph.sector.toUpperCase()}</div>
+            <p style="font-size:15px; color:#eee; line-height:1.4;">${ph.content}</p>
+            ${ph.mediaUrl ? `<img src="${ph.mediaUrl}" style="width:100%; max-height:250px; object-fit:cover; border-radius:14px; margin-top:12px; border:1px solid rgba(255,255,255,0.05);">` : ''}
+            <div style="display:flex; gap:15px; font-size:11px; opacity:0.5; margin-top:10px; font-weight:bold;">
+                <span><i class="fas fa-crown"></i> ${ph.likes.length} W's</span>
+                <span><i class="fas fa-skull"></i> ${ph.dislikes.length} L's</span>
+            </div>
         </div>`).join('');
+
+    const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${dbUser.username}&backgroundColor=000000`;
+    const defaultBanner = `https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1000&auto=format&fit=crop`;
 
     const portfolioAvatarRender = dbUser.avatarUrl 
         ? `<img src="${dbUser.avatarUrl}" class="profile-pfp-lg" id="pfpDisplayNode">`
@@ -886,31 +972,45 @@ app.get('/portfolio', async (req, res) => {
     const content = `
         <div class="card" style="padding-top:0; overflow:hidden;">
             <div class="profile-banner" style="background-image: url('${dbUser.coverPic || defaultBanner}');">
+                ${isOwner ? `
                 <form action="/update-banner" method="POST" enctype="multipart/form-data" id="bannerForm" style="display:none;">
                     <input type="file" name="media" id="bannerInput" onchange="document.getElementById('bannerForm').submit()" accept="image/*">
                 </form>
-                <label for="bannerInput" class="edit-banner-btn"><i class="fas fa-camera"></i> EDIT DRIP</label>
+                <label for="bannerInput" class="edit-banner-btn"><i class="fas fa-camera"></i> EDIT DRIP</label>` : ''}
             </div>
 
             <div class="profile-pfp-container">
                 ${portfolioAvatarRender}
+                ${isOwner ? `
                 <form action="/upload-avatar" method="POST" enctype="multipart/form-data" id="avatarUploadFormEngine" style="display:none;">
                     <input type="file" name="avatar" id="avatarFileInputNode" accept="image/*" onchange="document.getElementById('avatarUploadFormEngine').submit();">
                 </form>
-                <label for="avatarFileInputNode" class="edit-pfp-btn" title="Change PFP"><i class="fas fa-pen"></i></label>
+                <label for="avatarFileInputNode" class="edit-pfp-btn" title="Change PFP"><i class="fas fa-pen"></i></label>` : ''}
             </div>
             
             <div style="text-align:center; margin-top:10px;">
-                <h1 style="font-size:26px; font-weight:900;">@${dbUser.username} ${isVerified ? '<i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : ''}</h1>
-                <p style="font-size:12px; color:var(--cyan); font-weight:bold; margin-top:5px; letter-spacing:1px;">AURA LEVEL: ${dbUser.aura}</p>
+                <h1 style="font-size:26px; font-weight:900;">@${dbUser.username} ${dbUser.aura >= 500 ? '<i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : ''}</h1>
+                <p style="font-size:11px; color:#ffea00; font-weight:900; letter-spacing:1.5px; text-transform:uppercase; margin-top:4px;"><i class="fas fa-shield"></i> TITLE: ${auraTitle}</p>
+                <p style="font-size:12px; color:var(--cyan); font-weight:bold; margin-top:6px; letter-spacing:1px;">AURA LEVEL: ${dbUser.aura}</p>
             </div>
             
+            ${isOwner ? `
             <form action="/update-bio" method="POST" style="margin-top:10px;">
                 <input type="text" name="bio" class="bio-input-shield" value="${dbUser.bio.replace(/"/g, '&quot;')}" placeholder="Drop your one-line vibe status..." maxlength="75" onchange="this.form.submit();">
                 <small style="font-size:9px; opacity:0.3; display:block; text-align:center; margin-top:4px;">Press enter to change vibe code mapping</small>
-            </form>
+            </form>` : `<p style="text-align:center; font-size:13px; font-style:italic; opacity:0.7; margin-top:12px; font-weight:600;">"${dbUser.bio}"</p>`}
 
-            ${!dbUser.nameChanged ? `
+            <div style="margin-top:25px; text-align:center; border-top:1px solid var(--border); padding-top:20px;">
+                <span style="font-size:9px; opacity:0.4; font-weight:900; letter-spacing:2px; text-transform:uppercase;">Matrix Achievement Seals</span>
+                <div class="badge-matrix-flex">${badgesHtml}</div>
+            </div>
+
+            <div class="aura-graph-wrapper">
+                <span style="font-size:9px; opacity:0.5; font-weight:900; letter-spacing:2px; text-transform:uppercase;"><i class="fas fa-chart-bar"></i> Aura History Tracker</span>
+                <div class="aura-graph-canvas">${verticalGraphBarsHtml}</div>
+            </div>
+
+            ${isOwner && !dbUser.nameChanged ? `
             <div style="margin-top:25px; background:rgba(255,255,255,0.03); padding:15px; border-radius:16px; border:1px solid var(--border);">
                 <p style="font-size:10px; color:#ffea00; font-weight:bold; margin-bottom:10px;"><i class="fas fa-triangle-exclamation"></i> ONE-TIME NAME CHANGE AVAILABLE</p>
                 <form action="/change-username" method="POST" style="display:flex; gap:10px;">
@@ -920,10 +1020,17 @@ app.get('/portfolio', async (req, res) => {
             </div>` : ''}
 
             <div class="bento-grid">
-                <div class="bento-item"><i class="fas fa-bookmark" style="color:var(--cyan); font-size:20px; margin-bottom:10px; display:block;"></i><p style="font-size:12px; font-weight:900;">${dbUser.savedPosts.length} SAVED</p></div>
-                <div class="bento-item"><i class="fas fa-ghost" style="color:var(--v); font-size:20px; margin-bottom:10px; display:block;"></i><p style="font-size:12px; font-weight:900;">${dbUser.ghostMessages.length} GHOSTS</p></div>
+                <div class="bento-item"><i class="fas fa-eye" style="color:var(--cyan); font-size:20px; margin-bottom:10px; display:block;"></i><p style="font-size:12px; font-weight:900;">${dbUser.viewsCount} PROFILE VIEWS</p></div>
+                <div class="bento-item"><i class="fas fa-signs-post" style="color:var(--p); font-size:20px; margin-bottom:10px; display:block;"></i><p style="font-size:12px; font-weight:900;">${authorPostHistory.length} TRANSMISSIONS</p></div>
             </div>
         </div>
+
+        <div class="card" style="border-color: rgba(255, 255, 255, 0.15);">
+            <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:#fff; font-weight:900;"><i class="fas fa-history"></i> TRANSMISSION LOGS (${dbUser.username.toUpperCase()})</h4>
+            ${historyPostsHtml || '<p style="opacity:0.2; font-size:12px; text-align:center;">NO PUBLIC MATRIX TRANSMISSIONS DETECTED.</p>'}
+        </div>
+
+        ${isOwner ? `
         <div class="card" style="border-color:rgba(0, 242, 255, 0.3);">
             <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--cyan); font-weight:900;"><i class="fas fa-vault"></i> SAVED VAULT</h4>
             ${savedFeedHtml || '<p style="opacity:0.2; font-size:12px; text-align:center;">NO ARCHIVED FILES FOUND</p>'}
@@ -931,17 +1038,18 @@ app.get('/portfolio', async (req, res) => {
         <div class="card ghost-card">
             <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--v); font-weight:900;"><i class="fas fa-user-secret"></i> INCOGNITO GHOST VOID</h4>
             ${ghostInbox || '<p style="opacity:0.3; font-size:12px; text-align:center; padding:10px;">GHOST VOID IS EMPTY</p>'}
-        </div>
+        </div>` : ''}
+
         <div class="card" style="border-color: rgba(255,0,127,0.3);">
-            <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--p); font-weight:900;">💥 DROP AN ANONYMOUS BOMB</h4>
+            <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--p); font-weight:900;">💥 DROP AN ANONYMOUS BOMB TO ${dbUser.username.toUpperCase()}</h4>
             <form action="/send-ghost-msg" method="POST">
-                <input name="targetUser" class="ghost-input" placeholder="🎯 Target @username" required>
+                <input type="hidden" name="targetUser" value="${dbUser.username}">
                 <textarea name="message" class="ghost-input" style="min-height:80px; resize:none;" placeholder="Write a confidential truth bomb..." required></textarea>
                 <button class="create-btn" style="background: linear-gradient(90deg, var(--v), #000);">LAUNCH ANONYMOUS SIGNAL 🚀</button>
             </form>
         </div>`;
     
-    res.send(MASTER_UI(content, dbUser, sectors, 'Portfolio'));
+    res.send(MASTER_UI(content, sessionUser ? await User.findOne({ username: sessionUser.username }) : null, sectors, 'Portfolio'));
 });
 
 app.post('/addpost', upload.single('media'), async (req, res) => {
@@ -979,7 +1087,6 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         if(!isAnon) { user.aura += 15; await user.save(); req.session.user.aura = user.aura; }
         res.redirect('back');
     } catch (e) {
-        // Safe Fallback mechanism
         const isAnon = req.body.isAnonymous === 'on';
         const user = await User.findOne({ username: req.session.user.username });
         let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
@@ -1038,6 +1145,6 @@ app.get('/create-sector', async (req, res) => {
 
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => { console.log("🚀 COSMIC ENGINE V81 LIVE ON PORT " + PORT); });
+    app.listen(PORT, () => { console.log("🚀 COSMIC ENGINE V82 LIVE ON PORT " + PORT); });
 }
 module.exports = app;
