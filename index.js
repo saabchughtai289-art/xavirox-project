@@ -1,14 +1,15 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V80 [PROFILE BIO & LIGHTWEIGHT VIBE INFRASTRUCTURE]
+    🚀 XAVIROX COSMIC OS - V81 [ULTIMATE GENZ MATRIX EDITION]
     STATUS: MASTER REFACTOR + ASYNCHRONOUS COMMENTING + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
-    - INTEGRATED: Profile Bio feature allowing users to drop a single-line aesthetic vibe statement.
-    - DYNAMIC PRESERVATION: Bios propagate natively across the Dashboard Feed nodes and Matrix Leaderboards.
-    - INTEGRATED: Custom Profile Picture / Avatar uploads visible cross-platform (Dashboard, Comments, Leaderboard).
+    - NEW MERGE: Profile Bio feature allowing users to drop a single-line aesthetic vibe statement.
+    - NEW MERGE: GenZ Aesthetic Overhaul (Glassmorphism, Neon Glows, Slang Injection).
+    - NEW MERGE: Profile Banner (Cover Photo) & Custom PFP / Avatar Systems Added.
+    - NEW MERGE: One-Time Username Change Engine (Updates all past posts & comments).
+    - NEW MERGE: "Certified W" Verified Badge System (Unlocks automatically at 500+ Aura).
     - INTEGRATED: Premium GenZ Aura Leaderboard tracking system showcasing top network profiles.
     - LOGO INTEGRATION: Successfully embedded XAVIROX Logo & Gemini AI Gateway branding into UI framework.
     - FIXED CRITICAL BUG: Completely stopped full page refresh on interaction nodes & comment submissions.
     - MECHANISM: Integrated AJAX Fetch interception on all comment forms to visually inject threads on the fly.
-    - REPAIRED NAME MISMATCH: Changed input field name from 'comment-mini-input' to 'content' to match backend.
     - PRESERVED: Premium Fluid Delete Micro-Interaction CSS/JS Engine (Based on user interaction sample).
     - RESTORED: /login & /register GET/POST Engines to fix "Cannot GET /login" breakdown.
     - INTEGRATED: GenZ Cyber Footer (Support, DMCA & Content Removal -> xavirox.co@gmail.com).
@@ -17,7 +18,6 @@
     - RETAINED: GenZ Style Anonymous Message Center, Cyber Drop Boxes, V61 Void Search, Toggles.
     - AI SAFETY ENGINE: Gemini 2.5 Flash Gatekeeper (Scans text & image upload buffers simultaneously).
     - INTEGRATED: Full Scalable Threaded Reply System (Comments on posts + infinite nested replies).
-    - STRUCTURE: Self-referencing schema hierarchy tree rendering for dynamic sub-layer feeds.
     - FEATURE ADDED: Time Capsule Engine - Schedule signals/posts for the future seamlessly.
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
     - SECURITY FIX V65: MongoDB URI, Session Secret & Gemini APIs locked into Environment Variables.
@@ -37,7 +37,7 @@ const app = express();
 // ✅ SECURITY FIX: Environment Variables Setup
 const dbURI = process.env.MONGODB_URI;
 
-// --- [AI INITIALIZATION] --- (MOCK_KEY removed - will fail safely if key missing)
+// --- [AI INITIALIZATION] ---
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // --- [DATABASE] ---
@@ -59,8 +59,10 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     username: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     aura: { type: Number, default: 100 },
-    avatarUrl: { type: String, default: null }, 
-    bio: { type: String, default: 'No vibe announced yet...' }, // 🧬 NEW PROFILE VIBE STATEMENT FIELD
+    avatarUrl: { type: String, default: null }, // V80 Custom PFP Infrastructure
+    coverPic: { type: String, default: '' },    // V81 Banner System
+    bio: { type: String, default: 'No vibe announced yet...' }, // V80 Vibe Statement
+    nameChanged: { type: Boolean, default: false }, // V81 One-time name change lock
     savedPosts: [String],
     ghostMessages: [{ content: String, date: { type: Date, default: Date.now } }]
 }));
@@ -69,7 +71,7 @@ const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema(
     author: String, 
     authorAura: { type: Number, default: 100 },
     authorAvatar: { type: String, default: null }, 
-    authorBio: { type: String, default: 'No vibe announced yet...' }, // 🖼️ SNAPSHOT OF VIBE ON FORUMS
+    authorBio: { type: String, default: 'No vibe announced yet...' }, 
     content: String, 
     mediaUrl: String, 
     sector: { type: String, default: 'Global' }, 
@@ -96,7 +98,7 @@ const Sector = mongoose.models.Sector || mongoose.model('Sector', new mongoose.S
 }));
 
 // --- [MIDDLEWARE] ---
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(session({ 
     secret: process.env.SESSION_SECRET || 'xavirox_cosmic_secret_shh', 
@@ -106,7 +108,7 @@ app.use(session({
 }));
 app.use(async (req, res, next) => { await connectDB(); next(); });
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } }); // 15MB limit for high-res banners
 
 // --- [AI HELPER ENGINE] ---
 function fileToGenerativePart(buffer, mimeType) {
@@ -118,10 +120,10 @@ function fileToGenerativePart(buffer, mimeType) {
     };
 }
 
-// --- [MASTER UI ENGINE] ---
-const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') => {
+// --- [MASTER UI ENGINE V81] ---
+const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', allUsers = []) => {
     const isGuest = !user;
-    const auraColor = user ? (user.aura > 500 ? 'var(--cyan)' : user.aura < 50 ? '#ff0000' : 'var(--p)') : 'var(--p)';
+    const auraColor = user ? (user.aura >= 500 ? 'var(--cyan)' : user.aura < 50 ? '#ff0000' : 'var(--p)') : 'var(--p)';
     const guestAvatar = `<div class="user-avatar-fallback" style="background: linear-gradient(45deg, #333, #111);"><i class="fas fa-ghost"></i></div>`;
     const userAvatarHtml = user && user.avatarUrl 
         ? `<img src="${user.avatarUrl}" class="global-navbar-avatar-frame" alt="pfp">` 
@@ -135,60 +137,73 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     <title>XAVIROX | ${activeSector}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --bg: #000; --glass: rgba(255, 255, 255, 0.07); --border: rgba(255, 255, 255, 0.12); --dynamic-glow: 0 0 25px ${auraColor}44; }
-        * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
+        :root { --p: #ff007f; --v: #7000ff; --cyan: #00f2ff; --bg: #030303; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); --dynamic-glow: 0 0 30px ${auraColor}44; }
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
         
         /* 🌟 STARS BACKGROUND ENGINE */
-        .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: #000; }
+        .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%); }
         .star { position: absolute; background: #fff; border-radius: 50%; opacity: 0.3; animation: twinkle var(--d) infinite; }
-        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.7; transform: scale(1.2); } }
+        @keyframes twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.8; transform: scale(1.3); box-shadow: 0 0 10px #fff; } }
         
         .top-left-nav { position: fixed; top: 25px; left: 25px; z-index: 10001; display: flex; align-items: center; gap: 15px; }
-        .genz-search { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); border-radius: 20px; padding: 12px 20px; color: #fff; width: 180px; outline: none; backdrop-filter: blur(15px); font-size: 11px; font-weight: 700; letter-spacing: 1px; }
-        .genz-search:focus { width: 260px; border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 242, 255, 0.3); }
+        .genz-search { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 50px; padding: 12px 20px; color: #fff; width: 200px; outline: none; backdrop-filter: blur(15px); font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+        .genz-search:focus { width: 280px; border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); background: rgba(0,0,0,0.6); }
 
-        .nav-row { display: flex; gap: 12px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 24px; border: 1px solid var(--border); backdrop-filter: blur(20px); }
+        .nav-row { display: flex; gap: 10px; background: rgba(0,0,0,0.5); padding: 6px; border-radius: 50px; border: 1px solid var(--border); backdrop-filter: blur(20px); }
         .nav-item { position: relative; display: flex; flex-direction: column; align-items: center; }
-        .nav-btn-circle { width: 50px; height: 50px; background: var(--glass); border: 1px solid var(--border); border-radius: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; text-decoration: none; font-size: 18px; }
-        .nav-btn-circle:hover { transform: translateY(-5px); border-color: var(--cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); }
-        .icon-label { position: absolute; top: 60px; background: var(--cyan); color: #000; font-size: 9px; font-weight: 900; padding: 4px 10px; border-radius: 8px; opacity: 0; transform: translateY(-10px); pointer-events: none; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-btn-circle { width: 45px; height: 45px; background: var(--glass); border: 1px solid transparent; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; text-decoration: none; font-size: 16px; }
+        .nav-btn-circle:hover { transform: translateY(-3px); border-color: var(--cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.4); background: rgba(0, 242, 255, 0.1); color: var(--cyan); }
+        .icon-label { position: absolute; top: 55px; background: var(--cyan); color: #000; font-size: 9px; font-weight: 900; padding: 4px 10px; border-radius: 8px; opacity: 0; transform: translateY(-10px); pointer-events: none; text-transform: uppercase; letter-spacing: 1px; }
         .nav-item:hover .icon-label { opacity: 1; transform: translateY(0); }
         
-        /* 👤 DYNAMIC ISLAND TRACKER WITH LIVE PFP */
-        .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 290px; height: 48px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; padding: 0 15px; gap: 12px; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; cursor: pointer; overflow: hidden; }
-        .dynamic-island:hover { width: 420px; height: 72px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); }
+        /* 👤 DYNAMIC ISLAND AURA TRACKER */
+        .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 290px; height: 48px; background: rgba(0,0,0,0.7); border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; padding: 0 15px; gap: 12px; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; cursor: pointer; overflow: hidden; backdrop-filter: blur(10px); }
+        .dynamic-island:hover { width: 420px; height: 75px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); background: #000; }
         .global-navbar-avatar-frame { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
         .user-avatar-fallback { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #fff; flex-shrink: 0; }
         
-        .post-header-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
-        .post-avatar-fallback { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: #fff; }
-        .comment-header-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.15); }
-        .comment-avatar-fallback { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; }
+        /* XAVIROX & GEMINI INTEGRATION UI */
+        .brand-logo-container { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .gemini-shield-badge { background: linear-gradient(90deg, #4285f4, #9b51e0); padding: 4px 10px; border-radius: 8px; font-size: 9px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 10px rgba(155, 81, 224, 0.5); }
 
-        .interactive-pfp-uploader { width: 110px; height: 110px; border-radius: 35px; border: 2px dashed rgba(0, 242, 255, 0.4); margin: 0 auto; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(0,0,0,0.4); }
-        .interactive-pfp-uploader:hover { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0,242,255,0.2); }
-        .uploader-hover-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; font-size: 10px; font-weight: 900; color: var(--cyan); letter-spacing: 1px; }
-        .interactive-pfp-uploader:hover .uploader-hover-overlay { opacity: 1; }
-        .portfolio-pfp-render { width: 100%; height: 100%; object-fit: cover; }
-
-        /* 📝 BIO ENTRY ZONE AESTHETICS */
-        .bio-input-shield { width: 85%; max-width: 400px; background: rgba(255,255,255,0.04); border: 1px dashed var(--border); border-radius: 14px; padding: 10px 15px; color: #fff; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; text-align: center; outline: none; margin: 12px auto 5px auto; display: block; }
-        .bio-input-shield:focus { border-color: var(--cyan); background: rgba(0,242,255,0.02); box-shadow: 0 0 12px rgba(0,242,255,0.15); }
-        .bio-post-snippet { font-size: 11px; opacity: 0.55; font-style: italic; font-weight: 500; color: #ccc; margin-top: 2px; display: block; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        .brand-logo-container { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
         .main-container { max-width: 1100px; margin: 130px auto 50px auto; display: flex; gap: 35px; padding: 0 20px; flex: 1; width: 100%; }
         .feed { flex: 2; } .sidebar { flex: 1; }
-        .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 32px; padding: 30px; margin-bottom: 25px; position: relative; }
-        .card:hover { border-color: ${auraColor}; box-shadow: var(--dynamic-glow); transform: scale(1.01); }
-        .ghost-card { border: 1px dashed rgba(112, 0, 255, 0.4); background: rgba(112, 0, 255, 0.02); }
+        .card { background: rgba(15, 15, 15, 0.6); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 28px; padding: 30px; margin-bottom: 25px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+        .ghost-card { border: 1px dashed rgba(112, 0, 255, 0.6); background: rgba(112, 0, 255, 0.05); }
         
         .fancy-ghost-container { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
         .switch-track { width: 42px; height: 22px; background: #222; border: 1px solid var(--border); border-radius: 50px; position: relative; transition: background 0.3s; }
         .switch-thumb { width: 14px; height: 14px; background: #666; border-radius: 50%; position: absolute; top: 3px; left: 4px; transition: all 0.3s; }
-        input[type="checkbox"]:checked + .switch-track { background: var(--v); border-color: var(--p); box-shadow: 0 0 10px var(--v); }
+        input[type="checkbox"]:checked + .switch-track { background: var(--v); border-color: var(--p); box-shadow: 0 0 15px var(--v); }
         input[type="checkbox"]:checked + .switch-track .switch-thumb { left: 22px; background: #fff; box-shadow: 0 0 8px #fff; }
+
+        /* POST AVATARS & VERIFIED BADGE */
+        .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .post-pfp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--glass); }
+        .post-avatar-fallback { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; color: #fff; }
+        .verified-badge { color: var(--cyan); margin-left: 4px; font-size: 13px; text-shadow: 0 0 8px var(--cyan); }
+        .comment-header-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.15); }
+        .comment-avatar-fallback { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; }
+        
+        /* V80 PROFILE BIO ENGINE */
+        .bio-input-shield { width: 85%; max-width: 400px; background: rgba(255,255,255,0.04); border: 1px dashed var(--border); border-radius: 14px; padding: 10px 15px; color: #fff; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; text-align: center; outline: none; margin: 12px auto 5px auto; display: block; }
+        .bio-input-shield:focus { border-color: var(--cyan); background: rgba(0,242,255,0.02); box-shadow: 0 0 12px rgba(0,242,255,0.15); }
+        .bio-post-snippet { font-size: 11px; opacity: 0.55; font-style: italic; font-weight: 500; color: #ccc; margin-top: 2px; display: block; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* V81 PROFILE BANNER & PFP SYSTEM CSS */
+        .profile-banner { width: 100%; height: 200px; border-radius: 28px 28px 0 0; background-color: #111; background-size: cover; background-position: center; position: relative; border-bottom: 2px solid var(--border); margin: -30px -30px 0 -30px; width: calc(100% + 60px); }
+        .profile-pfp-container { position: relative; width: 120px; height: 120px; margin: -60px auto 15px auto; z-index: 2; }
+        .profile-pfp-lg { width: 100%; height: 100%; border-radius: 50%; border: 5px solid #0f0f0f; object-fit: cover; background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+        .edit-pfp-btn { position: absolute; bottom: 5px; right: 5px; background: var(--cyan); color: #000; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid #0f0f0f; font-size: 13px; transition: 0.2s; box-shadow: 0 0 10px var(--cyan); }
+        .edit-pfp-btn:hover { transform: scale(1.1); background: #fff; }
+        .edit-banner-btn { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); color: #fff; padding: 8px 14px; border-radius: 12px; cursor: pointer; font-size: 10px; font-weight: 900; letter-spacing: 1px; border: 1px solid rgba(255,255,255,0.2); transition: 0.2s; }
+        .edit-banner-btn:hover { background: var(--cyan); color: #000; box-shadow: 0 0 15px var(--cyan); }
+
+        .time-capsule-input-wrapper { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.04); padding: 6px 12px; border-radius: 14px; border: 1px solid var(--border); }
+        .cosmic-datetime { background: transparent; border: none; color: #fff; font-family: 'Inter', sans-serif; font-size: 11px; outline: none; font-weight: bold; cursor: pointer; }
+        .cosmic-datetime::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; }
 
         .genz-time-capsule { display: inline-flex; align-items: center; background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2); border-radius: 30px; padding: 4px 14px 4px 4px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter: blur(10px); }
         .genz-time-capsule:hover, .genz-time-capsule:focus-within { background: rgba(0, 242, 255, 0.1); border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 242, 255, 0.25); transform: translateY(-2px); }
@@ -200,23 +215,26 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .genz-datetime::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.8; cursor: pointer; }
 
         .interaction-bar { display: flex; gap: 20px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); }
-        .action-btn { background: transparent; border: none; color: #fff; font-size: 13px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 8px; opacity: 0.6; padding: 5px 10px; border-radius: 8px; }
+        .action-btn { background: transparent; border: none; color: #fff; font-size: 13px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 8px; opacity: 0.5; padding: 5px 10px; border-radius: 8px; }
         .action-btn:hover { opacity: 1; color: var(--cyan); background: rgba(255,255,255,0.05); }
         .active-w { color: var(--cyan) !important; opacity: 1 !important; text-shadow: 0 0 10px var(--cyan); } 
         .active-l { color: var(--p) !important; opacity: 1 !important; text-shadow: 0 0 10px var(--p); } 
         .active-save { color: #ffea00 !important; opacity: 1 !important; text-shadow: 0 0 10px #ffea00; }
 
+        /* 💬 THREADED REPLIES */
         .comments-section-container { margin-top: 20px; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); }
         .comment-node { background: rgba(255, 255, 255, 0.02); border-left: 2px solid var(--v); margin-top: 12px; padding: 12px 16px; border-radius: 0 16px 16px 0; position: relative; }
-        .comment-node.nested { margin-left: 25px; border-left-color: var(--cyan); background: rgba(0, 242, 255, 0.01); }
-        .reply-trigger-btn { font-size: 11px; background: transparent; border: none; color: var(--cyan); cursor: pointer; font-weight: bold; margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; opacity: 0.7; }
+        .comment-node.nested { margin-left: 30px; border-left-color: var(--cyan); background: rgba(0, 242, 255, 0.02); }
+        .reply-trigger-btn { font-size: 10px; background: transparent; border: none; color: var(--cyan); cursor: pointer; font-weight: bold; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
         .reply-trigger-btn:hover { opacity: 1; text-shadow: 0 0 8px var(--cyan); }
         .reply-form-wrapper { display: none; margin-top: 10px; padding-left: 10px; }
-        .comment-mini-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 12px; padding: 10px 15px; color: #fff; font-size: 12px; outline: none; }
+        .comment-mini-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; color: #fff; font-size: 12px; outline: none; }
+        .comment-mini-input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
 
-        /* Cosmic Exploding Delete Interactions */
+        /* 💥 DELETION ANIMATION */
         .del-engine-container { margin-left: auto; display: flex; align-items: center; justify-content: center; }
-        .cosmic-del-btn { background: linear-gradient(135deg, #d300c5, #7000ff); border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 10px rgba(112, 0, 255, 0.4); }
+        .cosmic-del-btn { background: linear-gradient(135deg, #d300c5, #7000ff); border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-radius 0.3s ease; box-shadow: 0 0 10px rgba(112, 0, 255, 0.4); }
+        .cosmic-del-btn:hover { transform: scale(1.1); box-shadow: 0 0 15px #d300c5; }
         .cosmic-del-btn .trash-ico { color: #fff; font-size: 13px; z-index: 2; pointer-events: none; }
         .cosmic-del-btn .del-text-track { display: none; opacity: 0; white-space: nowrap; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 900; color: #fff; letter-spacing: 1.5px; margin-left: 8px; z-index: 2; pointer-events: none; }
         .cosmic-del-btn.is-primed { width: 105px; border-radius: 20px; justify-content: flex-start; padding-left: 12px; }
@@ -227,19 +245,23 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         @keyframes explosionScattered { 0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; } 40% { transform: translateY(-12px) rotate(var(--rot)) scale(1.1); opacity: 0.9; } 100% { transform: translateY(25px) translateX(var(--tx)) rotate(var(--rot-end)) scale(0); opacity: 0; } }
         @keyframes trashVibeShake { 0% { transform: rotate(-8deg) scale(1.2); } 100% { transform: rotate(8deg) scale(1.2); } }
         
-        .aura-badge { font-size: 9px; background: ${auraColor}; color: #000; padding: 2px 8px; border-radius: 50px; font-weight: 900; margin-left: 10px; }
-        .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 15px; border-radius: 20px; font-weight: 900; cursor: pointer; font-size: 11px; text-transform: uppercase; text-decoration: none; text-align: center; }
+        .aura-badge { font-size: 9px; background: ${auraColor}; color: #000; padding: 2px 8px; border-radius: 50px; font-weight: 900; margin-left: 8px; }
+        .create-btn { display: block; width: 100%; background: linear-gradient(90deg, var(--v), var(--p)); color: #fff; border: none; padding: 16px; border-radius: 16px; font-weight: 900; cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; text-align: center; box-shadow: 0 5px 15px rgba(112,0,255,0.3); }
+        .create-btn:hover { filter: brightness(1.2); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,0,127,0.4); }
         .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
-        .bento-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 20px; padding: 20px; text-align: center; }
-        .ghost-msg-node { background: rgba(112, 0, 255, 0.03); padding: 16px; border-radius: 20px; border: 1px solid rgba(112, 0, 255, 0.2); margin-bottom: 12px; }
-        .ghost-input { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 14px; border-radius: 16px; margin-bottom: 12px; outline: none; font-size: 13px; font-weight: 600; }
-        .cosmic-footer { background: rgba(0, 0, 0, 0.6); border-top: 1px solid var(--border); backdrop-filter: blur(20px); width: 100%; padding: 25px 20px; text-align: center; margin-top: auto; }
-        .footer-links { display: flex; justify-content: center; gap: 30px; margin-bottom: 12px; flex-wrap: wrap; }
-        .footer-link { color: rgba(255, 255, 255, 0.6); text-decoration: none; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+        .bento-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 20px; padding: 20px; text-align: center; }
+        .ghost-msg-node { background: rgba(112, 0, 255, 0.05); padding: 16px; border-radius: 20px; border: 1px solid rgba(112, 0, 255, 0.3); margin-bottom: 12px; box-shadow: inset 0 0 20px rgba(112, 0, 255, 0.1); }
+        .ghost-input { width: 100%; background: rgba(0,0,0,0.6); border: 1px solid var(--border); color: #fff; padding: 15px; border-radius: 16px; margin-bottom: 12px; outline: none; font-size: 13px; font-weight: 600; }
+        .ghost-input:focus { border-color: var(--v); box-shadow: 0 0 15px rgba(112, 0, 255, 0.3); }
+        .auth-input { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); padding: 16px; border-radius: 14px; color: #fff; outline: none; font-size: 14px; margin-bottom: 16px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+        .auth-input:focus { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0,242,255,0.15), inset 0 2px 5px rgba(0,0,0,0.5); }
+        
+        .cosmic-footer { background: rgba(0, 0, 0, 0.8); border-top: 1px solid var(--border); backdrop-filter: blur(20px); width: 100%; padding: 30px 20px; text-align: center; margin-top: auto; }
+        .footer-links { display: flex; justify-content: center; gap: 30px; margin-bottom: 15px; flex-wrap: wrap; }
+        .footer-link { color: rgba(255, 255, 255, 0.5); text-decoration: none; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
         .footer-link:hover { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
-        .auth-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 15px; border-radius: 18px; color: #fff; outline: none; font-size: 14px; margin-bottom: 15px; }
 
-        /* 👑 LEADERBOARD PODIUM DESIGN */
+        /* 👑 AURA LEADERBOARD SPECIFIC ENGINE DESIGN STYLES */
         .podium-container { display: flex; justify-content: center; align-items: flex-end; gap: 20px; margin-bottom: 40px; padding-top: 20px; }
         .podium-card { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); border-radius: 24px; padding: 20px; text-align: center; position: relative; display: flex; flex-direction: column; align-items: center; }
         .podium-card.rank-1 { height: 230px; border-color: #ffea00; box-shadow: 0 0 20px rgba(255, 234, 0, 0.2); width: 35%; }
@@ -254,14 +276,15 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .leaderboard-row:hover { border-color: var(--cyan); transform: translateX(5px); background: rgba(0, 242, 255, 0.02); }
         .row-rank { font-weight: 900; font-size: 14px; width: 30px; color: rgba(255,255,255,0.4); }
 
+        /* 📱 MOBILE ARCHITECTURE OVERRIDES */
         @media (max-width: 768px) {
             .top-left-nav { position: absolute; top: 15px; left: 10px; right: 10px; width: calc(100% - 20px); justify-content: space-between; gap: 5px; }
             .genz-search { width: 35%; padding: 10px; font-size: 10px; }
             .genz-search:focus { width: 45%; }
-            .nav-row { padding: 4px; gap: 6px; border-radius: 16px; }
-            .nav-btn-circle { width: 38px; height: 38px; border-radius: 12px; font-size: 14px; }
+            .nav-row { padding: 4px; gap: 6px; border-radius: 50px; }
+            .nav-btn-circle { width: 38px; height: 38px; font-size: 14px; }
             .icon-label { display: none !important; }
-            .dynamic-island { top: 75px; width: 90%; height: 44px; font-size: 9px; letter-spacing: 1px; }
+            .dynamic-island { top: 75px; width: 90%; height: 42px; font-size: 9px; letter-spacing: 1px; }
             .dynamic-island:hover { width: 92%; height: 60px; }
             .main-container { margin: 140px auto 30px auto; flex-direction: column; gap: 15px; padding: 0 12px; }
             .feed { order: 1; width: 100%; }
@@ -269,6 +292,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             .card { padding: 20px; border-radius: 24px; margin-bottom: 15px; }
             .bento-grid { gap: 10px; }
             .bento-item { padding: 12px; border-radius: 14px; }
+            .profile-banner { height: 140px; margin: -20px -20px 0 -20px; width: calc(100% + 40px); }
+            .profile-pfp-container { width: 90px; height: 90px; margin-top: -45px; }
             .interaction-bar { gap: 12px; justify-content: space-between; }
             .action-btn { font-size: 11px; gap: 4px; }
             .footer-links { gap: 15px; }
@@ -295,8 +320,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
     <div class="dynamic-island">
         ${userAvatarHtml}
         <div style="flex: 1;">
-            <div class="island-main">${isGuest ? "⚡ XAVIROX AURA: MAKE AN ACC LIL BRO 💀" : "⚡ XAVIROX AURA: " + user.aura}</div>
-            <div class="island-detail">${isGuest ? "ACCESS REJECTED" : "SECURE RADAR STABLE"}</div>
+            <div class="island-main">${isGuest ? "⚡ AURA: MAKE AN ACC LIL BRO 💀" : "⚡ AURA LEVEL: " + user.aura}</div>
+            <div class="island-detail">${isGuest ? "ACCESS REJECTED" : "MATRIX SECURE 🟢"}</div>
         </div>
     </div>
     <div class="main-container">
@@ -304,19 +329,19 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         <div class="sidebar">
             <div class="card">
                 <div class="brand-logo-container">
-                    <span style="font-weight: 900; font-size: 20px; letter-spacing: 2px; color: #fff;">XAVIROX</span>
+                    <span style="font-weight: 900; font-size: 20px; letter-spacing: 2px; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3);">XAVIROX</span>
                     <div class="gemini-shield-badge"><i class="fas fa-brain"></i> GEMINI 2.5</div>
                 </div>
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:20px;">SECTORS / COMMUNITIES</h4>
-                <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:15px; text-decoration:none; font-weight:900;">🌏 GLOBAL</a>
-                <a href="/dashboard?sector=confessions" style="display:block; color:#ffea00; margin-bottom:15px; text-decoration:none; font-weight:900;">👻 #CONFESSIONS</a>
-                ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#ccc; font-size:13px; text-decoration:none; margin-top:12px;"># ${s.name.toUpperCase()}</a>`).join('')}
-                ${!isGuest ? `<button type="button" class="create-btn" style="margin-top:20px;" onclick="let n=prompt('Community / Sector Name?'); if(n) location.href='/create-sector?name='+n">+ BUILD COMMUNITY</button>` : ''}
+                <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-earth-americas"></i> GLOBAL</a>
+                <a href="/dashboard?sector=confessions" style="display:block; color:#ffea00; margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-ghost"></i> #CONFESSIONS</a>
+                ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#ccc; font-size:12px; font-weight:700; text-decoration:none; margin-top:12px; opacity:0.8;"># ${s.name.toUpperCase()}</a>`).join('')}
+                ${!isGuest ? `<button type="button" class="create-btn" style="margin-top:25px; font-size:10px;" onclick="let n=prompt('Name the new community / sector?'); if(n) location.href='/create-sector?name='+n">+ BUILD COMMUNITY</button>` : ''}
             </div>
             <div class="card">
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px;">FEEDBACK</h4>
-                <textarea id="fbTxt" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #222; border-radius:15px; color:#fff; padding:15px; margin-top:12px; outline:none; font-size:12px;" rows="2" placeholder="Signal thoughts..."></textarea>
-                <button type="button" onclick="this.innerText='SENT!'" class="create-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); margin-top:10px;">SEND</button>
+                <textarea id="fbTxt" style="width:100%; background:rgba(0,0,0,0.5); border:1px solid #333; border-radius:15px; color:#fff; padding:15px; margin-top:12px; outline:none; font-size:12px;" rows="2" placeholder="Drop thoughts..."></textarea>
+                <button type="button" onclick="this.innerText='COOKED! 🔥'" class="create-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); margin-top:10px;">SEND</button>
             </div>
         </div>
     </div>
@@ -328,25 +353,24 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V80 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V81 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
+        // Star background renderer
         const container = document.getElementById('stars');
-        for(let i=0; i<100; i++) {
+        for(let i=0; i<80; i++) {
             const star = document.createElement('div'); star.className = 'star';
-            star.style.width = '2px'; star.style.height = '2px';
+            star.style.width = Math.random() * 2 + 1 + 'px'; star.style.height = star.style.width;
             star.style.top = Math.random() * 100 + '%'; star.style.left = Math.random() * 100 + '%';
-            star.style.setProperty('--d', (Math.random() * 3 + 2) + 's');
+            star.style.setProperty('--d', (Math.random() * 4 + 2) + 's');
             container.appendChild(star);
         }
         
         async function interact(event, postId, type) {
             try {
                 const res = await fetch('/interact', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ postId: postId, type: type }) 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: postId, type: type }) 
                 });
                 if(res.status === 200) {
                     const targetBtn = event ? event.currentTarget : null;
@@ -361,16 +385,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                             if(likeBtn) likeBtn.classList.remove('active-w');
                         } else if(type === 'save') {
                             targetBtn.classList.toggle('active-save');
-                            targetBtn.innerHTML = targetBtn.classList.contains('active-save') 
-                                ? '<i class="fas fa-bookmark"></i> ARCHIVED' 
-                                : '<i class="fas fa-bookmark"></i> SAVE';
+                            targetBtn.innerHTML = targetBtn.classList.contains('active-save') ? '<i class="fas fa-bookmark"></i> ARCHIVED' : '<i class="fas fa-bookmark"></i> SAVE';
                         }
-                    } else {
-                        window.location.reload(); 
-                    }
+                    } else { window.location.reload(); }
                 } else if(res.status === 401) {
-                    alert('MAKE AN ACC LIL BRO 💀');
-                    window.location.href = '/login';
+                    alert('MAKE AN ACC LIL BRO 💀'); window.location.href = '/login';
                 }
             } catch(err) { window.location.reload(); }
         }
@@ -383,14 +402,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         async function submitCommentAjax(event, formElement, appendTargetId) {
             event.preventDefault();
             const formData = new FormData(formElement);
-            const data = {};
-            formData.forEach((value, key) => { data[key] = value; });
+            const data = {}; formData.forEach((value, key) => { data[key] = value; });
 
             try {
                 const response = await fetch('/add-comment-ajax', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
                 });
 
                 if (response.ok) {
@@ -404,7 +420,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 
                     newNode.innerHTML = 
                         '<div style="display:flex; align-items:center; gap:8px; font-size:11px; opacity:0.8; font-weight:bold; color:var(--cyan)">' + 
-                        avatarSnippet + '<span>@' + result.author + '</span>' +
+                        avatarSnippet + '<span>@' + result.author + (result.isVerified ? ' <i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : '') + '</span>' +
                         '<span style="opacity:0.4; font-weight:normal; margin-left:5px;">Just Now</span></div>' +
                         '<p style="font-size:13px; margin-top:6px; color:#ddd; padding-left:32px;">' + result.content + '</p>';
                     
@@ -423,23 +439,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         async function triggerDynamicDelete(event, btnElement, postId) {
             if(event) { event.preventDefault(); event.stopPropagation(); }
             if(!btnElement.classList.contains('is-primed')) {
-                btnElement.classList.add('is-primed');
-                return;
+                btnElement.classList.add('is-primed'); return;
             }
             btnElement.classList.add('is-destroying');
             await new Promise(resolve => setTimeout(resolve, 600));
             try {
                 const res = await fetch('/delete-post', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ postId: postId }) 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: postId }) 
                 });
-                if(res.status === 200) {
-                    btnElement.closest('.p-node').remove(); 
-                } else {
-                    alert('Ejection failed.');
-                    btnElement.classList.remove('is-destroying', 'is-primed');
-                }
+                if(res.status === 200) { btnElement.closest('.p-node').remove(); }
+                else { alert('Ejection failed.'); btnElement.classList.remove('is-destroying', 'is-primed'); }
             } catch(err) { btnElement.classList.remove('is-destroying', 'is-primed'); }
         }
 
@@ -447,8 +456,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             let cards = document.querySelectorAll('.feed .card.p-node');
             cards.forEach(card => {
                 let text = card.innerText.toLowerCase();
-                if(text.includes(query.toLowerCase())) card.style.display = 'block';
-                else card.style.display = 'none';
+                card.style.display = text.includes(query.toLowerCase()) ? 'block' : 'none';
             });
         }
 
@@ -469,11 +477,9 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 
 // --- [CORE ROUTES & FEEDS] ---
 
-app.get('/', (req, res) => {
-    res.redirect('/dashboard');
-});
+app.get('/', (req, res) => { res.redirect('/dashboard'); });
 
-// 👑 LEADERBOARD ROUTE: Upgraded to show continuous network vibe statements natively
+// 👑 LEADERBOARD ROUTE: Upgraded to show continuous network vibe statements natively + Verified Badges
 app.get('/leaderboard', async (req, res) => {
     try {
         const topUsers = await User.find({}).sort({ aura: -1 }).limit(10);
@@ -485,24 +491,27 @@ app.get('/leaderboard', async (req, res) => {
         const rank3User = topUsers[2] || { username: 'void_ghost', aura: 0, avatarUrl: null, bio: 'No vibe...' };
 
         const makePodiumAvatar = (u, fallbackColor) => {
+            const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}&backgroundColor=000000`;
             return u.avatarUrl 
                 ? `<img src="${u.avatarUrl}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:2px solid ${fallbackColor};">`
-                : `<div style="width:55px; height:55px; border-radius:50%; background:linear-gradient(45deg, ${fallbackColor}, #000); margin-bottom:10px; display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff; font-size:16px;">${u.username.charAt(0).toUpperCase()}</div>`;
+                : `<img src="${defAvatar}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:2px solid ${fallbackColor};">`;
         };
 
         const remainingUsersHtml = topUsers.slice(3).map((u, index) => {
             const currentRank = index + 4;
-            const postAuraColor = u.aura > 500 ? 'var(--cyan)' : u.aura < 50 ? '#ff0000' : 'var(--p)';
+            const postAuraColor = u.aura >= 500 ? 'var(--cyan)' : u.aura < 50 ? '#ff0000' : 'var(--p)';
+            const isVer = u.aura >= 500 ? '<i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : '';
+            const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}&backgroundColor=000000`;
             const rowAvatar = u.avatarUrl 
-                ? `<img src="${u.avatarUrl}" style="width:28px; height:28px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.15);">`
-                : `<div style="width:28px; height:28px; border-radius:50%; background:linear-gradient(45deg, var(--p), var(--v)); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:900; color:#fff;">${u.username.charAt(0).toUpperCase()}</div>`;
+                ? `<img src="${u.avatarUrl}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.15);">`
+                : `<img src="${defAvatar}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.15);">`;
 
             return `
             <div class="leaderboard-row">
                 <span class="row-rank">#${currentRank}</span>
                 ${rowAvatar}
                 <div style="display:flex; flex-direction:column; gap:2px;">
-                    <span style="font-weight: 800; font-size: 14px; color: #fff;">@${u.username}</span>
+                    <span style="font-weight: 800; font-size: 14px; color: #fff;">@${u.username} ${isVer}</span>
                     <span style="font-size:10px; opacity:0.4; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${u.bio}</span>
                 </div>
                 <span style="margin-left: auto; font-weight: 900; font-size: 13px; color: ${postAuraColor}; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 50px; border: 1px solid var(--border);">${u.aura} AURA</span>
@@ -519,7 +528,7 @@ app.get('/leaderboard', async (req, res) => {
             <div class="podium-container">
                 <div class="podium-card rank-2">
                     ${makePodiumAvatar(rank2User, 'var(--p)')}
-                    <span style="font-weight: 800; font-size: 14px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank2User.username}</span>
+                    <span style="font-weight: 800; font-size: 14px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank2User.username} ${rank2User.aura >= 500 ? '<i class="fas fa-circle-check verified-badge"></i>' : ''}</span>
                     <span style="font-size:9px; opacity:0.5; margin-top:3px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${rank2User.bio}"</span>
                     <span style="font-size: 12px; font-weight: 900; color: var(--p); margin-top: auto;">${rank2User.aura} AURA</span>
                     <div class="podium-rank-badge">2</div>
@@ -528,7 +537,7 @@ app.get('/leaderboard', async (req, res) => {
                 <div class="podium-card rank-1">
                     <div class="podium-crown" style="color: #ffea00;"><i class="fas fa-crown"></i></div>
                     ${makePodiumAvatar(rank1User, '#ffea00')}
-                    <span style="font-weight: 900; font-size: 16px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank1User.username}</span>
+                    <span style="font-weight: 900; font-size: 16px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank1User.username} ${rank1User.aura >= 500 ? '<i class="fas fa-circle-check verified-badge"></i>' : ''}</span>
                     <span style="font-size:10px; color:var(--cyan); opacity:0.8; margin-top:3px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${rank1User.bio}"</span>
                     <span style="font-size: 13px; font-weight: 900; color: var(--cyan); margin-top: auto;">${rank1User.aura} AURA</span>
                     <div class="podium-rank-badge">1</div>
@@ -536,7 +545,7 @@ app.get('/leaderboard', async (req, res) => {
 
                 <div class="podium-card rank-3">
                     ${makePodiumAvatar(rank3User, 'var(--v)')}
-                    <span style="font-weight: 800; font-size: 13px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank3User.username}</span>
+                    <span style="font-weight: 800; font-size: 13px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank3User.username} ${rank3User.aura >= 500 ? '<i class="fas fa-circle-check verified-badge"></i>' : ''}</span>
                     <span style="font-size:9px; opacity:0.5; margin-top:3px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${rank3User.bio}"</span>
                     <span style="font-size: 11px; font-weight: 900; color: var(--v); margin-top: auto;">${rank3User.aura} AURA</span>
                     <div class="podium-rank-badge">3</div>
@@ -558,29 +567,26 @@ app.get('/dashboard', async (req, res) => {
     const currentTime = new Date();
 
     const feedFilter = activeSector !== 'Global' ? { sector: activeSector } : {};
-    feedFilter.$or = [
-        { scheduledFor: null },
-        { scheduledFor: { $lte: currentTime } }
-    ];
+    feedFilter.$or = [ { scheduledFor: null }, { scheduledFor: { $lte: currentTime } } ];
 
     const posts = await Post.find(feedFilter).sort({ date: -1 });
     const sectors = await Sector.find();
     const user = req.session.user;
+    const allUsers = await User.find({}, 'username avatarUrl aura nameChanged coverPic bio');
 
-    const postForm = `<div class="card">
-        ${!user ? `<button type="button" class="create-btn" onclick="location.href='/login'">SYNC TO TRANSMIT</button>` : `
+    const postForm = `<div class="card" style="border-color: rgba(255,255,255,0.2);">
+        ${!user ? `<button type="button" class="create-btn" onclick="location.href='/login'">SYNC TO TRANSMIT ⚡</button>` : `
             <form action="/addpost" method="POST" enctype="multipart/form-data">
-                <textarea id="txBarEngine" name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px;" placeholder="Transmit a signal..." required></textarea>
+                <textarea id="txBarEngine" name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px; font-weight:500;" placeholder="Transmit a signal..." required></textarea>
                 <input type="hidden" name="sector" value="${activeSector}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px; border-top: 1px solid var(--border); padding-top: 15px;">
                     <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
-                        <label style="cursor:pointer; opacity:0.7;"><i class="fas fa-camera fa-lg"></i><input type="file" name="media" hidden></label>
+                        <label style="cursor:pointer; opacity:0.8; color:var(--cyan); transition:0.2s;"><i class="fas fa-image fa-lg"></i><input type="file" name="media" hidden></label>
                         <label class="fancy-ghost-container">
                             <input type="checkbox" name="isAnonymous" id="ghostToggle" ${activeSector==='confessions'?'checked':''} style="display:none;">
                             <div class="switch-track"><div class="switch-thumb"></div></div>
                             <span style="font-size:11px; font-weight:900; color:#aaa; letter-spacing:1px;">GHOST MODE</span>
                         </label>
-                        
                         <label class="genz-time-capsule">
                             <div class="capsule-icon-box"><i class="fas fa-meteor"></i></div>
                             <div class="capsule-text">
@@ -589,7 +595,7 @@ app.get('/dashboard', async (req, res) => {
                             </div>
                         </label>
                     </div>
-                    <button class="create-btn" style="width:auto; padding:10px 30px;">TRANSMIT</button>
+                    <button class="create-btn" style="width:auto; padding:12px 30px; border-radius:12px;">TRANSMIT 🚀</button>
                 </div>
             </form>`}
     </div>`;
@@ -601,17 +607,22 @@ app.get('/dashboard', async (req, res) => {
         if (targetNodes.length === 0) return '';
 
         return targetNodes.map(c => {
-            const nodeAvatarSnippet = c.authorAvatar 
-                ? `<img src="${c.authorAvatar}" class="comment-header-avatar">`
-                : `<div class="comment-avatar-fallback" style="background:linear-gradient(45deg, var(--p), var(--v))">${c.author.charAt(0).toUpperCase()}</div>`;
+            const cUser = allUsers.find(u => u.username === c.author);
+            const isVer = cUser && cUser.aura >= 500 ? '<i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : '';
+            const cAvatar = c.authorAvatar || (cUser ? cUser.avatarUrl : null);
+            const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.author}&backgroundColor=000000`;
+            
+            const nodeAvatarSnippet = cAvatar 
+                ? `<img src="${cAvatar}" class="comment-header-avatar">`
+                : `<img src="${defAvatar}" class="comment-header-avatar">`;
 
             return `
             <div class="comment-node ${isNested ? 'nested' : ''}">
-                <div style="display:flex; align-items:center; gap:8px; font-size:11px; opacity:0.8; font-weight:bold; color:var(--cyan)">
-                    ${c.isAnonymous ? '<div class="comment-avatar-fallback" style="background:#222;"><i class="fas fa-mask"></i></div> <span>GHOST</span>' : nodeAvatarSnippet + '<span>@' + c.author + '</span>'} 
+                <div style="display:flex; align-items:center; gap:8px; font-size:11px; opacity:0.9; font-weight:bold; color:var(--cyan)">
+                    ${c.isAnonymous ? '<div class="comment-avatar-fallback" style="background:#222;"><i class="fas fa-mask"></i></div> <span>GHOST</span>' : nodeAvatarSnippet + '<span>@' + c.author + isVer + '</span>'} 
                     <span style="opacity:0.4; font-weight:normal; margin-left:5px;">${new Date(c.date).toLocaleTimeString()}</span>
                 </div>
-                <p style="font-size:13px; margin-top:6px; color:#ddd; padding-left:32px;">${c.content}</p>
+                <p style="font-size:13px; margin-top:5px; color:#ddd; padding-left:32px; font-weight:500;">${c.content}</p>
                 ${user ? `
                 <button type="button" class="reply-trigger-btn" style="margin-left:32px;" onclick="toggleReplyForm('${c._id}')"><i class="fas fa-reply"></i> Reply</button>
                 <div class="reply-form-wrapper" id="form-${c._id}" style="padding-left:32px;">
@@ -630,24 +641,34 @@ app.get('/dashboard', async (req, res) => {
         const hasW = user && p.likes.includes(user.username);
         const hasL = user && p.dislikes.includes(user.username);
         const isSaved = user && user.savedPosts && user.savedPosts.includes(p._id.toString());
-        const postAuraColor = p.authorAura > 500 ? 'var(--cyan)' : p.authorAura < 50 ? '#ff0000' : 'var(--p)';
+        
+        // Use allUsers for up-to-date banner/pfp/verified info
+        const postAuthor = allUsers.find(u => u.username === p.author);
+        const currentAura = postAuthor ? postAuthor.aura : p.authorAura;
+        const postAuraColor = currentAura >= 500 ? 'var(--cyan)' : currentAura < 50 ? '#ff0000' : 'var(--p)';
         const showDelete = user && (user.username === p.author || user.username === 'xavirox');
         const postComments = allComments.filter(c => String(c.postId) === String(p._id));
         const commentsRenderedTree = renderCommentTree(postComments, null, false);
 
-        const postAvatarSnippet = p.authorAvatar 
-            ? `<img src="${p.authorAvatar}" class="post-header-avatar">`
-            : `<div class="post-avatar-fallback" style="background:linear-gradient(45deg, var(--p), var(--v))">${p.author.charAt(0).toUpperCase()}</div>`;
+        const isVer = postAuthor && postAuthor.aura >= 500 ? '<i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : '';
+        const currentAvatar = (postAuthor && postAuthor.avatarUrl) ? postAuthor.avatarUrl : p.authorAvatar;
+        const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.author}&backgroundColor=000000`;
+        const ghostAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=ghost&backgroundColor=111111`;
+        
+        const postAvatarSnippet = currentAvatar 
+            ? `<img src="${currentAvatar}" class="post-pfp">`
+            : `<img src="${defAvatar}" class="post-pfp">`;
 
         return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}">
-            <div style="display:flex; align-items:center; gap:10px;">
-                ${p.isAnonymous ? '<div class="post-avatar-fallback" style="background:#111; border:1px dashed #7000ff;"><i class="fas fa-mask" style="color:#7000ff;"></i></div>' : postAvatarSnippet}
-                <div style="display:flex; flex-direction:column;">
-                    <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:13px; letter-spacing:0.5px;">
-                        ${p.isAnonymous ? 'GHOST_SIGNAL' : '@'+p.author} 
-                        ${!p.isAnonymous ? `<span class="aura-badge">${p.authorAura}</span>` : ''}
+            <div class="post-header">
+                ${p.isAnonymous ? `<img src="${ghostAvatar}" class="post-pfp" style="border-color:#7000ff;">` : postAvatarSnippet}
+                <div style="display:flex; flex-direction:column; flex:1;">
+                    <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:14px; letter-spacing:0.5px;">
+                        ${p.isAnonymous ? 'GHOST_SIGNAL' : '@'+p.author + isVer} 
+                        ${!p.isAnonymous ? `<span class="aura-badge">${currentAura}</span>` : ''}
                     </b>
-                    ${!p.isAnonymous ? `<span class="bio-post-snippet">${p.authorBio || 'No vibe announced yet...'}</span>` : ''}
+                    ${!p.isAnonymous ? `<span class="bio-post-snippet">${(postAuthor && postAuthor.bio) ? postAuthor.bio : p.authorBio}</span>` : ''}
+                    <div style="font-size:10px; opacity:0.4; margin-top:2px;">${new Date(p.date).toLocaleString()} • ${p.sector.toUpperCase()}</div>
                 </div>
                 ${showDelete ? `
                 <div class="del-engine-container">
@@ -664,8 +685,8 @@ app.get('/dashboard', async (req, res) => {
                     </button>
                 </div>` : ''}
             </div>
-            <p style="margin-top:12px; font-size:16px;">${p.content}</p>
-            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);">` : ''}
+            <p style="margin-top:5px; font-size:16px; font-weight:500; line-height:1.5;">${p.content}</p>
+            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border); box-shadow: 0 5px 15px rgba(0,0,0,0.5);">` : ''}
             <div class="interaction-bar">
                 <button type="button" onclick="interact(event, '${p._id.toString()}', 'like')" class="action-btn like-btn ${hasW ? 'active-w' : ''}"><i class="fas fa-crown"></i> ${p.likes.length} W</button>
                 <button type="button" onclick="interact(event, '${p._id.toString()}', 'dislike')" class="action-btn dislike-btn ${hasL ? 'active-l' : ''}"><i class="fas fa-skull"></i> ${p.dislikes.length} L</button>
@@ -678,13 +699,13 @@ app.get('/dashboard', async (req, res) => {
                 <form onsubmit="submitCommentAjax(event, this, 'root-comment-box-${p._id}')" style="margin-top:15px; display: flex; gap: 10px;">
                     <input type="hidden" name="postId" value="${p._id}">
                     <input type="text" name="content" class="comment-mini-input" placeholder="Inject thoughts into thread..." required>
-                    <button class="create-btn" style="width: auto; padding: 0 20px; border-radius: 12px; font-size: 10px;">COMMENT</button>
-                </form>` : ''}
+                    <button class="create-btn" style="width: auto; padding: 0 20px; border-radius: 12px; font-size: 10px;">COOK 🍳</button>
+                </form>` : `<p style="font-size:11px; opacity:0.4; margin-top:10px;">⚠️ <a href="/login" style="color:var(--cyan); text-decoration:none;">Sync identity</a> to comment on this thread.</p>`}
             </div>
         </div>`
     }).join('');
 
-    res.send(MASTER_UI(postForm + html, user, sectors, activeSector));
+    res.send(MASTER_UI(postForm + html, user, sectors, activeSector, allUsers));
 });
 
 app.post('/add-comment-ajax', async (req, res) => {
@@ -698,10 +719,12 @@ app.post('/add-comment-ajax', async (req, res) => {
             author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl,
             content: content, isAnonymous: false
         }).save();
-        return res.status(200).json({ author: newComment.author, content: newComment.content, id: newComment._id, authorAvatar: newComment.authorAvatar });
+        const isVerified = user.aura >= 500;
+        return res.status(200).json({ author: newComment.author, content: newComment.content, id: newComment._id, authorAvatar: newComment.authorAvatar, isVerified });
     } catch(err) { return res.status(500).json({ error: "Internal Pipeline Failed" }); }
 });
 
+// --- [UPLOAD ENDPOINTS] ---
 app.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
     if (!req.session.user) return res.status(401).send("Unauthorized Matrix Action");
     try {
@@ -713,25 +736,68 @@ app.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
     } catch (err) { res.send("<script>alert('Avatar system failure.'); window.history.back();</script>"); }
 });
 
+app.post('/update-banner', upload.single('media'), async (req, res) => {
+    if (!req.session.user) return res.redirect('/login');
+    try {
+        if (!req.file) return res.redirect('/portfolio');
+        const user = await User.findOne({ username: req.session.user.username });
+        user.coverPic = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+        await user.save();
+        res.redirect('/portfolio');
+    } catch (err) { res.send("<script>alert('Failed to cook Banner update 💀'); window.history.back();</script>"); }
+});
+
 // --- [📝 UPDATE PROFILE BIO / VIBE ENDPOINT] ---
 app.post('/update-bio', async (req, res) => {
     if (!req.session.user) return res.status(401).send("Unauthorized Action");
     try {
-        const pureBio = (req.body.bio || "").trim().substring(0, 75); // Strict 1-line enforcement
+        const pureBio = (req.body.bio || "").trim().substring(0, 75); 
         if(!pureBio) return res.send("<script>alert('Vibe text cannot be empty.'); window.history.back();</script>");
 
-        await User.findOneAndUpdate(
-            { username: req.session.user.username },
-            { $set: { bio: pureBio } }
-        );
+        await User.findOneAndUpdate({ username: req.session.user.username }, { $set: { bio: pureBio } });
         res.send("<script>alert('VIBE STATEMENT LOCK IN! 🧬'); window.location.href='/portfolio';</script>");
     } catch (err) { res.send("<script>alert('Bio transmission failed.'); window.history.back();</script>"); }
+});
+
+// --- [CHANGE USERNAME ENDPOINT] ---
+app.post('/change-username', async (req, res) => {
+    if (!req.session.user) return res.redirect('/login');
+    try {
+        const newName = req.body.newUsername.toLowerCase().trim();
+        const user = await User.findOne({ username: req.session.user.username });
+        if (user.nameChanged) return res.send("<script>alert('Bro you already used your 1-time name change 💀'); window.history.back();</script>");
+        const exists = await User.findOne({ username: newName });
+        if (exists) return res.send("<script>alert('Username already taken by another sigma 😭'); window.history.back();</script>");
+
+        const oldName = user.username;
+        user.username = newName;
+        user.nameChanged = true;
+        await user.save();
+
+        await Post.updateMany({ author: oldName }, { author: newName });
+        await Comment.updateMany({ author: oldName }, { author: newName });
+
+        req.session.user.username = newName;
+        res.redirect('/portfolio');
+    } catch(e) { res.send("<script>alert('Server crashed trying to change your name 💀'); window.history.back();</script>"); }
 });
 
 // --- [RESTORED AUTH ENGINES] ---
 app.get('/login', (req, res) => {
     if (req.session.user) return res.redirect('/dashboard');
-    const loginForm = `<div class="card" style="max-width:450px; margin: 40px auto; border-color: var(--cyan);"><h2 style="text-align:center; margin-bottom:20px; letter-spacing:2px; color: var(--cyan);">SYNC ACCOUNT</h2><form action="/login" method="POST"><input type="text" name="username" class="auth-input" placeholder="Enter @username" required><input type="password" name="password" class="auth-input" placeholder="Enter Password" required><button class="create-btn" style="margin-top:10px;">ESTABLISH SYNC</button></form></div>`;
+    const loginForm = `
+        <div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--cyan); box-shadow: 0 0 40px rgba(0,242,255,0.1);">
+            <div style="text-align:center; margin-bottom:25px;">
+                <i class="fas fa-fingerprint fa-3x" style="color:var(--cyan); margin-bottom:15px; filter:drop-shadow(0 0 10px var(--cyan));"></i>
+                <h2 style="letter-spacing:3px; color: #fff;">ENTER THE MATRIX 🔌</h2>
+            </div>
+            <form action="/login" method="POST">
+                <input type="text" name="username" class="auth-input" placeholder="@username (dont lack)" required>
+                <input type="password" name="password" class="auth-input" placeholder="Password (keep it locked 🔒)" required>
+                <button class="create-btn" style="margin-top:15px; background:var(--cyan); color:#000; box-shadow:0 0 20px rgba(0,242,255,0.4);">LET ME IN 🔥</button>
+            </form>
+            <p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">No account? Zero Aura behavior 💀 <a href="/register" style="color:var(--cyan); text-decoration:none; font-weight:bold; margin-left:5px;">Fix that</a></p>
+        </div>`;
     res.send(MASTER_UI(loginForm, null, [], 'Login'));
 });
 
@@ -739,7 +805,7 @@ app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
         const user = await User.findOne({ username: username.toLowerCase().trim() });
-        if (!user || !(await bcrypt.compare(password, user.password))) return res.send("<script>alert('SYNC FAILED'); window.history.back();</script>");
+        if (!user || !(await bcrypt.compare(password, user.password))) return res.send("<script>alert('SYNC FAILED: Invalid Aura Keys or Identity Unknown 💀'); window.history.back();</script>");
         req.session.user = { username: user.username, aura: user.aura, avatarUrl: user.avatarUrl };
         res.redirect('/dashboard');
     } catch (err) { res.send("<script>alert('SYSTEM ERROR'); window.history.back();</script>"); }
@@ -747,7 +813,19 @@ app.post('/login', async (req, res) => {
 
 app.get('/register', (req, res) => {
     if (req.session.user) return res.redirect('/dashboard');
-    const registerForm = `<div class="card" style="max-width:450px; margin: 40px auto; border-color: var(--p);"><h2 style="text-align:center; margin-bottom:20px; letter-spacing:2px; color: var(--p);">GENERATE IDENTITY</h2><form action="/register" method="POST"><input type="text" name="username" class="auth-input" placeholder="Choose @username" required><input type="password" name="password" class="auth-input" placeholder="Secure Password" required><button class="create-btn" style="margin-top:10px;">BUILD MATRIX</button></form></div>`;
+    const registerForm = `
+        <div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--p); box-shadow: 0 0 40px rgba(255,0,127,0.1);">
+            <div style="text-align:center; margin-bottom:25px;">
+                <i class="fas fa-user-astronaut fa-3x" style="color:var(--p); margin-bottom:15px; filter:drop-shadow(0 0 10px var(--p));"></i>
+                <h2 style="letter-spacing:3px; color: #fff;">GENERATE IDENTITY 🧬</h2>
+            </div>
+            <form action="/register" method="POST">
+                <input type="text" name="username" class="auth-input" placeholder="Choose @username (make it hard)" required>
+                <input type="password" name="password" class="auth-input" placeholder="Secure Password" required>
+                <button class="create-btn" style="margin-top:15px; background:var(--p); box-shadow:0 0 20px rgba(255,0,127,0.4);">BUILD MATRIX 🚀</button>
+            </form>
+            <p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">Already got the keys? <a href="/login" style="color:var(--p); text-decoration:none; font-weight:bold; margin-left:5px;">Let him in</a></p>
+        </div>`;
     res.send(MASTER_UI(registerForm, null, [], 'Register'));
 });
 
@@ -755,7 +833,7 @@ app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     try {
         const existing = await User.findOne({ username: username.toLowerCase().trim() });
-        if (existing) return res.send("<script>alert('IDENTITY REJECTED'); window.history.back();</script>");
+        if (existing) return res.send("<script>alert('IDENTITY REJECTED: Username already taken in this network.'); window.history.back();</script>");
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await new User({ username: username.toLowerCase().trim(), password: hashedPassword }).save();
         req.session.user = { username: newUser.username, aura: newUser.aura, avatarUrl: newUser.avatarUrl };
@@ -784,10 +862,15 @@ app.get('/portfolio', async (req, res) => {
     const sectors = await Sector.find();
     const savedPostObjects = await Post.find({ _id: { $in: dbUser.savedPosts } });
 
+    const isVerified = dbUser.aura >= 500;
+    const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${dbUser.username}&backgroundColor=000000`;
+    const defaultBanner = `https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1000&auto=format&fit=crop`; // fallback cool stars
+
     const ghostInbox = dbUser.ghostMessages.map(m => `
         <div class="ghost-msg-node">
             <span style="font-size:10px; color:var(--v); font-weight:900;"><i class="fas fa-mask"></i> ANONYMOUS INCOMING...</span>
-            <p style="font-size:14px; margin-top:6px; color:#fff;">${m.content}</p>
+            <p style="font-size:14px; margin-top:6px; color:#fff; font-weight:500;">${m.content}</p>
+            <small style="opacity:0.2; font-size:9px; display:block; margin-top:5px;">${new Date(m.date).toLocaleString()}</small>
         </div>`).join('');
 
     const savedFeedHtml = savedPostObjects.map(sp => `
@@ -797,46 +880,64 @@ app.get('/portfolio', async (req, res) => {
         </div>`).join('');
 
     const portfolioAvatarRender = dbUser.avatarUrl 
-        ? `<img src="${dbUser.avatarUrl}" class="portfolio-pfp-render" id="pfpDisplayNode">`
-        : `<div style="font-size: 32px; font-weight:900; color:#fff;">${dbUser.username.charAt(0).toUpperCase()}</div>`;
+        ? `<img src="${dbUser.avatarUrl}" class="profile-pfp-lg" id="pfpDisplayNode">`
+        : `<img src="${defaultAvatar}" class="profile-pfp-lg" id="pfpDisplayNode">`;
 
     const content = `
-        <div class="card" style="text-align:center; border:2px solid var(--cyan);">
-            <form action="/upload-avatar" method="POST" enctype="multipart/form-data" id="avatarUploadFormEngine">
-                <div class="interactive-pfp-uploader" onclick="document.getElementById('avatarFileInputNode').click();">
-                    ${portfolioAvatarRender}
-                    <div class="uploader-hover-overlay"><i class="fas fa-cloud-arrow-up fa-2x" style="margin-bottom:5px;"></i><span>SYNC PFP</span></div>
-                </div>
-                <input type="file" name="avatar" id="avatarFileInputNode" style="display:none;" accept="image/*" onchange="document.getElementById('avatarUploadFormEngine').submit();">
-            </form>
+        <div class="card" style="padding-top:0; overflow:hidden;">
+            <div class="profile-banner" style="background-image: url('${dbUser.coverPic || defaultBanner}');">
+                <form action="/update-banner" method="POST" enctype="multipart/form-data" id="bannerForm" style="display:none;">
+                    <input type="file" name="media" id="bannerInput" onchange="document.getElementById('bannerForm').submit()" accept="image/*">
+                </form>
+                <label for="bannerInput" class="edit-banner-btn"><i class="fas fa-camera"></i> EDIT DRIP</label>
+            </div>
+
+            <div class="profile-pfp-container">
+                ${portfolioAvatarRender}
+                <form action="/upload-avatar" method="POST" enctype="multipart/form-data" id="avatarUploadFormEngine" style="display:none;">
+                    <input type="file" name="avatar" id="avatarFileInputNode" accept="image/*" onchange="document.getElementById('avatarUploadFormEngine').submit();">
+                </form>
+                <label for="avatarFileInputNode" class="edit-pfp-btn" title="Change PFP"><i class="fas fa-pen"></i></label>
+            </div>
             
-            <h1 style="margin-top:15px;">@${dbUser.username}</h1>
+            <div style="text-align:center; margin-top:10px;">
+                <h1 style="font-size:26px; font-weight:900;">@${dbUser.username} ${isVerified ? '<i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : ''}</h1>
+                <p style="font-size:12px; color:var(--cyan); font-weight:bold; margin-top:5px; letter-spacing:1px;">AURA LEVEL: ${dbUser.aura}</p>
+            </div>
             
-            <form action="/update-bio" method="POST" style="margin-top:5px;">
+            <form action="/update-bio" method="POST" style="margin-top:10px;">
                 <input type="text" name="bio" class="bio-input-shield" value="${dbUser.bio.replace(/"/g, '&quot;')}" placeholder="Drop your one-line vibe status..." maxlength="75" onchange="this.form.submit();">
-                <small style="font-size:9px; opacity:0.3; display:block; margin-top:4px;">Press enter to change vibe code mapping</small>
+                <small style="font-size:9px; opacity:0.3; display:block; text-align:center; margin-top:4px;">Press enter to change vibe code mapping</small>
             </form>
 
+            ${!dbUser.nameChanged ? `
+            <div style="margin-top:25px; background:rgba(255,255,255,0.03); padding:15px; border-radius:16px; border:1px solid var(--border);">
+                <p style="font-size:10px; color:#ffea00; font-weight:bold; margin-bottom:10px;"><i class="fas fa-triangle-exclamation"></i> ONE-TIME NAME CHANGE AVAILABLE</p>
+                <form action="/change-username" method="POST" style="display:flex; gap:10px;">
+                    <input type="text" name="newUsername" class="auth-input" style="margin:0; padding:10px; font-size:12px;" placeholder="New @username" required>
+                    <button class="create-btn" style="width:auto; padding:0 20px; font-size:10px; border-radius:12px;" onclick="return confirm('You can only do this ONCE. Sure bro?');">CHANGE</button>
+                </form>
+            </div>` : ''}
+
             <div class="bento-grid">
-                <div class="bento-item" style="grid-column: span 2;"><h3 style="font-size:9px; opacity:0.5;">AURA STATUS</h3><p style="font-size:22px; color:var(--cyan); font-weight:900;">${dbUser.aura}</p></div>
-                <div class="bento-item"><i class="fas fa-bookmark"></i><p style="font-size:10px;">${dbUser.savedPosts.length} SAVED</p></div>
-                <div class="bento-item"><i class="fas fa-ghost"></i><p style="font-size:10px;">${dbUser.ghostMessages.length} GHOSTS</p></div>
+                <div class="bento-item"><i class="fas fa-bookmark" style="color:var(--cyan); font-size:20px; margin-bottom:10px; display:block;"></i><p style="font-size:12px; font-weight:900;">${dbUser.savedPosts.length} SAVED</p></div>
+                <div class="bento-item"><i class="fas fa-ghost" style="color:var(--v); font-size:20px; margin-bottom:10px; display:block;"></i><p style="font-size:12px; font-weight:900;">${dbUser.ghostMessages.length} GHOSTS</p></div>
             </div>
         </div>
-        <div class="card" style="border-color:#ffea00;">
-            <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:#ffea00;">📁 SAVED CHANNELS & VAULT</h4>
+        <div class="card" style="border-color:rgba(0, 242, 255, 0.3);">
+            <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--cyan); font-weight:900;"><i class="fas fa-vault"></i> SAVED VAULT</h4>
             ${savedFeedHtml || '<p style="opacity:0.2; font-size:12px; text-align:center;">NO ARCHIVED FILES FOUND</p>'}
         </div>
         <div class="card ghost-card">
-            <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--v); font-weight:900;">📥 INCOGNITO GHOST VOID</h4>
+            <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--v); font-weight:900;"><i class="fas fa-user-secret"></i> INCOGNITO GHOST VOID</h4>
             ${ghostInbox || '<p style="opacity:0.3; font-size:12px; text-align:center; padding:10px;">GHOST VOID IS EMPTY</p>'}
         </div>
-        <div class="card" style="border-color: rgba(255,255,255,0.15);">
+        <div class="card" style="border-color: rgba(255,0,127,0.3);">
             <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--p); font-weight:900;">💥 DROP AN ANONYMOUS BOMB</h4>
             <form action="/send-ghost-msg" method="POST">
                 <input name="targetUser" class="ghost-input" placeholder="🎯 Target @username" required>
                 <textarea name="message" class="ghost-input" style="min-height:80px; resize:none;" placeholder="Write a confidential truth bomb..." required></textarea>
-                <button class="create-btn" style="background: linear-gradient(45deg, var(--v), #000);">LAUNCH ANONYMOUS SIGNAL</button>
+                <button class="create-btn" style="background: linear-gradient(90deg, var(--v), #000);">LAUNCH ANONYMOUS SIGNAL 🚀</button>
             </form>
         </div>`;
     
@@ -871,7 +972,7 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         }
 
         await new Post({ 
-            author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl, authorBio: user.bio, // Syncing Vibe state to post context
+            author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl, authorBio: user.bio, 
             content: textContent, sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon, scheduledFor: finalScheduledDate
         }).save();
         
@@ -937,6 +1038,6 @@ app.get('/create-sector', async (req, res) => {
 
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => { console.log("🚀 COSMIC ENGINE V80 LIVE ON PORT " + PORT); });
+    app.listen(PORT, () => { console.log("🚀 COSMIC ENGINE V81 LIVE ON PORT " + PORT); });
 }
 module.exports = app;
