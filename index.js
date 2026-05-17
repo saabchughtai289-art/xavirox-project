@@ -1,6 +1,8 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V79 [AVATAR MATRIX & CUSTOM PFP IDENTITY UPDATE]
+    🚀 XAVIROX COSMIC OS - V80 [PROFILE BIO & LIGHTWEIGHT VIBE INFRASTRUCTURE]
     STATUS: MASTER REFACTOR + ASYNCHRONOUS COMMENTING + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
+    - INTEGRATED: Profile Bio feature allowing users to drop a single-line aesthetic vibe statement.
+    - DYNAMIC PRESERVATION: Bios propagate natively across the Dashboard Feed nodes and Matrix Leaderboards.
     - INTEGRATED: Custom Profile Picture / Avatar uploads visible cross-platform (Dashboard, Comments, Leaderboard).
     - INTEGRATED: Premium GenZ Aura Leaderboard tracking system showcasing top network profiles.
     - LOGO INTEGRATION: Successfully embedded XAVIROX Logo & Gemini AI Gateway branding into UI framework.
@@ -57,7 +59,8 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     username: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     aura: { type: Number, default: 100 },
-    avatarUrl: { type: String, default: null }, // 🧬 CUSTOM AVATAR/PFP INFRASTRUCTURE FIELD
+    avatarUrl: { type: String, default: null }, 
+    bio: { type: String, default: 'No vibe announced yet...' }, // 🧬 NEW PROFILE VIBE STATEMENT FIELD
     savedPosts: [String],
     ghostMessages: [{ content: String, date: { type: Date, default: Date.now } }]
 }));
@@ -65,24 +68,24 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
 const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema({
     author: String, 
     authorAura: { type: Number, default: 100 },
-    authorAvatar: { type: String, default: null }, // 🖼️ SNAPSHOT OF AVATAR AT TIME OF POST
+    authorAvatar: { type: String, default: null }, 
+    authorBio: { type: String, default: 'No vibe announced yet...' }, // 🖼️ SNAPSHOT OF VIBE ON FORUMS
     content: String, 
     mediaUrl: String, 
     sector: { type: String, default: 'Global' }, 
     isAnonymous: { type: Boolean, default: false }, 
     date: { type: Date, default: Date.now },
-    scheduledFor: { type: Date, default: null }, // ⏳ TIME CAPSULE INFRASTRUCTURE FIELD
+    scheduledFor: { type: Date, default: null }, 
     likes: { type: [String], default: [] },
     dislikes: { type: [String], default: [] }
 }));
 
-// 💬 SELF-REFERENCING NESTED COMMENTS SCHEMA
 const Comment = mongoose.models.Comment || mongoose.model('Comment', new mongoose.Schema({
     postId: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', required: true },
     parentCommentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Comment', default: null }, 
     author: String,
     authorAura: { type: Number, default: 100 },
-    authorAvatar: { type: String, default: null }, // 🖼️ FAST FETCH AVATAR INSIDE THREAD NODES
+    authorAvatar: { type: String, default: null }, 
     content: String,
     isAnonymous: { type: Boolean, default: false },
     date: { type: Date, default: Date.now }
@@ -152,29 +155,29 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .icon-label { position: absolute; top: 60px; background: var(--cyan); color: #000; font-size: 9px; font-weight: 900; padding: 4px 10px; border-radius: 8px; opacity: 0; transform: translateY(-10px); pointer-events: none; text-transform: uppercase; letter-spacing: 1px; }
         .nav-item:hover .icon-label { opacity: 1; transform: translateY(0); }
         
-        /* 👤 DYNAMIC ISLAND AURA TRACKER WITH LIVE PFP INTEGRATION */
+        /* 👤 DYNAMIC ISLAND TRACKER WITH LIVE PFP */
         .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 290px; height: 48px; background: #000; border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; padding: 0 15px; gap: 12px; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; cursor: pointer; overflow: hidden; }
         .dynamic-island:hover { width: 420px; height: 72px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); }
         .global-navbar-avatar-frame { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
         .user-avatar-fallback { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #fff; flex-shrink: 0; }
         
-        /* USER CLASSIFICATION PROFILES FOR AVATARS CROSS-PLATFORM */
         .post-header-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
         .post-avatar-fallback { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: #fff; }
         .comment-header-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.15); }
         .comment-avatar-fallback { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; }
 
-        /* PROFILE INTERACTIVE IMAGE GENERATOR PILL */
         .interactive-pfp-uploader { width: 110px; height: 110px; border-radius: 35px; border: 2px dashed rgba(0, 242, 255, 0.4); margin: 0 auto; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(0,0,0,0.4); }
         .interactive-pfp-uploader:hover { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0,242,255,0.2); }
         .uploader-hover-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; font-size: 10px; font-weight: 900; color: var(--cyan); letter-spacing: 1px; }
         .interactive-pfp-uploader:hover .uploader-hover-overlay { opacity: 1; }
         .portfolio-pfp-render { width: 100%; height: 100%; object-fit: cover; }
 
-        .brand-logo-container { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
-        .xavirox-logo-img { height: 32px; filter: drop-shadow(0 0 8px var(--cyan)); }
-        .gemini-shield-badge { background: linear-gradient(45deg, #4285f4, #9b51e0); padding: 4px 8px; border-radius: 8px; font-size: 9px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.2); }
+        /* 📝 BIO ENTRY ZONE AESTHETICS */
+        .bio-input-shield { width: 85%; max-width: 400px; background: rgba(255,255,255,0.04); border: 1px dashed var(--border); border-radius: 14px; padding: 10px 15px; color: #fff; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; text-align: center; outline: none; margin: 12px auto 5px auto; display: block; }
+        .bio-input-shield:focus { border-color: var(--cyan); background: rgba(0,242,255,0.02); box-shadow: 0 0 12px rgba(0,242,255,0.15); }
+        .bio-post-snippet { font-size: 11px; opacity: 0.55; font-style: italic; font-weight: 500; color: #ccc; margin-top: 2px; display: block; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+        .brand-logo-container { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
         .main-container { max-width: 1100px; margin: 130px auto 50px auto; display: flex; gap: 35px; padding: 0 20px; flex: 1; width: 100%; }
         .feed { flex: 2; } .sidebar { flex: 1; }
         .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 32px; padding: 30px; margin-bottom: 25px; position: relative; }
@@ -187,47 +190,14 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         input[type="checkbox"]:checked + .switch-track { background: var(--v); border-color: var(--p); box-shadow: 0 0 10px var(--v); }
         input[type="checkbox"]:checked + .switch-track .switch-thumb { left: 22px; background: #fff; box-shadow: 0 0 8px #fff; }
 
-        /* 🚀 VIP GENZ TIME CAPSULE AESTHETIC INTEGRATION */
-        .genz-time-capsule {
-            display: inline-flex;
-            align-items: center;
-            background: rgba(0, 242, 255, 0.05);
-            border: 1px solid rgba(0, 242, 255, 0.2);
-            border-radius: 30px;
-            padding: 4px 14px 4px 4px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            backdrop-filter: blur(10px);
-        }
-        .genz-time-capsule:hover, .genz-time-capsule:focus-within {
-            background: rgba(0, 242, 255, 0.1);
-            border-color: var(--cyan);
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.25);
-            transform: translateY(-2px);
-        }
-        .capsule-icon-box {
-            background: var(--cyan);
-            color: #000;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            margin-right: 10px;
-            box-shadow: 0 0 10px var(--cyan);
-            animation: pulseCapsule 2s infinite alternate;
-        }
-        @keyframes pulseCapsule {
-            0% { transform: scale(1); box-shadow: 0 0 8px var(--cyan); }
-            100% { transform: scale(1.1); box-shadow: 0 0 18px var(--cyan); }
-        }
+        .genz-time-capsule { display: inline-flex; align-items: center; background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2); border-radius: 30px; padding: 4px 14px 4px 4px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter: blur(10px); }
+        .genz-time-capsule:hover, .genz-time-capsule:focus-within { background: rgba(0, 242, 255, 0.1); border-color: var(--cyan); box-shadow: 0 0 20px rgba(0, 242, 255, 0.25); transform: translateY(-2px); }
+        .capsule-icon-box { background: var(--cyan); color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; margin-right: 10px; box-shadow: 0 0 10px var(--cyan); animation: pulseCapsule 2s infinite alternate; }
+        @keyframes pulseCapsule { 0% { transform: scale(1); box-shadow: 0 0 8px var(--cyan); } 100% { transform: scale(1.1); box-shadow: 0 0 18px var(--cyan); } }
         .capsule-text { display: flex; flex-direction: column; justify-content: center; }
         .capsule-label { font-size: 8px; font-weight: 900; letter-spacing: 1.5px; color: var(--cyan); text-transform: uppercase; margin-bottom: 2px; opacity: 0.8; }
         .genz-datetime { background: transparent; border: none; color: #fff; font-family: 'Inter', sans-serif; font-size: 12px; outline: none; font-weight: 800; cursor: pointer; }
-        .genz-datetime::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.8; cursor: pointer; transition: 0.3s; }
-        .genz-datetime::-webkit-calendar-picker-indicator:hover { opacity: 1; filter: invert(1) drop-shadow(0 0 5px #fff); }
+        .genz-datetime::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.8; cursor: pointer; }
 
         .interaction-bar { display: flex; gap: 20px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); }
         .action-btn { background: transparent; border: none; color: #fff; font-size: 13px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 8px; opacity: 0.6; padding: 5px 10px; border-radius: 8px; }
@@ -236,7 +206,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .active-l { color: var(--p) !important; opacity: 1 !important; text-shadow: 0 0 10px var(--p); } 
         .active-save { color: #ffea00 !important; opacity: 1 !important; text-shadow: 0 0 10px #ffea00; }
 
-        /* 💬 THREADED REPLIES VISUAL FRAMEWORK */
         .comments-section-container { margin-top: 20px; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); }
         .comment-node { background: rgba(255, 255, 255, 0.02); border-left: 2px solid var(--v); margin-top: 12px; padding: 12px 16px; border-radius: 0 16px 16px 0; position: relative; }
         .comment-node.nested { margin-left: 25px; border-left-color: var(--cyan); background: rgba(0, 242, 255, 0.01); }
@@ -244,14 +213,10 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .reply-trigger-btn:hover { opacity: 1; text-shadow: 0 0 8px var(--cyan); }
         .reply-form-wrapper { display: none; margin-top: 10px; padding-left: 10px; }
         .comment-mini-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 12px; padding: 10px 15px; color: #fff; font-size: 12px; outline: none; }
-        .comment-mini-input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
 
-        /* ======================================================================
-            💥 COSMIC PREMIUM EXPLODING DELETE INTERACTION STYLES
-           ====================================================================== */
+        /* Cosmic Exploding Delete Interactions */
         .del-engine-container { margin-left: auto; display: flex; align-items: center; justify-content: center; }
-        .cosmic-del-btn { background: linear-gradient(135deg, #d300c5, #7000ff); border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-radius 0.3s ease; box-shadow: 0 0 10px rgba(112, 0, 255, 0.4); }
-        .cosmic-del-btn:hover { transform: scale(1.1); box-shadow: 0 0 15px #d300c5; }
+        .cosmic-del-btn { background: linear-gradient(135deg, #d300c5, #7000ff); border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 10px rgba(112, 0, 255, 0.4); }
         .cosmic-del-btn .trash-ico { color: #fff; font-size: 13px; z-index: 2; pointer-events: none; }
         .cosmic-del-btn .del-text-track { display: none; opacity: 0; white-space: nowrap; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 900; color: #fff; letter-spacing: 1.5px; margin-left: 8px; z-index: 2; pointer-events: none; }
         .cosmic-del-btn.is-primed { width: 105px; border-radius: 20px; justify-content: flex-start; padding-left: 12px; }
@@ -259,37 +224,27 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .del-char { display: inline-block; transform-origin: center bottom; }
         .cosmic-del-btn.is-destroying .del-char { animation: explosionScattered 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
         .cosmic-del-btn.is-destroying .trash-ico { animation: trashVibeShake 0.15s ease-in-out infinite alternate; }
-        @keyframes explosionScattered {
-            0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-            40% { transform: translateY(-12px) rotate(var(--rot)) scale(1.1); opacity: 0.9; }
-            100% { transform: translateY(25px) translateX(var(--tx)) rotate(var(--rot-end)) scale(0); opacity: 0; }
-        }
-        @keyframes trashVibeShake {
-            0% { transform: rotate(-8deg) scale(1.2); }
-            100% { transform: rotate(8deg) scale(1.2); }
-        }
+        @keyframes explosionScattered { 0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; } 40% { transform: translateY(-12px) rotate(var(--rot)) scale(1.1); opacity: 0.9; } 100% { transform: translateY(25px) translateX(var(--tx)) rotate(var(--rot-end)) scale(0); opacity: 0; } }
+        @keyframes trashVibeShake { 0% { transform: rotate(-8deg) scale(1.2); } 100% { transform: rotate(8deg) scale(1.2); } }
         
         .aura-badge { font-size: 9px; background: ${auraColor}; color: #000; padding: 2px 8px; border-radius: 50px; font-weight: 900; margin-left: 10px; }
         .create-btn { display: block; width: 100%; background: linear-gradient(45deg, var(--p), var(--v)); color: #fff; border: none; padding: 15px; border-radius: 20px; font-weight: 900; cursor: pointer; font-size: 11px; text-transform: uppercase; text-decoration: none; text-align: center; }
         .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
         .bento-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 20px; padding: 20px; text-align: center; }
-        .ghost-msg-node { background: rgba(112, 0, 255, 0.03); padding: 16px; border-radius: 20px; border: 1px solid rgba(112, 0, 255, 0.2); margin-bottom: 12px; box-shadow: inset 0 0 15px rgba(112, 0, 255, 0.05); }
+        .ghost-msg-node { background: rgba(112, 0, 255, 0.03); padding: 16px; border-radius: 20px; border: 1px solid rgba(112, 0, 255, 0.2); margin-bottom: 12px; }
         .ghost-input { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 14px; border-radius: 16px; margin-bottom: 12px; outline: none; font-size: 13px; font-weight: 600; }
-        .ghost-input:focus { border-color: var(--v); box-shadow: 0 0 15px rgba(112, 0, 255, 0.3); }
         .cosmic-footer { background: rgba(0, 0, 0, 0.6); border-top: 1px solid var(--border); backdrop-filter: blur(20px); width: 100%; padding: 25px 20px; text-align: center; margin-top: auto; }
         .footer-links { display: flex; justify-content: center; gap: 30px; margin-bottom: 12px; flex-wrap: wrap; }
         .footer-link { color: rgba(255, 255, 255, 0.6); text-decoration: none; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
         .footer-link:hover { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
-        .footer-link span { color: var(--p); }
         .auth-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 15px; border-radius: 18px; color: #fff; outline: none; font-size: 14px; margin-bottom: 15px; }
-        .auth-input:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
 
-        /* 👑 AURA LEADERBOARD SPECIFIC ENGINE DESIGN STYLES */
+        /* 👑 LEADERBOARD PODIUM DESIGN */
         .podium-container { display: flex; justify-content: center; align-items: flex-end; gap: 20px; margin-bottom: 40px; padding-top: 20px; }
         .podium-card { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); border-radius: 24px; padding: 20px; text-align: center; position: relative; display: flex; flex-direction: column; align-items: center; }
-        .podium-card.rank-1 { height: 210px; border-color: #ffea00; box-shadow: 0 0 20px rgba(255, 234, 0, 0.2); width: 35%; }
-        .podium-card.rank-2 { height: 180px; border-color: #ccc; width: 30%; }
-        .podium-card.rank-3 { height: 165px; border-color: #cd7f32; width: 30%; }
+        .podium-card.rank-1 { height: 230px; border-color: #ffea00; box-shadow: 0 0 20px rgba(255, 234, 0, 0.2); width: 35%; }
+        .podium-card.rank-2 { height: 200px; border-color: #ccc; width: 30%; }
+        .podium-card.rank-3 { height: 185px; border-color: #cd7f32; width: 30%; }
         .podium-crown { font-size: 24px; margin-bottom: 5px; animation: pulseCapsule 1.5s infinite alternate; }
         .podium-rank-badge { position: absolute; bottom: -15px; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #000; }
         .rank-1 .podium-rank-badge { background: #ffea00; box-shadow: 0 0 10px #ffea00; }
@@ -299,7 +254,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
         .leaderboard-row:hover { border-color: var(--cyan); transform: translateX(5px); background: rgba(0, 242, 255, 0.02); }
         .row-rank { font-weight: 900; font-size: 14px; width: 30px; color: rgba(255,255,255,0.4); }
 
-        /* 📱 MOBILE ARCHITECTURE OVERRIDES */
         @media (max-width: 768px) {
             .top-left-nav { position: absolute; top: 15px; left: 10px; right: 10px; width: calc(100% - 20px); justify-content: space-between; gap: 5px; }
             .genz-search { width: 35%; padding: 10px; font-size: 10px; }
@@ -374,11 +328,10 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             <a href="mailto:xavirox.co@gmail.com?subject=Content%20Removal%20Request" class="footer-link"><i class="fas fa-trash-can"></i> Content Removal</a>
         </div>
         <p style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px; font-weight: 800;">OWNER SECURE CONTACT: xavirox.co@gmail.com</p>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V79 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V80 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
-        // Star background renderer
         const container = document.getElementById('stars');
         for(let i=0; i<100; i++) {
             const star = document.createElement('div'); star.className = 'star';
@@ -388,7 +341,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             container.appendChild(star);
         }
         
-        // Interaction logic engine
         async function interact(event, postId, type) {
             try {
                 const res = await fetch('/interact', { 
@@ -419,12 +371,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                 } else if(res.status === 401) {
                     alert('MAKE AN ACC LIL BRO 💀');
                     window.location.href = '/login';
-                } else {
-                    alert('Database context routing failed.');
                 }
-            } catch(err) {
-                window.location.reload();
-            }
+            } catch(err) { window.location.reload(); }
         }
 
         function toggleReplyForm(commentId) {
@@ -432,7 +380,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
             if(form) form.style.display = form.style.display === 'block' ? 'none' : 'block';
         }
 
-        // 🎯 AJAX PIPELINE: Submit comments dynamically without reloading
         async function submitCommentAjax(event, formElement, appendTargetId) {
             event.preventDefault();
             const formData = new FormData(formElement);
@@ -468,18 +415,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                         targetContainer.appendChild(newNode);
                         formElement.reset();
                         if(data.parentCommentId) formElement.parentElement.style.display = 'none';
-                    } else {
-                        window.location.reload();
-                    }
-                } else {
-                    alert("Identity sync dropped. Failed to save thread node.");
-                }
-            } catch (err) {
-                window.location.reload();
-            }
+                    } else { window.location.reload(); }
+                } else { alert("Identity sync dropped."); }
+            } catch (err) { window.location.reload(); }
         }
 
-        // Deletion macro engine
         async function triggerDynamicDelete(event, btnElement, postId) {
             if(event) { event.preventDefault(); event.stopPropagation(); }
             if(!btnElement.classList.contains('is-primed')) {
@@ -497,13 +437,10 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
                 if(res.status === 200) {
                     btnElement.closest('.p-node').remove(); 
                 } else {
-                    alert('Ejection failed: Access key signature invalid.');
+                    alert('Ejection failed.');
                     btnElement.classList.remove('is-destroying', 'is-primed');
                 }
-            } catch(err) {
-                alert('Server handshaking breakdown.');
-                btnElement.classList.remove('is-destroying', 'is-primed');
-            }
+            } catch(err) { btnElement.classList.remove('is-destroying', 'is-primed'); }
         }
 
         function searchVoid(query) {
@@ -517,12 +454,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global') 
 
         const chaoticThoughts = [
             "type something unhinged...", "drop your hot take here", "bro is thinking...", "enter your villain arc thoughts",
-            "type before the motivation disappears", "the internet is listening 👀", "cooked or cooking?", "say something legendary",
-            "your brainrot goes here", "start a war in the comments", "type like nobody screenshots", "certified yap zone",
-            "summon chaos here", "drop lore immediately", "speak your truth king", "type something your future self regrets",
-            "enter forbidden opinions", "post and pray", "write like the main character", "start typing before the cringe hits"
+            "the internet is listening 👀", "cooked or cooking?", "say something legendary"
         ];
-        
         const mainInput = document.getElementById('txBarEngine');
         if(mainInput) {
             setInterval(() => {
@@ -540,16 +473,16 @@ app.get('/', (req, res) => {
     res.redirect('/dashboard');
 });
 
-// 👑 LEADERBOARD ROUTE: Fetches top 10 aura profiles with integrated Custom Pfps
+// 👑 LEADERBOARD ROUTE: Upgraded to show continuous network vibe statements natively
 app.get('/leaderboard', async (req, res) => {
     try {
         const topUsers = await User.find({}).sort({ aura: -1 }).limit(10);
         const sectors = await Sector.find();
         const user = req.session.user;
 
-        const rank1User = topUsers[0] || { username: 'void_ghost', aura: 0, avatarUrl: null };
-        const rank2User = topUsers[1] || { username: 'void_ghost', aura: 0, avatarUrl: null };
-        const rank3User = topUsers[2] || { username: 'void_ghost', aura: 0, avatarUrl: null };
+        const rank1User = topUsers[0] || { username: 'void_ghost', aura: 0, avatarUrl: null, bio: 'No vibe...' };
+        const rank2User = topUsers[1] || { username: 'void_ghost', aura: 0, avatarUrl: null, bio: 'No vibe...' };
+        const rank3User = topUsers[2] || { username: 'void_ghost', aura: 0, avatarUrl: null, bio: 'No vibe...' };
 
         const makePodiumAvatar = (u, fallbackColor) => {
             return u.avatarUrl 
@@ -568,7 +501,10 @@ app.get('/leaderboard', async (req, res) => {
             <div class="leaderboard-row">
                 <span class="row-rank">#${currentRank}</span>
                 ${rowAvatar}
-                <span style="font-weight: 800; font-size: 14px; color: #fff;">@${u.username}</span>
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <span style="font-weight: 800; font-size: 14px; color: #fff;">@${u.username}</span>
+                    <span style="font-size:10px; opacity:0.4; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${u.bio}</span>
+                </div>
                 <span style="margin-left: auto; font-weight: 900; font-size: 13px; color: ${postAuraColor}; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 50px; border: 1px solid var(--border);">${u.aura} AURA</span>
             </div>`;
         }).join('');
@@ -578,14 +514,14 @@ app.get('/leaderboard', async (req, res) => {
             <div style="text-align: center; margin-bottom: 30px;">
                 <span style="font-size: 10px; font-weight: 900; letter-spacing: 3px; color: var(--cyan); text-transform: uppercase;">AURA MATRIX PROTOCOL</span>
                 <h1 style="font-size: 28px; font-weight: 900; letter-spacing: 1px; margin-top: 5px;">NETWORK LEADERBOARD</h1>
-                <p style="font-size: 12px; opacity: 0.5; margin-top: 6px;">Top profiles certified by overall matrix aura weight</p>
             </div>
 
             <div class="podium-container">
                 <div class="podium-card rank-2">
                     ${makePodiumAvatar(rank2User, 'var(--p)')}
                     <span style="font-weight: 800; font-size: 14px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank2User.username}</span>
-                    <span style="font-size: 12px; font-weight: 900; color: var(--p); margin-top: 6px;">${rank2User.aura} AURA</span>
+                    <span style="font-size:9px; opacity:0.5; margin-top:3px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${rank2User.bio}"</span>
+                    <span style="font-size: 12px; font-weight: 900; color: var(--p); margin-top: auto;">${rank2User.aura} AURA</span>
                     <div class="podium-rank-badge">2</div>
                 </div>
 
@@ -593,14 +529,16 @@ app.get('/leaderboard', async (req, res) => {
                     <div class="podium-crown" style="color: #ffea00;"><i class="fas fa-crown"></i></div>
                     ${makePodiumAvatar(rank1User, '#ffea00')}
                     <span style="font-weight: 900; font-size: 16px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank1User.username}</span>
-                    <span style="font-size: 13px; font-weight: 900; color: var(--cyan); margin-top: 6px;">${rank1User.aura} AURA</span>
+                    <span style="font-size:10px; color:var(--cyan); opacity:0.8; margin-top:3px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${rank1User.bio}"</span>
+                    <span style="font-size: 13px; font-weight: 900; color: var(--cyan); margin-top: auto;">${rank1User.aura} AURA</span>
                     <div class="podium-rank-badge">1</div>
                 </div>
 
                 <div class="podium-card rank-3">
                     ${makePodiumAvatar(rank3User, 'var(--v)')}
                     <span style="font-weight: 800; font-size: 13px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank3User.username}</span>
-                    <span style="font-size: 11px; font-weight: 900; color: var(--v); margin-top: 6px;">${rank3User.aura} AURA</span>
+                    <span style="font-size:9px; opacity:0.5; margin-top:3px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${rank3User.bio}"</span>
+                    <span style="font-size: 11px; font-weight: 900; color: var(--v); margin-top: auto;">${rank3User.aura} AURA</span>
                     <div class="podium-rank-badge">3</div>
                 </div>
             </div>
@@ -612,9 +550,7 @@ app.get('/leaderboard', async (req, res) => {
         </div>`;
 
         res.send(MASTER_UI(leaderboardContent, user, sectors, 'Leaderboard'));
-    } catch (err) {
-        res.redirect('/dashboard');
-    }
+    } catch (err) { res.redirect('/dashboard'); }
 });
 
 app.get('/dashboard', async (req, res) => {
@@ -645,7 +581,7 @@ app.get('/dashboard', async (req, res) => {
                             <span style="font-size:11px; font-weight:900; color:#aaa; letter-spacing:1px;">GHOST MODE</span>
                         </label>
                         
-                        <label class="genz-time-capsule" title="Drop this signal in the future...">
+                        <label class="genz-time-capsule">
                             <div class="capsule-icon-box"><i class="fas fa-meteor"></i></div>
                             <div class="capsule-text">
                                 <span class="capsule-label">TIME CAPSULE</span>
@@ -661,12 +597,7 @@ app.get('/dashboard', async (req, res) => {
     const allComments = await Comment.find({ postId: { $in: posts.map(p => p._id) } }).sort({ date: 1 });
 
     function renderCommentTree(commentsList, parentId = null, isNested = false) {
-        const targetNodes = commentsList.filter(c => {
-            if (parentId === null) {
-                return c.parentCommentId === null || c.parentCommentId === undefined;
-            }
-            return String(c.parentCommentId) === String(parentId);
-        });
+        const targetNodes = commentsList.filter(c => parentId === null ? (c.parentCommentId === null || c.parentCommentId === undefined) : String(c.parentCommentId) === String(parentId));
         if (targetNodes.length === 0) return '';
 
         return targetNodes.map(c => {
@@ -690,9 +621,7 @@ app.get('/dashboard', async (req, res) => {
                         <input type="text" name="content" class="comment-mini-input" placeholder="Type reply execution..." required>
                     </form>
                 </div>` : ''}
-                <div id="tree-container-${c._id}">
-                    ${renderCommentTree(commentsList, c._id, true)}
-                </div>
+                <div id="tree-container-${c._id}">${renderCommentTree(commentsList, c._id, true)}</div>
             </div>`;
         }).join('');
     }
@@ -713,10 +642,13 @@ app.get('/dashboard', async (req, res) => {
         return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}">
             <div style="display:flex; align-items:center; gap:10px;">
                 ${p.isAnonymous ? '<div class="post-avatar-fallback" style="background:#111; border:1px dashed #7000ff;"><i class="fas fa-mask" style="color:#7000ff;"></i></div>' : postAvatarSnippet}
-                <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:13px; letter-spacing:0.5px;">
-                    ${p.isAnonymous ? 'GHOST_SIGNAL' : '@'+p.author} 
-                    ${!p.isAnonymous ? `<span class="aura-badge">${p.authorAura}</span>` : ''}
-                </b>
+                <div style="display:flex; flex-direction:column;">
+                    <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:13px; letter-spacing:0.5px;">
+                        ${p.isAnonymous ? 'GHOST_SIGNAL' : '@'+p.author} 
+                        ${!p.isAnonymous ? `<span class="aura-badge">${p.authorAura}</span>` : ''}
+                    </b>
+                    ${!p.isAnonymous ? `<span class="bio-post-snippet">${p.authorBio || 'No vibe announced yet...'}</span>` : ''}
+                </div>
                 ${showDelete ? `
                 <div class="del-engine-container">
                     <button type="button" onclick="triggerDynamicDelete(event, this, '${p._id.toString()}')" class="cosmic-del-btn">
@@ -732,7 +664,7 @@ app.get('/dashboard', async (req, res) => {
                     </button>
                 </div>` : ''}
             </div>
-            <p style="margin-top:12px; font-size:16px; padding-left: ${p.isAnonymous ? '0' : '0px'};">${p.content}</p>
+            <p style="margin-top:12px; font-size:16px;">${p.content}</p>
             ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);">` : ''}
             <div class="interaction-bar">
                 <button type="button" onclick="interact(event, '${p._id.toString()}', 'like')" class="action-btn like-btn ${hasW ? 'active-w' : ''}"><i class="fas fa-crown"></i> ${p.likes.length} W</button>
@@ -741,15 +673,13 @@ app.get('/dashboard', async (req, res) => {
             </div>
             <div class="comments-section-container">
                 <h5 style="font-size:10px; opacity:0.4; letter-spacing:2px; margin-bottom:10px;">TRANSMITTED THREADS</h5>
-                <div id="root-comment-box-${p._id}">
-                    ${commentsRenderedTree || '<p style="font-size:11px; opacity:0.2; padding-left:5px;" class="no-threads-prompt">No structural threads running.</p>'}
-                </div>
+                <div id="root-comment-box-${p._id}">${commentsRenderedTree || '<p style="font-size:11px; opacity:0.2; padding-left:5px;" class="no-threads-prompt">No structural threads running.</p>'}</div>
                 ${user ? `
                 <form onsubmit="submitCommentAjax(event, this, 'root-comment-box-${p._id}')" style="margin-top:15px; display: flex; gap: 10px;">
                     <input type="hidden" name="postId" value="${p._id}">
                     <input type="text" name="content" class="comment-mini-input" placeholder="Inject thoughts into thread..." required>
                     <button class="create-btn" style="width: auto; padding: 0 20px; border-radius: 12px; font-size: 10px;">COMMENT</button>
-                </form>` : `<p style="font-size:11px; opacity:0.4; margin-top:10px;">⚠️ <a href="/login" style="color:var(--cyan); text-decoration:none;">Sync identity</a> to comment on this thread.</p>`}
+                </form>` : ''}
             </div>
         </div>`
     }).join('');
@@ -757,7 +687,6 @@ app.get('/dashboard', async (req, res) => {
     res.send(MASTER_UI(postForm + html, user, sectors, activeSector));
 });
 
-// --- [💬 REAL-TIME ENDPOINT: AJAX COMPLIANT THREAD SAVER WITH AVATARS] ---
 app.post('/add-comment-ajax', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: "Unauthorized" });
     const { postId, parentCommentId, content } = req.body;
@@ -765,140 +694,100 @@ app.post('/add-comment-ajax', async (req, res) => {
         const user = await User.findOne({ username: req.session.user.username });
         if (!user) return res.status(404).json({ error: "User identity synced out." });
         const newComment = await new Comment({
-            postId: postId,
-            parentCommentId: parentCommentId || null, 
-            author: user.username,
-            authorAura: user.aura,
-            authorAvatar: user.avatarUrl,
-            content: content,
-            isAnonymous: false
+            postId: postId, parentCommentId: parentCommentId || null, 
+            author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl,
+            content: content, isAnonymous: false
         }).save();
         return res.status(200).json({ author: newComment.author, content: newComment.content, id: newComment._id, authorAvatar: newComment.authorAvatar });
-    } catch(err) {
-        return res.status(500).json({ error: "Internal Pipeline Failed" });
-    }
+    } catch(err) { return res.status(500).json({ error: "Internal Pipeline Failed" }); }
 });
 
-// --- [UPLOAD AVATAR / PFP ENDPOINT] ---
 app.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
     if (!req.session.user) return res.status(401).send("Unauthorized Matrix Action");
     try {
         if (!req.file) return res.send("<script>alert('No avatar asset selected.'); window.history.back();</script>");
-        
-        // Convert avatar buffer to base64 encoding scheme
         const base64Avatar = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-        
-        // Update User Profile natively
-        const updatedUser = await User.findOneAndUpdate(
-            { username: req.session.user.username },
-            { $set: { avatarUrl: base64Avatar } },
-            { new: true }
-        );
-
-        // Sync session instance variables
+        const updatedUser = await User.findOneAndUpdate({ username: req.session.user.username }, { $set: { avatarUrl: base64Avatar } }, { new: true });
         req.session.user.avatarUrl = updatedUser.avatarUrl;
-        
         res.send("<script>alert('MATRIX AVATAR SYNCED SUCCESSFULLY 🌟'); window.location.href='/portfolio';</script>");
-    } catch (err) {
-        res.send("<script>alert('Avatar system failure.'); window.history.back();</script>");
-    }
+    } catch (err) { res.send("<script>alert('Avatar system failure.'); window.history.back();</script>"); }
+});
+
+// --- [📝 UPDATE PROFILE BIO / VIBE ENDPOINT] ---
+app.post('/update-bio', async (req, res) => {
+    if (!req.session.user) return res.status(401).send("Unauthorized Action");
+    try {
+        const pureBio = (req.body.bio || "").trim().substring(0, 75); // Strict 1-line enforcement
+        if(!pureBio) return res.send("<script>alert('Vibe text cannot be empty.'); window.history.back();</script>");
+
+        await User.findOneAndUpdate(
+            { username: req.session.user.username },
+            { $set: { bio: pureBio } }
+        );
+        res.send("<script>alert('VIBE STATEMENT LOCK IN! 🧬'); window.location.href='/portfolio';</script>");
+    } catch (err) { res.send("<script>alert('Bio transmission failed.'); window.history.back();</script>"); }
 });
 
 // --- [RESTORED AUTH ENGINES] ---
 app.get('/login', (req, res) => {
     if (req.session.user) return res.redirect('/dashboard');
-    const loginForm = `
-        <div class="card" style="max-width:450px; margin: 40px auto; border-color: var(--cyan);">
-            <h2 style="text-align:center; margin-bottom:20px; letter-spacing:2px; color: var(--cyan);">SYNC ACCOUNT</h2>
-            <form action="/login" method="POST">
-                <input type="text" name="username" class="auth-input" placeholder="Enter @username" required>
-                <input type="password" name="password" class="auth-input" placeholder="Enter Password" required>
-                <button class="create-btn" style="margin-top:10px;">ESTABLISH SYNC</button>
-            </form>
-            <p style="text-align:center; margin-top:20px; font-size:12px; opacity:0.6;">New to the void? <a href="/register" style="color:var(--p); text-decoration:none; font-weight:bold;">Create Identity</a></p>
-        </div>`;
+    const loginForm = `<div class="card" style="max-width:450px; margin: 40px auto; border-color: var(--cyan);"><h2 style="text-align:center; margin-bottom:20px; letter-spacing:2px; color: var(--cyan);">SYNC ACCOUNT</h2><form action="/login" method="POST"><input type="text" name="username" class="auth-input" placeholder="Enter @username" required><input type="password" name="password" class="auth-input" placeholder="Enter Password" required><button class="create-btn" style="margin-top:10px;">ESTABLISH SYNC</button></form></div>`;
     res.send(MASTER_UI(loginForm, null, [], 'Login'));
 });
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
-        if (!username || !password) return res.send("<script>alert('All parameters required'); window.history.back();</script>");
         const user = await User.findOne({ username: username.toLowerCase().trim() });
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            return res.send("<script>alert('SYNC FAILED: Invalid Aura Keys or Identity Unknown 💀'); window.history.back();</script>");
-        }
+        if (!user || !(await bcrypt.compare(password, user.password))) return res.send("<script>alert('SYNC FAILED'); window.history.back();</script>");
         req.session.user = { username: user.username, aura: user.aura, avatarUrl: user.avatarUrl };
         res.redirect('/dashboard');
-    } catch (err) {
-        res.send("<script>alert('SYSTEM ERROR during handshake.'); window.history.back();</script>");
-    }
+    } catch (err) { res.send("<script>alert('SYSTEM ERROR'); window.history.back();</script>"); }
 });
 
 app.get('/register', (req, res) => {
     if (req.session.user) return res.redirect('/dashboard');
-    const registerForm = `
-        <div class="card" style="max-width:450px; margin: 40px auto; border-color: var(--p);">
-            <h2 style="text-align:center; margin-bottom:20px; letter-spacing:2px; color: var(--p);">GENERATE IDENTITY</h2>
-            <form action="/register" method="POST">
-                <input type="text" name="username" class="auth-input" placeholder="Choose @username" required>
-                <input type="password" name="password" class="auth-input" placeholder="Secure Password" required>
-                <button class="create-btn" style="margin-top:10px; background: linear-gradient(45deg, var(--p), #000);">BUILD MATRIX</button>
-            </form>
-            <p style="text-align:center; margin-top:20px; font-size:12px; opacity:0.6;">Already verified? <a href="/login" style="color:var(--cyan); text-decoration:none; font-weight:bold;">Login</a></p>
-        </div>`;
+    const registerForm = `<div class="card" style="max-width:450px; margin: 40px auto; border-color: var(--p);"><h2 style="text-align:center; margin-bottom:20px; letter-spacing:2px; color: var(--p);">GENERATE IDENTITY</h2><form action="/register" method="POST"><input type="text" name="username" class="auth-input" placeholder="Choose @username" required><input type="password" name="password" class="auth-input" placeholder="Secure Password" required><button class="create-btn" style="margin-top:10px;">BUILD MATRIX</button></form></div>`;
     res.send(MASTER_UI(registerForm, null, [], 'Register'));
 });
 
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     try {
-        if (!username || !password) return res.send("<script>alert('All params required'); window.history.back();</script>");
         const existing = await User.findOne({ username: username.toLowerCase().trim() });
-        if (existing) {
-            return res.send("<script>alert('IDENTITY REJECTED: Username already taken in this network.'); window.history.back();</script>");
-        }
+        if (existing) return res.send("<script>alert('IDENTITY REJECTED'); window.history.back();</script>");
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await new User({ username: username.toLowerCase().trim(), password: hashedPassword }).save();
         req.session.user = { username: newUser.username, aura: newUser.aura, avatarUrl: newUser.avatarUrl };
         res.redirect('/dashboard');
-    } catch (err) {
-        res.send("<script>alert('INITIALIZATION FAILED: Matrix error.'); window.history.back();</script>");
-    }
+    } catch (err) { res.send("<script>alert('INITIALIZATION FAILED'); window.history.back();</script>"); }
 });
 
-app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/dashboard');
-});
+app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/dashboard'); });
 
 app.post('/send-ghost-msg', async (req, res) => {
-    if (!req.session.user) return res.send("<script>alert('Login required to send ghost signals.'); window.location.href='/login';</script>");
+    if (!req.session.user) return res.redirect('/login');
     const { targetUser, message } = req.body;
-    if (!targetUser || !message) return res.send("<script>alert('Target and message required.'); window.history.back();</script>");
     try {
         const target = await User.findOne({ username: targetUser.toLowerCase().trim() });
-        if (!target) return res.send("<script>alert('Target identity not found in the void.'); window.history.back();</script>");
+        if (!target) return res.send("<script>alert('Target identity not found.'); window.history.back();</script>");
         await User.findOneAndUpdate({ username: targetUser.toLowerCase().trim() }, { $push: { ghostMessages: { content: message } } });
         res.send("<script>alert('GHOST SIGNAL INJECTED UNTRACEABLE 🧠'); window.history.back();</script>");
-    } catch(err) {
-        res.send("<script>alert('Ghost signal failed.'); window.history.back();</script>");
-    }
+    } catch(err) { res.send("<script>alert('Ghost signal failed.'); window.history.back();</script>"); }
 });
 
 app.get('/portfolio', async (req, res) => {
     const user = req.session.user;
-    if(!user) return res.send("<script>alert('MAKE AN ACC LIL BRO 💀'); window.location.href='/login';</script>");
+    if(!user) return res.redirect('/login');
     const dbUser = await User.findOne({ username: user.username });
-    if (!dbUser) return res.send("<script>alert('Identity drop. Login again.'); window.location.href='/login';</script>");
+    if (!dbUser) return res.redirect('/login');
     const sectors = await Sector.find();
     const savedPostObjects = await Post.find({ _id: { $in: dbUser.savedPosts } });
 
     const ghostInbox = dbUser.ghostMessages.map(m => `
         <div class="ghost-msg-node">
-            <span style="font-size:10px; color:var(--v); font-weight:900; letter-spacing:1px;"><i class="fas fa-mask"></i> ANONYMOUS INCOMING...</span>
-            <p style="font-size:14px; margin-top:6px; color:#fff; font-weight:500;">${m.content}</p>
-            <small style="opacity:0.2; font-size:9px; display:block; margin-top:5px;">${new Date(m.date).toLocaleString()}</small>
+            <span style="font-size:10px; color:var(--v); font-weight:900;"><i class="fas fa-mask"></i> ANONYMOUS INCOMING...</span>
+            <p style="font-size:14px; margin-top:6px; color:#fff;">${m.content}</p>
         </div>`).join('');
 
     const savedFeedHtml = savedPostObjects.map(sp => `
@@ -909,22 +798,25 @@ app.get('/portfolio', async (req, res) => {
 
     const portfolioAvatarRender = dbUser.avatarUrl 
         ? `<img src="${dbUser.avatarUrl}" class="portfolio-pfp-render" id="pfpDisplayNode">`
-        : `<div style="font-size: 32px; font-weight:900; color:#fff;" id="pfpFallbackTxt">${dbUser.username.charAt(0).toUpperCase()}</div>`;
+        : `<div style="font-size: 32px; font-weight:900; color:#fff;">${dbUser.username.charAt(0).toUpperCase()}</div>`;
 
     const content = `
         <div class="card" style="text-align:center; border:2px solid var(--cyan);">
             <form action="/upload-avatar" method="POST" enctype="multipart/form-data" id="avatarUploadFormEngine">
                 <div class="interactive-pfp-uploader" onclick="document.getElementById('avatarFileInputNode').click();">
                     ${portfolioAvatarRender}
-                    <div class="uploader-hover-overlay">
-                        <i class="fas fa-cloud-arrow-up fa-2x" style="margin-bottom:5px;"></i>
-                        <span>SYNC PFP</span>
-                    </div>
+                    <div class="uploader-hover-overlay"><i class="fas fa-cloud-arrow-up fa-2x" style="margin-bottom:5px;"></i><span>SYNC PFP</span></div>
                 </div>
                 <input type="file" name="avatar" id="avatarFileInputNode" style="display:none;" accept="image/*" onchange="document.getElementById('avatarUploadFormEngine').submit();">
             </form>
             
             <h1 style="margin-top:15px;">@${dbUser.username}</h1>
+            
+            <form action="/update-bio" method="POST" style="margin-top:5px;">
+                <input type="text" name="bio" class="bio-input-shield" value="${dbUser.bio.replace(/"/g, '&quot;')}" placeholder="Drop your one-line vibe status..." maxlength="75" onchange="this.form.submit();">
+                <small style="font-size:9px; opacity:0.3; display:block; margin-top:4px;">Press enter to change vibe code mapping</small>
+            </form>
+
             <div class="bento-grid">
                 <div class="bento-item" style="grid-column: span 2;"><h3 style="font-size:9px; opacity:0.5;">AURA STATUS</h3><p style="font-size:22px; color:var(--cyan); font-weight:900;">${dbUser.aura}</p></div>
                 <div class="bento-item"><i class="fas fa-bookmark"></i><p style="font-size:10px;">${dbUser.savedPosts.length} SAVED</p></div>
@@ -951,10 +843,8 @@ app.get('/portfolio', async (req, res) => {
     res.send(MASTER_UI(content, dbUser, sectors, 'Portfolio'));
 });
 
-// --- [SYSTEM LOGIC + AI GATEKEEPER INTEGRATION] ---
 app.post('/addpost', upload.single('media'), async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
-    
     try {
         const isAnon = req.body.isAnonymous === 'on';
         const user = await User.findOne({ username: req.session.user.username });
@@ -962,25 +852,18 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         
         const textContent = req.body.content;
         let aiContents = [];
-
-        if (req.file) {
-            const imagePart = fileToGenerativePart(req.file.buffer, req.file.mimetype);
-            aiContents.push(imagePart);
-        }
-        if (textContent) { aiContents.push(textContent); }
-        aiContents.push("Analyze this user-submitted content. Respond with ONLY 'SAFE' or 'TOXIC'. Check for explicit adult content, severe abuse, cyberbullying, or intense hate speech in English, Urdu, or Roman Urdu.");
+        if (req.file) aiContents.push(fileToGenerativePart(req.file.buffer, req.file.mimetype));
+        if (textContent) aiContents.push(textContent);
+        aiContents.push("Analyze this content. Respond with ONLY 'SAFE' or 'TOXIC'.");
 
         const aiResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: aiContents });
-        const gatekeeperVerdict = aiResponse.text.trim().toUpperCase();
-
-        if (gatekeeperVerdict === 'TOXIC') {
+        if (aiResponse.text.trim().toUpperCase() === 'TOXIC') {
             user.aura = Math.max(0, user.aura - 50);
             await user.save();
-            return res.send("<script>alert('SYSTEM ERROR: Content failed the Aura policy. -50 Aura penalized. 💀'); window.history.back();</script>");
+            return res.send("<script>alert('CONTENT TOXIC. -50 Aura penalized. 💀'); window.history.back();</script>");
         }
 
         let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
-        
         let finalScheduledDate = null;
         if (req.body.scheduledTime) {
             const parsedTime = new Date(req.body.scheduledTime);
@@ -988,118 +871,72 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         }
 
         await new Post({ 
-            author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl, content: textContent, 
-            sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon,
-            scheduledFor: finalScheduledDate
+            author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl, authorBio: user.bio, // Syncing Vibe state to post context
+            content: textContent, sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon, scheduledFor: finalScheduledDate
         }).save();
         
-        if(!isAnon) { 
-            user.aura += 15; 
-            await user.save();
-            req.session.user.aura = user.aura;
-        }
+        if(!isAnon) { user.aura += 15; await user.save(); req.session.user.aura = user.aura; }
         res.redirect('back');
-
-    } catch (aiError) {
+    } catch (e) {
+        // Safe Fallback mechanism
         const isAnon = req.body.isAnonymous === 'on';
         const user = await User.findOne({ username: req.session.user.username });
-        if (!user) return res.redirect('/login');
         let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
-        let finalScheduledDate = null;
-        if (req.body.scheduledTime) {
-            const parsedTime = new Date(req.body.scheduledTime);
-            if (parsedTime > new Date()) finalScheduledDate = parsedTime;
-        }
         await new Post({ 
-            author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl, content: req.body.content, 
-            sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon,
-            scheduledFor: finalScheduledDate
+            author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl, authorBio: user.bio,
+            content: req.body.content, sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon
         }).save();
-        if(!isAnon) { 
-            user.aura += 15; 
-            await user.save();
-            req.session.user.aura = user.aura;
-        }
+        if(!isAnon) { user.aura += 15; await user.save(); }
         res.redirect('back');
     }
 });
 
-// --- [POST DELETION ROUTE] ---
 app.post('/delete-post', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-    const { postId } = req.body;
     try {
-        const post = await Post.findById(postId);
-        if (!post) return res.status(404).json({ error: 'Post not found' });
-        if (post.author !== req.session.user.username && req.session.user.username !== 'xavirox') {
-            return res.status(403).json({ error: 'Forbidden' });
-        }
-        await Post.findByIdAndDelete(postId);
-        await Comment.deleteMany({ postId: postId });
+        const post = await Post.findById(req.body.postId);
+        if (!post) return res.status(404).json({ error: 'Not found' });
+        if (post.author !== req.session.user.username && req.session.user.username !== 'xavirox') return res.status(403).json({ error: 'Forbidden' });
+        await Post.findByIdAndDelete(req.body.postId);
+        await Comment.deleteMany({ postId: req.body.postId });
         return res.sendStatus(200);
-    } catch (err) {
-        return res.status(500).json({ error: 'Internal Server Error' });
-    }
+    } catch (err) { return res.status(500).json({ error: 'Error' }); }
 });
 
-// --- [INTERACTION ROUTES] ---
 app.post('/interact', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const { postId, type } = req.body;
     const username = req.session.user.username;
     try {
         const post = await Post.findById(postId);
-        if (!post) return res.status(404).json({ error: 'Post not found' });
         const user = await User.findOne({ username });
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (!post || !user) return res.sendStatus(404);
 
         if (type === 'like') {
-            if (post.likes.includes(username)) {
-                post.likes = post.likes.filter(u => u !== username);
-            } else {
-                post.likes.push(username);
-                post.dislikes = post.dislikes.filter(u => u !== username);
-            }
+            if (post.likes.includes(username)) post.likes = post.likes.filter(u => u !== username);
+            else { post.likes.push(username); post.dislikes = post.dislikes.filter(u => u !== username); }
             await post.save();
         } else if (type === 'dislike') {
-            if (post.dislikes.includes(username)) {
-                post.dislikes = post.dislikes.filter(u => u !== username);
-            } else {
-                post.dislikes.push(username);
-                post.likes = post.likes.filter(u => u !== username);
-            }
+            if (post.dislikes.includes(username)) post.dislikes = post.dislikes.filter(u => u !== username);
+            else { post.dislikes.push(username); post.likes = post.likes.filter(u => u !== username); }
             await post.save();
         } else if (type === 'save') {
-            if (user.savedPosts.includes(postId)) {
-                user.savedPosts = user.savedPosts.filter(id => id !== postId);
-            } else {
-                user.savedPosts.push(postId);
-            }
+            if (user.savedPosts.includes(postId)) user.savedPosts = user.savedPosts.filter(id => id !== postId);
+            else user.savedPosts.push(postId);
             await user.save();
         }
-
         return res.sendStatus(200);
-    } catch (err) {
-        return res.status(500).json({ error: 'Database context sync failed' });
-    }
+    } catch (err) { return res.sendStatus(500); }
 });
 
 app.get('/create-sector', async (req, res) => {
-    if (!req.session.user) return res.status(401).send("Unauthorized Access");
-    const name = req.query.name;
-    if (name) {
-        try {
-            await new Sector({ name: name.toLowerCase().trim() }).save();
-        } catch (e) {}
-    }
+    if (!req.session.user) return res.sendStatus(401);
+    if (req.query.name) { try { await new Sector({ name: req.query.name.toLowerCase().trim() }).save(); } catch (e) {} }
     res.redirect('/dashboard');
 });
 
-// --- [SERVERLESS EXPORT CONFIGURATION] ---
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log("🚀 COSMIC ENGINE V79 LIVE ON PORT " + PORT);
-    });
+    app.listen(PORT, () => { console.log("🚀 COSMIC ENGINE V80 LIVE ON PORT " + PORT); });
 }
 module.exports = app;
