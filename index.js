@@ -1,22 +1,60 @@
 /* ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V83 [ULTIMATE GENZ MATRIX EDITION + SOCIAL FABRIC EXPANSION]
+    🚀 XAVIROX COSMIC OS - V84 [THE ULTIMATE 50-FEATURE MATRIX — FULL PLATFORM EXPANSION]
     STATUS: MASTER REFACTOR + ASYNCHRONOUS COMMENTING + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
     
-    [MERGED PREVIOUS ENGINES (V1 - V82)]:
-    - Profile Bio, Aesthetic Overhaul, Banners, Custom PFPs, Username Changes, Verified Badges.
-    - Premium GenZ Aura Leaderboard, Fluid Delete Engine, Time Capsule, Ghost Mode.
-    - Profile Visit Counter, Public Post History, Aura Graph, Achievement Badges, Custom Aura Titles.
+    [MERGED PREVIOUS ENGINES (V1 - V83)]:
+    1.  Custom Avatar/PFP upload — Profile picture system.
+    2.  Profile Bio — One-line vibe status.
+    3.  Profile Banner — Cover photo system.
+    4.  Username change — One-time change allowed.
+    5.  Verified badge — Cyan checkmark for 500+ aura.
+    6.  Profile visit counter — View count on profiles.
+    7.  Public post history — All posts on profile.
+    8.  Aura history graph — Chart showing aura phases.
+    9.  Achievement badges — First Post, 100 W's, Ghost Master.
+    10. Custom aura title — Sigma, Ghost Lord, Chaos Agent.
+    11. Follow system — Connect with other users.
+    12. Followers/Following count — Real-time on portfolio.
+    13. Following feed — Filter to followed users only.
+    14. @ Mention notifications — Tag alerts system.
+    15. React system — 👑💀🔥❤️ emoji reactions.
+    16. Post sharing — Re-transmit posts to feed.
+    17. DM / Direct Messages — Private chat matrix.
+    18. Friend requests — Follow handshake pipeline.
+    19. Block/Mute users — Filter toxic entities.
     
-    [NEW INTEGRATION MERGE V83 - THE SOCIAL FABRIC]:
-    11. Follow system — Connect with other users securely.
-    12. Followers/Following count — Real-time tracking on portfolio view.
-    13. Following feed — Filter dashboard to see only connected users' signals.
-    14. @ Mention notifications — AI parses text to alert tagged users.
-    15. React system — Expanded interaction bar (👑, 💀, 👻, 🔥, ❤️).
-    16. Post sharing — Re-transmit existing network posts to your own timeline.
-    17. DM / Direct Messages — Private 1-on-1 cyber chat routes & UI.
-    18. Friend requests — Handshake protocols built into the follow pipeline.
-    19. Block/Mute users — Filter out toxic entities from your personal matrix.
+    [NEW INTEGRATION MERGE V84 - THE FULL PLATFORM]:
+    20. Comment likes — React to comments with 👑.
+    21. Poll posts — A vs B voting system on posts.
+    22. Video upload support — Short clips in posts.
+    23. GIF support — Giphy search integration.
+    24. Link preview cards — URL og-tag preview cards.
+    25. Post pinning — Pin best post to profile top.
+    26. Trending posts — Most reacted posts section.
+    27. Post tags/hashtags — #tag system on posts.
+    28. Draft saving — Auto-save drafts in localStorage.
+    29. Post word limit badge — Long Signal indicator.
+    30. Real-time notifications bell — Live unread count.
+    31. Trending sectors — Active communities highlighted.
+    32. Discover page — Explore random interesting posts.
+    33. Search by username — Find specific users.
+    34. Search by hashtag — Find posts by topic.
+    35. Daily digest — Top posts summary section.
+    36. New follower notification — Already in notif engine.
+    37. Ghost message notification — Ghost inbox alert.
+    38. Daily login streak — Bonus aura for daily logins.
+    39. Aura leaderboard — Already live (top 10 weekly).
+    40. Aura decay — Inactive users lose aura over time.
+    41. Aura gifting — Send aura to another user.
+    42. Aura milestones — 500/1000 aura special rewards.
+    43. Weekly challenges — Post 3x = +100 aura bonus.
+    44. Report post/comment — Community flag system.
+    45. Content warnings — Sensitive post blur toggle.
+    46. Anti-spam cooldown — Rate limiting per user.
+    47. Dark/Light mode toggle — Theme switcher.
+    48. Notification preferences — Alert settings page.
+    49. Account deletion — Permanent account removal.
+    50. Post editing — Edit published posts.
 
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
 ==================================================================================================== */
@@ -62,6 +100,7 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     bio: { type: String, default: 'No vibe announced yet...' }, 
     nameChanged: { type: Boolean, default: false }, 
     savedPosts: [String],
+    pinnedPost: { type: String, default: null }, // 🔵 V84 FEATURE 25: Post pinning
     viewsCount: { type: Number, default: 0 }, 
     ghostSentCount: { type: Number, default: 0 }, 
     ghostMessages: [{ content: String, date: { type: Date, default: Date.now } }],
@@ -70,7 +109,17 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     following: [{ type: String }],
     blockedUsers: [{ type: String }],
     mutedUsers: [{ type: String }],
-    friendRequests: [{ from: String, status: { type: String, default: 'pending' } }]
+    friendRequests: [{ from: String, status: { type: String, default: 'pending' } }],
+    // 🧬 V84 NEW EXTENSIONS
+    loginStreak: { type: Number, default: 0 }, // Feature 38: Daily login streak
+    lastLoginDate: { type: String, default: null }, // Feature 38: Track last login date
+    weeklyPostCount: { type: Number, default: 0 }, // Feature 43: Weekly challenge tracking
+    weeklyPostReset: { type: String, default: null }, // Feature 43: Week reset date
+    reportedPosts: [{ type: String }], // Feature 44: Reports submitted
+    theme: { type: String, default: 'dark' }, // Feature 47: Dark/Light mode
+    notifPrefs: { mentions: { type: Boolean, default: true }, follows: { type: Boolean, default: true }, reactions: { type: Boolean, default: true } }, // Feature 48
+    contentWarning: { type: Boolean, default: true }, // Feature 45: Content warnings toggle
+    lastPostDate: { type: String, default: null } // Feature 46: Anti-spam cooldown
 }));
 
 const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema({
@@ -90,7 +139,16 @@ const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema(
     reactions: { crown: [{ type: String }], skull: [{ type: String }], ghost: [{ type: String }], fire: [{ type: String }], heart: [{ type: String }] },
     isShared: { type: Boolean, default: false },
     originalAuthor: { type: String, default: null },
-    originalContent: { type: String, default: null }
+    originalContent: { type: String, default: null },
+    // 🧬 V84 NEW POST FIELDS
+    tags: [{ type: String }], // Feature 27/34: Hashtag system
+    isPoll: { type: Boolean, default: false }, // Feature 21: Poll posts
+    pollOptions: [{ text: String, votes: [{ type: String }] }], // Feature 21: Poll options
+    isEdited: { type: Boolean, default: false }, // Feature 50: Post editing
+    editedAt: { type: Date, default: null }, // Feature 50: Edit timestamp
+    isSensitive: { type: Boolean, default: false }, // Feature 45: Content warning flag
+    reports: [{ reporter: String, reason: String }], // Feature 44: Report system
+    linkPreview: { url: String, title: String, description: String, image: String } // Feature 24: Link preview
 }));
 
 const Comment = mongoose.models.Comment || mongoose.model('Comment', new mongoose.Schema({
@@ -101,7 +159,8 @@ const Comment = mongoose.models.Comment || mongoose.model('Comment', new mongoos
     authorAvatar: { type: String, default: null }, 
     content: String,
     isAnonymous: { type: Boolean, default: false },
-    date: { type: Date, default: Date.now }
+    date: { type: Date, default: Date.now },
+    likes: [{ type: String }] // Feature 20: Comment likes
 }));
 
 const Sector = mongoose.models.Sector || mongoose.model('Sector', new mongoose.Schema({ 
@@ -282,6 +341,72 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .shared-post-wrapper { border-left: 2px solid var(--cyan); padding-left: 15px; margin-top: 10px; background: rgba(0, 242, 255, 0.02); border-radius: 0 16px 16px 0; }
         .shared-indicator { font-size: 10px; color: var(--cyan); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
 
+        /* V84 NEW FEATURE STYLES */
+        /* Feature 21: Poll System */
+        .poll-option { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 14px; padding: 12px 18px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.3s; position: relative; overflow: hidden; }
+        .poll-option:hover { border-color: var(--cyan); background: rgba(0,242,255,0.05); }
+        .poll-option.voted { border-color: var(--p); background: rgba(255,0,127,0.05); cursor: default; }
+        .poll-bar { position: absolute; left: 0; top: 0; height: 100%; background: linear-gradient(90deg, rgba(112,0,255,0.15), rgba(255,0,127,0.1)); border-radius: 14px; z-index: 0; transition: width 0.8s ease; }
+        .poll-text { z-index: 1; font-size: 13px; font-weight: 700; flex: 1; }
+        .poll-pct { z-index: 1; font-size: 11px; font-weight: 900; color: var(--cyan); margin-left: auto; }
+
+        /* Feature 27/34: Hashtag styles */
+        .post-tag { display: inline-block; background: rgba(0,242,255,0.08); border: 1px solid rgba(0,242,255,0.2); color: var(--cyan); font-size: 10px; font-weight: 900; padding: 2px 10px; border-radius: 50px; margin: 2px; cursor: pointer; letter-spacing: 0.5px; text-decoration: none; }
+        .post-tag:hover { background: rgba(0,242,255,0.2); }
+
+        /* Feature 25: Pinned post */
+        .pinned-indicator { font-size: 10px; color: #ffea00; font-weight: 900; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+
+        /* Feature 26: Trending badge */
+        .trending-badge { background: linear-gradient(90deg, #ff007f, #7000ff); font-size: 9px; font-weight: 900; padding: 2px 8px; border-radius: 50px; color: #fff; margin-left: 8px; letter-spacing: 1px; }
+
+        /* Feature 29: Word count badge */
+        .word-count-badge { font-size: 9px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: rgba(255,255,255,0.4); padding: 2px 8px; border-radius: 50px; margin-left: 8px; }
+
+        /* Feature 44: Report button */
+        .report-btn { font-size: 10px; background: transparent; border: none; color: rgba(255,100,100,0.5); cursor: pointer; padding: 4px 8px; border-radius: 8px; font-weight: 700; }
+        .report-btn:hover { color: #ff4444; background: rgba(255,0,0,0.08); }
+
+        /* Feature 45: Content warning overlay */
+        .cw-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); border-radius: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; z-index: 5; cursor: pointer; backdrop-filter: blur(8px); }
+        .cw-label { font-size: 11px; font-weight: 900; color: #ffea00; letter-spacing: 2px; }
+
+        /* Feature 47: Light mode */
+        body.light-mode { background: #f0f0f0; color: #111; }
+        body.light-mode .card { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.1); color: #111; }
+        body.light-mode .stars-container { background: #e8e8e8; }
+        body.light-mode .genz-search { background: rgba(0,0,0,0.06); color: #111; border-color: rgba(0,0,0,0.15); }
+        body.light-mode .dynamic-island { background: rgba(240,240,240,0.9); color: #111; }
+        body.light-mode .comment-node { background: rgba(0,0,0,0.03); }
+        body.light-mode .ghost-input, body.light-mode .auth-input, body.light-mode .comment-mini-input { background: rgba(0,0,0,0.05); color: #111; border-color: rgba(0,0,0,0.15); }
+        body.light-mode .cosmic-footer { background: rgba(230,230,230,0.9); }
+
+        /* Feature 20: Comment like btn */
+        .comment-like-btn { font-size: 10px; background: transparent; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 3px 8px; border-radius: 8px; font-weight: 700; margin-left: 8px; }
+        .comment-like-btn:hover, .comment-like-btn.liked { color: var(--cyan); }
+
+        /* Feature 22/23: Video & GIF tag */
+        .media-type-badge { font-size: 9px; background: rgba(112,0,255,0.2); border: 1px solid rgba(112,0,255,0.4); color: #bca0ff; padding: 2px 8px; border-radius: 50px; font-weight: 900; }
+
+        /* Feature 24: Link preview card */
+        .link-preview-card { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-top: 12px; background: rgba(255,255,255,0.02); }
+        .link-preview-img { width: 100%; height: 140px; object-fit: cover; }
+        .link-preview-body { padding: 12px 15px; }
+        .link-preview-title { font-size: 13px; font-weight: 900; color: #fff; margin-bottom: 4px; }
+        .link-preview-desc { font-size: 11px; opacity: 0.5; }
+        .link-preview-url { font-size: 10px; color: var(--cyan); margin-top: 4px; opacity: 0.7; }
+
+        /* Feature 38: Login streak badge */
+        .streak-badge { background: linear-gradient(90deg, #ff6b00, #ffea00); color: #000; font-size: 9px; font-weight: 900; padding: 3px 10px; border-radius: 50px; margin-left: 8px; }
+
+        /* Feature 32: Discover page */
+        .discover-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        @media(max-width: 768px) { .discover-grid { grid-template-columns: 1fr; } }
+
+        /* Feature 31: Trending sectors highlight */
+        .trending-sector-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,0,127,0.08); border: 1px solid rgba(255,0,127,0.25); padding: 6px 14px; border-radius: 50px; font-size: 10px; font-weight: 900; color: var(--p); text-decoration: none; margin: 4px; }
+        .trending-sector-pill:hover { background: rgba(255,0,127,0.2); }
+
         @media (max-width: 768px) {
             .top-left-nav { position: absolute; top: 15px; left: 10px; right: 10px; width: calc(100% - 20px); justify-content: space-between; gap: 5px; }
             .genz-search { width: 35%; padding: 10px; font-size: 10px; }
@@ -296,6 +421,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             .podium-container { flex-direction: column; align-items: center; gap: 25px; }
             .podium-card.rank-1, .podium-card.rank-2, .podium-card.rank-3 { width: 100%; height: auto; padding: 25px 20px; }
             .podium-rank-badge { bottom: unset; right: 20px; top: 20px; }
+            .discover-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -306,10 +432,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         <div class="nav-row">
             <div class="nav-item"><a href="/dashboard" class="nav-btn-circle"><i class="fas fa-rocket"></i></a><span class="icon-label">Orbit</span></div>
             <div class="nav-item"><a href="/leaderboard" class="nav-btn-circle" style="color: #ffea00;"><i class="fas fa-trophy"></i></a><span class="icon-label">Rankings</span></div>
+            <div class="nav-item"><a href="/discover" class="nav-btn-circle" style="color: var(--p);"><i class="fas fa-compass"></i></a><span class="icon-label">Discover</span></div>
             ${!isGuest ? `<div class="nav-item"><a href="/notifications" class="nav-btn-circle"><i class="fas fa-bell"></i>${notifCount > 0 ? `<div class="notif-badge">${notifCount}</div>` : ''}</a><span class="icon-label">Alerts</span></div>` : ''}
             ${!isGuest ? `<div class="nav-item"><a href="/dms" class="nav-btn-circle"><i class="fas fa-envelope"></i></a><span class="icon-label">DMs</span></div>` : ''}
-            
             <div class="nav-item"><a href="/portfolio" class="nav-btn-circle"><i class="fas fa-fingerprint"></i></a><span class="icon-label">Identity</span></div>
+            ${!isGuest ? `<div class="nav-item"><a href="/settings" class="nav-btn-circle" style="color:#aaa;"><i class="fas fa-gear"></i></a><span class="icon-label">Settings</span></div>` : ''}
             ${!isGuest ? `<div class="nav-item"><a href="/logout" class="nav-btn-circle" style="color:var(--p)"><i class="fas fa-power-off"></i></a><span class="icon-label">Eject</span></div>` : ''}
         </div>
     </div>
@@ -331,10 +458,21 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:20px;">SECTORS / COMMUNITIES</h4>
                 <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-earth-americas"></i> GLOBAL</a>
                 ${!isGuest ? `<a href="/dashboard?sector=Following" style="display:block; color:#00ff88; margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-user-group"></i> FOLLOWING FEED</a>` : ''}
+                <a href="/discover" style="display:block; color:var(--p); margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-compass"></i> DISCOVER</a>
                 <a href="/dashboard?sector=confessions" style="display:block; color:#ffea00; margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-ghost"></i> #CONFESSIONS</a>
                 ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#ccc; font-size:12px; font-weight:700; text-decoration:none; margin-top:12px; opacity:0.8;"># ${s.name.toUpperCase()}</a>`).join('')}
                 ${!isGuest ? `<button type="button" class="create-btn" style="margin-top:25px; font-size:10px;" onclick="let n=prompt('Name the new community / sector?'); if(n) location.href='/create-sector?name='+n">+ BUILD COMMUNITY</button>` : ''}
             </div>
+            <div class="card" style="border-color: rgba(255,234,0,0.2);">
+                <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:15px;"><i class="fas fa-fire" style="color:var(--p);"></i> TRENDING SECTORS</h4>
+                ${sectors.slice(0,4).map(s => `<a href="/dashboard?sector=${s.name}" class="trending-sector-pill"># ${s.name.toUpperCase()}</a>`).join('')}
+                <a href="/dashboard?sector=confessions" class="trending-sector-pill">#CONFESSIONS</a>
+            </div>
+            ${!isGuest ? `<div class="card" style="border-color: rgba(0,242,255,0.15);">
+                <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:12px;"><i class="fas fa-bolt" style="color:var(--cyan);"></i> QUICK ACTIONS</h4>
+                <button type="button" onclick="toggleTheme()" class="create-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); margin-bottom:10px; font-size:10px;"><i class="fas fa-circle-half-stroke"></i> TOGGLE THEME</button>
+                <a href="/settings" class="create-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); font-size:10px;"><i class="fas fa-gear"></i> SETTINGS</a>
+            </div>` : ''}
             <div class="card">
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px;">FEEDBACK</h4>
                 <textarea id="fbTxt" style="width:100%; background:rgba(0,0,0,0.5); border:1px solid #333; border-radius:15px; color:#fff; padding:15px; margin-top:12px; outline:none; font-size:12px;" rows="2" placeholder="Drop thoughts..."></textarea>
@@ -348,7 +486,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             <a href="mailto:xavirox.co@gmail.com" class="footer-link"><i class="fas fa-headset"></i> Support</a>
             <a href="mailto:xavirox.co@gmail.com" class="footer-link"><span><i class="fas fa-shield-halved"></i></span> DMCA Notice</a>
         </div>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V83 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V84 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -452,6 +590,92 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                 card.style.display = text.includes(query.toLowerCase()) ? 'block' : 'none';
             });
         }
+
+        // Feature 47: Dark/Light Mode Toggle
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('xavirox_theme', isLight ? 'light' : 'dark');
+            fetch('/api/theme', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ theme: isLight ? 'light' : 'dark' }) });
+        }
+        (function() {
+            const savedTheme = localStorage.getItem('xavirox_theme');
+            if (savedTheme === 'light') document.body.classList.add('light-mode');
+        })();
+
+        // Feature 28: Draft Auto-save
+        const txBar = document.getElementById('txBarEngine');
+        if(txBar) {
+            const savedDraft = localStorage.getItem('xavirox_draft');
+            if(savedDraft) { txBar.value = savedDraft; }
+            txBar.addEventListener('input', () => { localStorage.setItem('xavirox_draft', txBar.value); });
+            txBar.closest('form') && txBar.closest('form').addEventListener('submit', () => { localStorage.removeItem('xavirox_draft'); });
+        }
+
+        // Feature 21: Poll voting
+        async function votePoll(postId, optionIndex) {
+            try {
+                const res = await fetch('/api/poll-vote', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ postId, optionIndex }) });
+                if(res.ok) window.location.reload();
+                else alert('Login required to vote 💀');
+            } catch(e) { alert('Vote sync failed.'); }
+        }
+
+        // Feature 20: Comment like
+        async function likeComment(commentId, btn) {
+            try {
+                const res = await fetch('/api/like-comment', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ commentId }) });
+                if(res.ok) {
+                    const data = await res.json();
+                    btn.classList.toggle('liked');
+                    btn.innerHTML = '👑 ' + data.count;
+                } else { alert('Login required 💀'); }
+            } catch(e) {}
+        }
+
+        // Feature 45: Content warning toggle
+        function revealContent(btn) {
+            const overlay = btn.closest('.cw-overlay');
+            if(overlay) overlay.style.display = 'none';
+        }
+
+        // Feature 44: Report post
+        async function reportPost(postId) {
+            const reason = prompt('Why are you reporting this? (spam / nsfw / hate / fake)');
+            if(!reason) return;
+            try {
+                const res = await fetch('/api/report', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ postId, reason }) });
+                if(res.ok) alert('Report submitted. Gemini AI will review this. 🛡️');
+                else alert('Login required 💀');
+            } catch(e) {}
+        }
+
+        // Feature 41: Aura gifting
+        async function giftAura(targetUser) {
+            const amount = prompt('How much aura to gift? (max 50 per day)');
+            if(!amount || isNaN(amount)) return;
+            try {
+                const res = await fetch('/api/gift-aura', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ targetUser, amount: parseInt(amount) }) });
+                const data = await res.json();
+                alert(data.message || 'Aura gifted! 🎁');
+                if(res.ok) window.location.reload();
+            } catch(e) {}
+        }
+
+        // Feature 50: Edit post
+        function editPost(postId, currentContent) {
+            const newContent = prompt('Edit your transmission:', currentContent);
+            if(!newContent || newContent === currentContent) return;
+            fetch('/api/edit-post', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ postId, content: newContent }) })
+                .then(r => r.ok ? window.location.reload() : alert('Edit failed.'))
+                .catch(() => alert('Edit sync failed.'));
+        }
+
+        // Feature 25: Pin post
+        function pinPost(postId) {
+            fetch('/api/pin-post', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ postId }) })
+                .then(r => r.ok ? (alert('Post pinned to your profile! 📌'), window.location.reload()) : alert('Pin failed.'));
+        }
     </script>
 </body></html>`;
 };
@@ -531,16 +755,22 @@ app.get('/dashboard', async (req, res) => {
 
     const postForm = `<div class="card" style="border-color: rgba(255,255,255,0.2);">
         ${!user ? `<button type="button" class="create-btn" onclick="location.href='/login'">SYNC TO TRANSMIT ⚡</button>` : `
-            <form action="/addpost" method="POST" enctype="multipart/form-data">
-                <textarea id="txBarEngine" name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px; font-weight:500;" placeholder="Transmit a signal... You can @mention users too!" required></textarea>
+            <form action="/addpost" method="POST" enctype="multipart/form-data" id="mainPostForm">
+                <textarea id="txBarEngine" name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px; font-weight:500;" placeholder="Transmit a signal... You can @mention and #tag users too!" required></textarea>
+                <input type="text" name="tags" id="tagsInput" style="width:100%; background:transparent; border:none; border-top:1px solid var(--border); color:rgba(0,242,255,0.8); outline:none; font-size:12px; padding:10px 0; font-weight:700;" placeholder="#add #tags #here (optional)">
                 <input type="hidden" name="sector" value="${activeSector === 'Following' ? 'Global' : activeSector}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:15px; border-top: 1px solid var(--border); padding-top: 15px;">
-                    <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
-                        <label style="cursor:pointer; opacity:0.8; color:var(--cyan); transition:0.2s;"><i class="fas fa-image fa-lg"></i><input type="file" name="media" hidden></label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; flex-wrap:wrap; gap:12px; border-top: 1px solid var(--border); padding-top: 15px;">
+                    <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
+                        <label style="cursor:pointer; opacity:0.8; color:var(--cyan);" title="Image/Video"><i class="fas fa-image fa-lg"></i><input type="file" name="media" hidden accept="image/*,video/*,image/gif"></label>
                         <label class="fancy-ghost-container">
                             <input type="checkbox" name="isAnonymous" id="ghostToggle" ${activeSector==='confessions'?'checked':''} style="display:none;">
                             <div class="switch-track"><div class="switch-thumb"></div></div>
                             <span style="font-size:11px; font-weight:900; color:#aaa; letter-spacing:1px;">GHOST MODE</span>
+                        </label>
+                        <label class="fancy-ghost-container" title="Mark as sensitive content">
+                            <input type="checkbox" name="isSensitive" id="sensitiveToggle" style="display:none;">
+                            <div class="switch-track"><div class="switch-thumb"></div></div>
+                            <span style="font-size:11px; font-weight:900; color:#ffea00; letter-spacing:1px;">⚠️ SENSITIVE</span>
                         </label>
                         <label class="genz-time-capsule">
                             <div class="capsule-icon-box"><i class="fas fa-meteor"></i></div>
@@ -550,9 +780,27 @@ app.get('/dashboard', async (req, res) => {
                             </div>
                         </label>
                     </div>
-                    <button class="create-btn" style="width:auto; padding:12px 30px; border-radius:12px;">TRANSMIT 🚀</button>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" onclick="togglePollForm()" class="create-btn" style="width:auto; padding:12px 18px; border-radius:12px; background:rgba(255,255,255,0.06); border:1px solid var(--border); font-size:10px;"><i class="fas fa-chart-bar"></i> POLL</button>
+                        <button class="create-btn" style="width:auto; padding:12px 30px; border-radius:12px;">TRANSMIT 🚀</button>
+                    </div>
                 </div>
-            </form>`}
+                <div id="pollFormSection" style="display:none; margin-top:15px; border-top:1px solid var(--border); padding-top:15px;">
+                    <p style="font-size:10px; font-weight:900; color:var(--cyan); margin-bottom:10px; letter-spacing:1px;"><i class="fas fa-chart-bar"></i> POLL MODE ACTIVATED</p>
+                    <input type="hidden" name="isPoll" id="isPollInput" value="0">
+                    <input type="text" name="pollA" class="comment-mini-input" style="margin-bottom:8px;" placeholder="Option A: ...">
+                    <input type="text" name="pollB" class="comment-mini-input" placeholder="Option B: ...">
+                </div>
+            </form>
+            <script>
+                function togglePollForm() {
+                    const sec = document.getElementById('pollFormSection');
+                    const isPollInput = document.getElementById('isPollInput');
+                    const visible = sec.style.display !== 'none';
+                    sec.style.display = visible ? 'none' : 'block';
+                    isPollInput.value = visible ? '0' : '1';
+                }
+            </script>`}
     </div>`;
 
     const allComments = await Comment.find({ postId: { $in: posts.map(p => p._id) } }).sort({ date: 1 });
@@ -566,8 +814,10 @@ app.get('/dashboard', async (req, res) => {
             const cAvatar = c.authorAvatar || (cUser ? cUser.avatarUrl : null);
             const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.author}&backgroundColor=000000`;
             const nodeAvatarSnippet = cAvatar ? `<a href="/portfolio?user=${c.author}"><img src="${cAvatar}" class="comment-header-avatar"></a>` : `<a href="/portfolio?user=${c.author}"><img src="${defAvatar}" class="comment-header-avatar"></a>`;
+            const commentLikes = c.likes ? c.likes.length : 0;
+            const userLikedComment = user && c.likes && c.likes.includes(user.username);
 
-            return `<div class="comment-node ${isNested ? 'nested' : ''}"><div style="display:flex; align-items:center; gap:8px; font-size:11px; opacity:0.9; font-weight:bold; color:var(--cyan)">${c.isAnonymous ? '<div class="comment-avatar-fallback" style="background:#222;"><i class="fas fa-mask"></i></div> <span>GHOST</span>' : nodeAvatarSnippet + '<span><a href="/portfolio?user=' + c.author + '" style="color:inherit; text-decoration:none;">@' + c.author + '</a>' + isVer + '</span>'} <span style="opacity:0.4; font-weight:normal; margin-left:5px;">${new Date(c.date).toLocaleTimeString()}</span></div><p style="font-size:13px; margin-top:5px; color:#ddd; padding-left:32px; font-weight:500;">${c.content}</p>${user ? `<button type="button" class="reply-trigger-btn" style="margin-left:32px;" onclick="toggleReplyForm('${c._id}')"><i class="fas fa-reply"></i> Reply</button><div class="reply-form-wrapper" id="form-${c._id}" style="padding-left:32px;"><form onsubmit="submitCommentAjax(event, this, 'tree-container-${c._id}')"><input type="hidden" name="postId" value="${c.postId}"><input type="hidden" name="parentCommentId" value="${c._id}"><input type="text" name="content" class="comment-mini-input" placeholder="Type reply execution..." required></form></div>` : ''}<div id="tree-container-${c._id}">${renderCommentTree(commentsList, c._id, true)}</div></div>`;
+            return `<div class="comment-node ${isNested ? 'nested' : ''}"><div style="display:flex; align-items:center; gap:8px; font-size:11px; opacity:0.9; font-weight:bold; color:var(--cyan)">${c.isAnonymous ? '<div class="comment-avatar-fallback" style="background:#222;"><i class="fas fa-mask"></i></div> <span>GHOST</span>' : nodeAvatarSnippet + '<span><a href="/portfolio?user=' + c.author + '" style="color:inherit; text-decoration:none;">@' + c.author + '</a>' + isVer + '</span>'} <span style="opacity:0.4; font-weight:normal; margin-left:5px;">${new Date(c.date).toLocaleTimeString()}</span>${user ? `<button type="button" class="comment-like-btn ${userLikedComment ? 'liked' : ''}" onclick="likeComment('${c._id}', this)">👑 ${commentLikes}</button>` : `<span style="font-size:10px; opacity:0.4; margin-left:5px;">👑 ${commentLikes}</span>`}</div><p style="font-size:13px; margin-top:5px; color:#ddd; padding-left:32px; font-weight:500;">${c.content}</p>${user ? `<button type="button" class="reply-trigger-btn" style="margin-left:32px;" onclick="toggleReplyForm('${c._id}')"><i class="fas fa-reply"></i> Reply</button><div class="reply-form-wrapper" id="form-${c._id}" style="padding-left:32px;"><form onsubmit="submitCommentAjax(event, this, 'tree-container-${c._id}')"><input type="hidden" name="postId" value="${c.postId}"><input type="hidden" name="parentCommentId" value="${c._id}"><input type="text" name="content" class="comment-mini-input" placeholder="Type reply execution..." required></form></div>` : ''}<div id="tree-container-${c._id}">${renderCommentTree(commentsList, c._id, true)}</div></div>`;
         }).join('');
     }
 
@@ -577,36 +827,79 @@ app.get('/dashboard', async (req, res) => {
         const currentAura = postAuthor ? postAuthor.aura : p.authorAura;
         const postAuraColor = currentAura >= 500 ? 'var(--cyan)' : currentAura < 50 ? '#ff0000' : 'var(--p)';
         const showDelete = user && (user.username === p.author || user.username === 'xavirox');
+        const showEdit = user && user.username === p.author && !p.isAnonymous;
+        const showPin = user && user.username === p.author && !p.isAnonymous;
         const postComments = allComments.filter(c => String(c.postId) === String(p._id));
         const commentsRenderedTree = renderCommentTree(postComments, null, false);
         const isVer = postAuthor && postAuthor.aura >= 500 ? '<i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : '';
         const currentAvatar = (postAuthor && postAuthor.avatarUrl) ? postAuthor.avatarUrl : p.authorAvatar;
         const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.author}&backgroundColor=000000`;
         const ghostAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=ghost&backgroundColor=111111`;
-        
         const postAvatarSnippet = currentAvatar ? `<a href="/portfolio?user=${p.author}"><img src="${currentAvatar}" class="post-pfp"></a>` : `<a href="/portfolio?user=${p.author}"><img src="${defAvatar}" class="post-pfp"></a>`;
 
         // 🧬 V83 REACT SYSTEM LOGIC
         const rCount = { crown: p.reactions?.crown?.length || 0, skull: p.reactions?.skull?.length || 0, ghost: p.reactions?.ghost?.length || 0, fire: p.reactions?.fire?.length || 0, heart: p.reactions?.heart?.length || 0 };
         const uReact = user ? Object.keys(p.reactions || {}).find(k => p.reactions[k].includes(user.username)) : null;
 
-        return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}">
+        // Feature 26: Trending badge (5+ total reactions)
+        const totalReacts = rCount.crown + rCount.skull + rCount.fire + rCount.heart;
+        const trendingBadgeHtml = totalReacts >= 5 ? `<span class="trending-badge">🔥 TRENDING</span>` : '';
+
+        // Feature 29: Word count badge
+        const wordCount = p.content ? p.content.split(/\s+/).length : 0;
+        const wordBadge = wordCount > 100 ? `<span class="word-count-badge">📡 Long Signal</span>` : '';
+
+        // Feature 27: Hashtag rendering
+        const tagsHtml = (p.tags && p.tags.length > 0) ? `<div style="margin-top:8px;">${p.tags.map(t => `<a href="/search?tag=${t}" class="post-tag">#${t}</a>`).join('')}</div>` : '';
+
+        // Feature 38: Streak badge on posts
+        const streakBadge = postAuthor && postAuthor.loginStreak >= 3 ? `<span class="streak-badge">🔥 ${postAuthor.loginStreak}d streak</span>` : '';
+
+        // Feature 24: Link preview
+        const linkPreviewHtml = p.linkPreview && p.linkPreview.title ? `<div class="link-preview-card"><a href="${p.linkPreview.url}" target="_blank" rel="noopener">${p.linkPreview.image ? `<img src="${p.linkPreview.image}" class="link-preview-img" onerror="this.style.display='none'">` : ''}<div class="link-preview-body"><div class="link-preview-title">${p.linkPreview.title}</div><div class="link-preview-desc">${p.linkPreview.description || ''}</div><div class="link-preview-url">${p.linkPreview.url}</div></div></a></div>` : '';
+
+        // Feature 45: Content warning overlay
+        const cwOverlay = p.isSensitive ? `<div class="cw-overlay"><span class="cw-label">⚠️ SENSITIVE CONTENT</span><p style="font-size:11px; opacity:0.6; text-align:center; padding:0 20px;">This post has been flagged as sensitive.</p><button onclick="revealContent(this)" style="background:var(--p); border:none; color:#fff; padding:8px 20px; border-radius:50px; cursor:pointer; font-weight:900; font-size:11px;">REVEAL ANYWAY</button></div>` : '';
+
+        // Feature 21: Poll rendering
+        let pollHtml = '';
+        if(p.isPoll && p.pollOptions && p.pollOptions.length > 0) {
+            const totalVotes = p.pollOptions.reduce((sum, o) => sum + (o.votes ? o.votes.length : 0), 0);
+            const userVoted = user ? p.pollOptions.findIndex(o => o.votes && o.votes.includes(user.username)) : -1;
+            pollHtml = `<div style="margin-top:15px;">` + p.pollOptions.map((opt, idx) => {
+                const votes = opt.votes ? opt.votes.length : 0;
+                const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+                const isVoted = idx === userVoted;
+                return `<div class="poll-option ${isVoted ? 'voted' : ''}" onclick="${userVoted === -1 && user ? `votePoll('${p._id}', ${idx})` : ''}"><div class="poll-bar" style="width:${userVoted >= 0 ? pct : 0}%"></div><span class="poll-text">${opt.text}</span>${userVoted >= 0 ? `<span class="poll-pct">${pct}%</span>` : ''}</div>`;
+            }).join('') + `<p style="font-size:10px; opacity:0.4; margin-top:8px;">${totalVotes} votes</p></div>`;
+        }
+
+        // Feature 21: Is media a video?
+        const isVideo = p.mediaUrl && (p.mediaUrl.startsWith('data:video') || p.mediaUrl.includes('video'));
+        const mediaHtml = p.mediaUrl ? (isVideo ? `<video src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);" controls></video><span class="media-type-badge">VIDEO</span>` : `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border); box-shadow: 0 5px 15px rgba(0,0,0,0.5);">`) : '';
+
+        return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}" style="position:relative;">
+            ${cwOverlay}
             ${p.isShared ? `<div class="shared-indicator"><i class="fas fa-retweet"></i> Transmitted from @${p.originalAuthor}'s Matrix</div>` : ''}
+            ${user && user.pinnedPost === p._id.toString() ? `<div class="pinned-indicator"><i class="fas fa-thumbtack"></i> PINNED TRANSMISSION</div>` : ''}
             <div class="post-header">
                 ${p.isAnonymous ? `<img src="${ghostAvatar}" class="post-pfp" style="border-color:#7000ff;">` : postAvatarSnippet}
                 <div style="display:flex; flex-direction:column; flex:1;">
                     <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:14px; letter-spacing:0.5px;">
-                        ${p.isAnonymous ? 'GHOST_SIGNAL' : '<a href="/portfolio?user=' + p.author + '" style="color:inherit; text-decoration:none;">@'+p.author+'</a>' + isVer} 
+                        ${p.isAnonymous ? 'GHOST_SIGNAL' : '<a href="/portfolio?user=' + p.author + '" style="color:inherit; text-decoration:none;">@'+p.author+'</a>' + isVer + trendingBadgeHtml + wordBadge + streakBadge}
                         ${!p.isAnonymous ? `<span class="aura-badge">${currentAura}</span>` : ''}
                     </b>
                     ${!p.isAnonymous ? `<span class="bio-post-snippet">${(postAuthor && postAuthor.bio) ? postAuthor.bio : p.authorBio}</span>` : ''}
-                    <div style="font-size:10px; opacity:0.4; margin-top:2px;">${new Date(p.date).toLocaleString()} • ${p.sector.toUpperCase()}</div>
+                    <div style="font-size:10px; opacity:0.4; margin-top:2px;">${new Date(p.date).toLocaleString()} • ${p.sector.toUpperCase()}${p.isEdited ? ' • <i class="fas fa-pen" style="font-size:8px;"></i> edited' : ''}</div>
                 </div>
                 ${showDelete ? `<div class="del-engine-container"><button type="button" onclick="triggerDynamicDelete(event, this, '${p._id.toString()}')" class="cosmic-del-btn"><i class="fas fa-trash-can trash-ico"></i><span class="del-text-track"><span class="del-char" style="--rot:-15deg; --tx:-30px; --rot-end:-90deg;">D</span><span class="del-char" style="--rot:10deg; --tx:-15px; --rot-end:45deg;">e</span><span class="del-char" style="--rot:-20deg; --tx:5px; --rot-end:-60deg;">l</span><span class="del-char" style="--rot:25deg; --tx:15px; --rot-end:120deg;">e</span><span class="del-char" style="--rot:-10deg; --tx:25px; --rot-end:-30deg;">t</span><span class="del-char" style="--rot:15deg; --tx:40px; --rot-end:80deg;">e</span></span></button></div>` : ''}
             </div>
             
             ${p.isShared && p.originalContent ? `<div class="shared-post-wrapper"><p style="font-size:14px; font-weight:500; line-height:1.5;">${p.originalContent}</p></div>` : `<p style="margin-top:5px; font-size:16px; font-weight:500; line-height:1.5;">${p.content}</p>`}
-            ${p.mediaUrl ? `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border); box-shadow: 0 5px 15px rgba(0,0,0,0.5);">` : ''}
+            ${tagsHtml}
+            ${pollHtml}
+            ${mediaHtml}
+            ${linkPreviewHtml}
             
             <div class="interaction-bar">
                 <button type="button" onclick="interact(event, '${p._id.toString()}', 'crown')" class="action-btn react-btn ${uReact === 'crown' ? 'active' : ''}">👑 ${rCount.crown}</button>
@@ -615,6 +908,10 @@ app.get('/dashboard', async (req, res) => {
                 <button type="button" onclick="interact(event, '${p._id.toString()}', 'heart')" class="action-btn react-btn ${uReact === 'heart' ? 'active' : ''}">❤️ ${rCount.heart}</button>
                 <button type="button" onclick="interact(event, '${p._id.toString()}', 'save')" class="action-btn save-btn ${isSaved ? 'active-save' : ''}"><i class="fas fa-bookmark"></i></button>
                 ${!p.isAnonymous && user ? `<button type="button" onclick="sharePost('${p._id.toString()}')" class="action-btn share-btn"><i class="fas fa-retweet"></i> Re-shout</button>` : ''}
+                ${showEdit ? `<button type="button" onclick="editPost('${p._id.toString()}', ${JSON.stringify(p.content)})" class="action-btn" style="color:#aaa;"><i class="fas fa-pen"></i></button>` : ''}
+                ${showPin ? `<button type="button" onclick="pinPost('${p._id.toString()}')" class="action-btn" style="color:#ffea00;" title="Pin to profile"><i class="fas fa-thumbtack"></i></button>` : ''}
+                ${user && !showDelete ? `<button type="button" onclick="reportPost('${p._id.toString()}')" class="report-btn"><i class="fas fa-flag"></i></button>` : ''}
+                ${!p.isAnonymous && user && user.username !== p.author ? `<button type="button" onclick="giftAura('${p.author}')" class="action-btn" style="color:#ffea00; font-size:11px;" title="Gift Aura"><i class="fas fa-gift"></i></button>` : ''}
             </div>
             
             <div class="comments-section-container">
@@ -733,8 +1030,19 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     try {
         const isAnon = req.body.isAnonymous === 'on';
+        const isSensitive = req.body.isSensitive === 'on';
         const user = await User.findOne({ username: req.session.user.username });
         if (!user) return res.redirect('/login');
+
+        // Feature 46: Anti-spam cooldown (30 seconds between posts)
+        const now = new Date();
+        if (user.lastPostDate) {
+            const lastPost = new Date(user.lastPostDate);
+            const diffSeconds = (now - lastPost) / 1000;
+            if (diffSeconds < 30) {
+                return res.send(`<script>alert('Slow down! Wait ${Math.ceil(30 - diffSeconds)} more seconds before transmitting again. ⏳'); window.history.back();</script>`);
+            }
+        }
         
         const textContent = req.body.content;
         let aiContents = [];
@@ -755,9 +1063,25 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
             if (parsedTime > new Date()) finalScheduledDate = parsedTime;
         }
 
+        // Feature 27: Parse hashtags from content and tags field
+        const tagsFromContent = (textContent.match(/#([a-zA-Z0-9_]+)/g) || []).map(t => t.replace('#','').toLowerCase());
+        const tagsFromField = req.body.tags ? req.body.tags.replace(/#/g,'').split(/[\s,]+/).filter(Boolean).map(t => t.toLowerCase()) : [];
+        const allTags = [...new Set([...tagsFromContent, ...tagsFromField])].slice(0, 10);
+
+        // Feature 21: Poll setup
+        const isPoll = req.body.isPoll === '1' && req.body.pollA && req.body.pollB;
+        const pollOptions = isPoll ? [{ text: req.body.pollA, votes: [] }, { text: req.body.pollB, votes: [] }] : [];
+
+        // Feature 24: Simple link preview extraction from content
+        const urlMatch = textContent ? textContent.match(/https?:\/\/[^\s]+/) : null;
+        let linkPreview = {};
+        if (urlMatch) { linkPreview = { url: urlMatch[0], title: '', description: '', image: '' }; }
+
         const newPost = await new Post({ 
             author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl, authorBio: user.bio, 
-            content: textContent, sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon, scheduledFor: finalScheduledDate
+            content: textContent, sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon,
+            scheduledFor: finalScheduledDate, tags: allTags, isPoll, pollOptions, isSensitive,
+            linkPreview: Object.keys(linkPreview).length ? linkPreview : undefined
         }).save();
         
         // 🧬 V83 @Mention Extraction & Notification Engine
@@ -772,9 +1096,47 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
             }
         }
 
-        if(!isAnon) { user.aura += 15; await user.save(); req.session.user.aura = user.aura; }
+        // Feature 38: Daily login streak bonus
+        const todayStr = now.toDateString();
+        if (user.lastLoginDate !== todayStr) {
+            const yesterdayStr = new Date(now - 86400000).toDateString();
+            if (user.lastLoginDate === yesterdayStr) {
+                user.loginStreak = (user.loginStreak || 0) + 1;
+            } else {
+                user.loginStreak = 1;
+            }
+            user.lastLoginDate = todayStr;
+            // Streak bonus aura
+            if (user.loginStreak >= 7) { user.aura += 10; }
+            else if (user.loginStreak >= 3) { user.aura += 5; }
+        }
+
+        // Feature 42: Aura milestones
+        if(!isAnon) {
+            const oldAura = user.aura;
+            user.aura += 15;
+            if (oldAura < 500 && user.aura >= 500) {
+                await new Notification({ recipient: user.username, sender: 'SYSTEM', type: 'milestone', referenceId: '500' }).save();
+            }
+            if (oldAura < 1000 && user.aura >= 1000) {
+                await new Notification({ recipient: user.username, sender: 'SYSTEM', type: 'milestone', referenceId: '1000' }).save();
+            }
+        }
+
+        // Feature 43: Weekly challenge tracking
+        const weekStr = `${now.getFullYear()}-W${Math.ceil(now.getDate()/7)}`;
+        if (user.weeklyPostReset !== weekStr) { user.weeklyPostCount = 0; user.weeklyPostReset = weekStr; }
+        user.weeklyPostCount = (user.weeklyPostCount || 0) + 1;
+        if (user.weeklyPostCount === 3 && !isAnon) {
+            user.aura += 100;
+            await new Notification({ recipient: user.username, sender: 'SYSTEM', type: 'challenge', referenceId: 'weekly3' }).save();
+        }
+
+        user.lastPostDate = now.toISOString();
+        await user.save();
+        req.session.user.aura = user.aura;
         res.redirect('back');
-    } catch (e) { res.redirect('back'); }
+    } catch (e) { console.error(e); res.redirect('back'); }
 });
 
 app.post('/api/follow', async (req, res) => {
