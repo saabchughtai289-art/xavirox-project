@@ -1,4 +1,5 @@
-/* ====================================================================================================
+/* 
+====================================================================================================
     🚀 XAVIROX COSMIC OS - V84 [THE ULTIMATE 50-FEATURE MATRIX — FULL PLATFORM EXPANSION]
     STATUS: MASTER REFACTOR + ASYNCHRONOUS COMMENTING + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
     
@@ -292,13 +293,13 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .capsule-label { font-size: 8px; font-weight: 900; letter-spacing: 1.5px; color: var(--cyan); text-transform: uppercase; margin-bottom: 2px; opacity: 0.8; }
         .genz-datetime { background: transparent; border: none; color: #fff; font-family: 'Inter', sans-serif; font-size: 12px; outline: none; font-weight: 800; cursor: pointer; }
 
-        /* V83 INTERACTION BAR EXPANSION (REACTS & SHARES) */
-        .interaction-bar { display: flex; gap: 15px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); flex-wrap: wrap; }
-        .action-btn { background: transparent; border: none; color: #fff; font-size: 14px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; opacity: 0.5; padding: 5px 8px; border-radius: 8px; }
+        /* V83 INTERACTION BAR EXPANSION (REACTS & SHARES) - MODIFIED */
+        .interaction-bar { display: flex !important; justify-content: flex-start !important; gap: 12px !important; flex-wrap: wrap !important; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); }
+        .action-btn { background: transparent; border: none; color: #fff; font-size: 14px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; opacity: 0.5; border-radius: 8px; margin-left: 0 !important; margin-right: 6px !important; padding: 6px 10px !important; }
         .action-btn:hover { opacity: 1; color: var(--cyan); background: rgba(255,255,255,0.05); transform: scale(1.1); }
         .react-btn.active { opacity: 1 !important; transform: scale(1.1); text-shadow: 0 0 10px rgba(255,255,255,0.5); }
         .active-save { color: #ffea00 !important; opacity: 1 !important; text-shadow: 0 0 10px #ffea00; }
-        .share-btn { margin-left: auto; color: var(--cyan); opacity: 0.8; }
+        .share-btn { color: var(--cyan); opacity: 0.8; }
 
         .comments-section-container { margin-top: 20px; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); }
         .comment-node { background: rgba(255, 255, 255, 0.02); border-left: 2px solid var(--v); margin-top: 12px; padding: 12px 16px; border-radius: 0 16px 16px 0; position: relative; }
