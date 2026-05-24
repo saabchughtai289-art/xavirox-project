@@ -173,6 +173,7 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     notifPrefs: { mentions: { type: Boolean, default: true }, follows: { type: Boolean, default: true }, reactions: { type: Boolean, default: true } }, // Feature 48
     contentWarning: { type: Boolean, default: true }, // Feature 45: Content warnings toggle
     lastPostDate: { type: String, default: null }, // Feature 46: Anti-spam cooldown
+    isGhost: { type: Boolean, default: false }, // V87: Global ghost mode state
     // 🧬 V85 DUEL EXTENSIONS
     duelWins: { type: Number, default: 0 },      // D. Aura Duels: win counter
     duelLosses: { type: Number, default: 0 },    // D. Aura Duels: loss counter
@@ -418,6 +419,30 @@ app.use(async (req, res, next) => {
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
+// V87: Feed query helpers — hide locked time capsules from main feed
+const buildTimeCapsuleFeedClause = (now = new Date()) => ({
+    $or: [
+        { isTimeCapsule: false },
+        { isTimeCapsule: true, unlockAt: { $lte: now } }
+    ]
+});
+
+const buildFeedQuery = (sectorFilter = {}, now = new Date()) => ({
+    $and: [
+        sectorFilter,
+        buildTimeCapsuleFeedClause(now),
+        { $or: [{ scheduledFor: null }, { scheduledFor: { $lte: now } }] }
+    ]
+});
+
+// Attach Mongoose user doc to req.user when session/passport auth is present
+app.use(async (req, res, next) => {
+    if (isAuthenticated(req) && !req.user) {
+        req.user = await resolveRequestUser(req);
+    }
+    next();
+});
+
 // --- [AI HELPER ENGINE] ---
 function fileToGenerativePart(buffer, mimeType) {
     return { inlineData: { data: buffer.toString("base64"), mimeType } };
@@ -469,17 +494,93 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         /* ================================================================
            V85 GLASSMORPHISM CARD SYSTEM — Premium blur + neon borders
            ================================================================ */
+        /* V87 Premium glass — zinc-900/40 + backdrop-blur-lg + white/10 border */
+        .glass-surface, .card, .post-card, .bento-item, .ghost-poll-card, .duel-card, .glitch-market-card, .transmit-card {
+            background: rgba(24, 24, 27, 0.4) !important;
+            backdrop-filter: blur(16px) saturate(160%);
+            -webkit-backdrop-filter: blur(16px) saturate(160%);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
         .card {
-            background: rgba(8, 12, 22, 0.65);
-            backdrop-filter: var(--card-blur);
-            -webkit-backdrop-filter: var(--card-blur);
-            border: 1px solid var(--border);
             border-radius: 28px;
             padding: 30px;
             margin-bottom: 25px;
             position: relative;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
         }
+        .glass-btn, .action-btn, .create-btn, .nav-btn-circle, .genz-search, .cosmic-toggle-btn {
+            background: rgba(0, 0, 0, 0.4) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        .dynamic-island, .feed-search-bar {
+            background: rgba(24, 24, 27, 0.4) !important;
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        .cosmic-controls-bar {
+            position: fixed;
+            top: 4.5rem;
+            right: 1rem;
+            z-index: 10001;
+            display: flex;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 9999px;
+            flex-wrap: wrap;
+            max-width: min(420px, 92vw);
+        }
+        .cosmic-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 9999px;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .cosmic-toggle-btn .indicator-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.25);
+            box-shadow: 0 0 6px rgba(255,255,255,0.2);
+        }
+        .cosmic-toggle-btn.is-active .indicator-dot {
+            background: #39ff14;
+            box-shadow: 0 0 12px #39ff14;
+        }
+        .cosmic-toggle-btn.is-active { border-color: rgba(57, 255, 20, 0.45) !important; box-shadow: 0 0 20px rgba(57, 255, 20, 0.2); }
+        #sensitiveFilterBtn.is-active { border-color: rgba(255, 234, 0, 0.45) !important; }
+        #sensitiveFilterBtn.is-active .indicator-dot { background: #ffea00; box-shadow: 0 0 12px #ffea00; }
+        .sensitive-post-content.sensitive-blurred {
+            filter: blur(12px);
+            -webkit-filter: blur(12px);
+            user-select: none;
+            pointer-events: none;
+        }
+        .blur-md { filter: blur(12px); -webkit-filter: blur(12px); }
+        .select-none { user-select: none; }
+        .delete-btn {
+            background: linear-gradient(135deg, rgba(211,0,197,0.85), rgba(112,0,255,0.85)) !important;
+            border: 1px solid rgba(255,255,255,0.15) !important;
+            color: #fff;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+        .delete-btn:hover { transform: scale(1.08); box-shadow: 0 0 16px rgba(255,0,127,0.45); }
         .card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, rgba(0,242,255,0.03) 0%, transparent 50%, rgba(112,0,255,0.03) 100%); pointer-events: none; }
         .card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.7), var(--neon-cyan-glow), inset 0 1px 0 rgba(0,242,255,0.1); }
         .ghost-card { border: 1px dashed rgba(112, 0, 255, 0.5); background: rgba(112, 0, 255, 0.04); box-shadow: 0 8px 32px rgba(0,0,0,0.5), var(--neon-purple-glow); }
@@ -871,13 +972,25 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
     <div class="feed-search-bar fixed top-4 left-4 z-50 w-64">
         <input type="text" class="genz-search" placeholder="SEARCH THE VOID..." onkeyup="searchVoid(this.value)">
     </div>
-    <div class="dynamic-island fixed top-4 left-1/2 -translate-x-1/2 z-50">
+    <div class="dynamic-island glass-surface fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-full">
         ${userAvatarHtml}
         <div style="flex: 1;">
             <div class="island-main">${isGuest ? "⚡ AURA: MAKE AN ACC LIL BRO 💀" : "⚡ AURA LEVEL: " + user.aura}</div>
             <div class="island-detail">${isGuest ? "ACCESS REJECTED" : "MATRIX SECURE 🟢"}</div>
         </div>
     </div>
+    ${!isGuest ? `<div class="cosmic-controls-bar glass-surface">
+        <button type="button" id="ghostModeBtn" class="cosmic-toggle-btn glass-btn ${user && user.isGhost ? 'is-active' : ''}" data-is-ghost="${user && user.isGhost ? 'true' : 'false'}">
+            <span class="indicator-dot"></span>
+            <span>GHOST</span>
+            <span class="toggle-status-text">${user && user.isGhost ? 'ON' : 'OFF'}</span>
+        </button>
+        <button type="button" id="sensitiveFilterBtn" class="cosmic-toggle-btn glass-btn is-active" data-filter-on="true">
+            <span class="indicator-dot"></span>
+            <span>SENSITIVE</span>
+            <span class="toggle-status-text">ON</span>
+        </button>
+    </div>` : ''}
     <div class="main-container">
         <div class="feed" id="feedContainer">${content}</div>
         <div class="sidebar">
@@ -1003,11 +1116,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             } catch (err) { window.location.reload(); }
         }
 
-        async function triggerDynamicDelete(event, btnElement, postId) {
-            if(event) { event.preventDefault(); event.stopPropagation(); }
-            if(!btnElement.classList.contains('is-primed')) { btnElement.classList.add('is-primed'); return; }
-            btnElement.classList.add('is-destroying');
-            await new Promise(resolve => setTimeout(resolve, 600));
+        // V87: Delegated delete — confirm, POST /delete-post, remove .post-card from DOM
+        document.addEventListener('click', async function(e) {
+            const deleteBtn = e.target.closest('.delete-btn');
+            if (!deleteBtn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const postCard = deleteBtn.closest('.post-card');
+            const postId = deleteBtn.dataset.postId || (postCard && postCard.dataset.postId);
+            if (!postId) return;
+            if (!confirm('Delete this transmission from the matrix?')) return;
             try {
                 const res = await fetch('/delete-post', {
                     method: 'POST',
@@ -1015,15 +1133,113 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                     credentials: 'same-origin',
                     body: JSON.stringify({ postId: postId })
                 });
-                if(res.status === 200) { btnElement.closest('.p-node').remove(); }
-                else if(res.status === 401) { alert('Session expired — log in again to delete.'); window.location.href = '/login'; }
-                else if(res.status === 403) { alert('You cannot delete this transmission.'); btnElement.classList.remove('is-destroying', 'is-primed'); }
-                else { alert('Delete sync failed.'); btnElement.classList.remove('is-destroying', 'is-primed'); }
-            } catch(err) { btnElement.classList.remove('is-destroying', 'is-primed'); }
+                if (res.status === 200) {
+                    if (postCard) postCard.remove();
+                } else if (res.status === 401) {
+                    alert('Session expired — log in again to delete.');
+                    window.location.href = '/login';
+                } else if (res.status === 403) {
+                    alert('You cannot delete this transmission.');
+                } else {
+                    alert('Delete sync failed.');
+                }
+            } catch (err) {
+                alert('Delete uplink failed.');
+            }
+        });
+
+        // V87: Ghost Mode — POST /toggle-ghost-mode
+        (function initGhostModeBtn() {
+            const ghostModeBtn = document.getElementById('ghostModeBtn');
+            if (!ghostModeBtn) return;
+            const statusText = ghostModeBtn.querySelector('.toggle-status-text');
+            const syncGhostBtnUI = (isGhost) => {
+                ghostModeBtn.classList.toggle('is-active', isGhost);
+                ghostModeBtn.dataset.isGhost = isGhost ? 'true' : 'false';
+                if (statusText) statusText.textContent = isGhost ? 'ON' : 'OFF';
+                const ghostHidden = document.getElementById('ghostModeHidden');
+                if (ghostHidden) ghostHidden.value = isGhost ? 'true' : 'false';
+            };
+            ghostModeBtn.addEventListener('click', async () => {
+                try {
+                    const res = await fetch('/toggle-ghost-mode', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin'
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        syncGhostBtnUI(data.isGhost);
+                    } else {
+                        alert(data.error || 'Ghost mode sync failed.');
+                    }
+                } catch (err) {
+                    alert('Ghost mode uplink failed.');
+                }
+            });
+            syncGhostBtnUI(ghostModeBtn.dataset.isGhost === 'true');
+        })();
+
+        // V87: Sensitive content filter — toggle blur on .sensitive-post-content
+        (function initSensitiveFilterBtn() {
+            const sensitiveFilterBtn = document.getElementById('sensitiveFilterBtn');
+            if (!sensitiveFilterBtn) return;
+            let showSensitive = sensitiveFilterBtn.dataset.filterOn !== 'false';
+            const statusText = sensitiveFilterBtn.querySelector('.toggle-status-text');
+            const applySensitiveBlur = () => {
+                document.querySelectorAll('.sensitive-post-content').forEach(el => {
+                    if (!showSensitive) {
+                        el.classList.add('blur-md', 'select-none', 'sensitive-blurred');
+                    } else {
+                        el.classList.remove('blur-md', 'select-none', 'sensitive-blurred');
+                    }
+                });
+            };
+            const syncSensitiveBtnUI = () => {
+                sensitiveFilterBtn.classList.toggle('is-active', showSensitive);
+                sensitiveFilterBtn.dataset.filterOn = showSensitive ? 'true' : 'false';
+                if (statusText) statusText.textContent = showSensitive ? 'ON' : 'OFF';
+                applySensitiveBlur();
+            };
+            sensitiveFilterBtn.addEventListener('click', () => {
+                showSensitive = !showSensitive;
+                syncSensitiveBtnUI();
+            });
+            syncSensitiveBtnUI();
+        })();
+
+        // V87: Create Time Capsule via API
+        async function sealTimeCapsule() {
+            const contentEl = document.getElementById('timeCapsuleContent');
+            const unlockEl = document.getElementById('timeCapsuleUnlock');
+            if (!contentEl || !unlockEl || !contentEl.value.trim() || !unlockEl.value) {
+                alert('Enter capsule content and unlock date/time.');
+                return;
+            }
+            try {
+                const res = await fetch('/create-time-capsule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        content: contentEl.value.trim(),
+                        unlockDateTime: unlockEl.value
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    alert('Time capsule sealed in the void! 🔒');
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to seal time capsule.');
+                }
+            } catch (err) {
+                alert('Time capsule uplink failed.');
+            }
         }
 
         function searchVoid(query) {
-            let cards = document.querySelectorAll('.feed .card.p-node');
+            let cards = document.querySelectorAll('.feed .post-card, .feed .card.p-node');
             cards.forEach(card => {
                 let text = card.innerText.toLowerCase();
                 card.style.display = text.includes(query.toLowerCase()) ? 'block' : 'none';
@@ -1102,36 +1318,15 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         }
 
         // V86 Ghost Mode Toggle — client-side neon state without reload
-        (function initGhostModeToggle() {
-            const ghostToggle = document.getElementById('ghostToggle');
-            const ghostLabel = document.getElementById('ghostModeLabel');
-            const ghostContainer = document.getElementById('ghostModeContainer');
-            const ghostHidden = document.getElementById('ghostModeHidden');
-            const sensitiveToggle = document.getElementById('sensitiveToggle');
-            const sensitiveLabel = document.getElementById('sensitiveModeLabel');
-            const syncGhostVisual = () => {
-                if (!ghostToggle) return;
-                const isOn = ghostToggle.checked;
-                if (ghostHidden) ghostHidden.value = isOn ? 'true' : 'false';
-                if (ghostLabel) {
-                    ghostLabel.textContent = 'GHOST MODE';
-                    ghostLabel.classList.toggle('ghost-mode-label-active', isOn);
-                }
-                if (ghostContainer) {
-                    ghostContainer.classList.toggle('ghost-mode-purple', isOn);
-                }
-            };
-            const syncSensitiveVisual = () => {
-                if (!sensitiveToggle || !sensitiveLabel) return;
-                sensitiveLabel.classList.toggle('sensitive-mode-label-active', sensitiveToggle.checked);
-            };
-            if (ghostToggle) {
-                ghostToggle.addEventListener('change', syncGhostVisual);
-                syncGhostVisual();
-            }
-            if (sensitiveToggle) {
-                sensitiveToggle.addEventListener('change', syncSensitiveVisual);
-                syncSensitiveVisual();
+        (function initPostTransmitToggles() {
+            const postSensitiveToggle = document.getElementById('postSensitiveToggle');
+            const postSensitiveLabel = document.getElementById('postSensitiveLabel');
+            if (postSensitiveToggle && postSensitiveLabel) {
+                const syncPostSensitive = () => {
+                    postSensitiveLabel.classList.toggle('sensitive-mode-label-active', postSensitiveToggle.checked);
+                };
+                postSensitiveToggle.addEventListener('change', syncPostSensitive);
+                syncPostSensitive();
             }
         })();
 
@@ -1300,9 +1495,7 @@ app.get('/dashboard', async (req, res) => {
         feedFilter.author = { $nin: user.blockedUsers };
     }
 
-    feedFilter.$or = [ { scheduledFor: null }, { scheduledFor: { $lte: currentTime } } ];
-
-    const posts = await Post.find(feedFilter).sort({ date: -1 });
+    const posts = await Post.find(buildFeedQuery(feedFilter, currentTime)).sort({ date: -1 });
     const sectors = await Sector.find();
     const allUsers = await User.find({}, 'username avatarUrl aura nameChanged coverPic bio');
 
@@ -1385,31 +1578,21 @@ app.get('/dashboard', async (req, res) => {
                 <textarea id="txBarEngine" name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px; font-weight:500;" placeholder="Transmit a signal... You can @mention and #tag users too!" required></textarea>
                 <input type="text" name="tags" id="tagsInput" style="width:100%; background:transparent; border:none; border-top:1px solid var(--border); color:rgba(0,242,255,0.8); outline:none; font-size:12px; padding:10px 0; font-weight:700;" placeholder="#add #tags #here (optional)">
                 <input type="hidden" name="sector" value="${activeSector === 'Following' ? 'Global' : activeSector}">
-                <input type="hidden" name="isAnonymous" id="ghostModeHidden" value="${activeSector==='confessions'?'true':'false'}">
                 <div class="transmit-actions-bento">
-                    <div class="transmit-toggle-card ghost-toggle-card">
-                        <label class="fancy-ghost-container" id="ghostModeContainer" style="opacity:1; visibility:visible; width:100%;">
-                            <input type="checkbox" id="ghostToggle" ${activeSector==='confessions'?'checked':''} style="position:absolute; opacity:0; width:0; height:0;">
+                    <div class="transmit-toggle-card ghost-toggle-card glass-surface" style="opacity:1; visibility:visible;">
+                        <p style="font-size:9px; font-weight:900; letter-spacing:1px; color:var(--cyan); margin-bottom:8px;">POST AS ANONYMOUS</p>
+                        <p style="font-size:10px; opacity:0.55;">Use the <strong>GHOST</strong> button (top-right) to toggle matrix ghost mode for your account.</p>
+                        <input type="hidden" name="isAnonymous" id="ghostModeHidden" value="${(user.isGhost || activeSector==='confessions') ? 'true' : 'false'}">
+                    </div>
+                    <div class="transmit-toggle-card sensitive-card glass-surface" style="opacity:1; visibility:visible;">
+                        <label class="fancy-ghost-container" id="postSensitiveContainer" title="Mark this post as sensitive" style="opacity:1; visibility:visible; width:100%; display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" name="isSensitive" id="postSensitiveToggle" style="position:absolute; opacity:0; width:1px; height:1px;">
                             <div class="switch-track"><div class="switch-thumb"></div></div>
-                            <span id="ghostModeLabel" style="font-size:11px; font-weight:900; color:#fff; letter-spacing:1px; opacity:1;">GHOST MODE</span>
+                            <span id="postSensitiveLabel" style="font-size:11px; font-weight:900; color:#ffea00; letter-spacing:1px;">⚠️ MARK SENSITIVE</span>
                         </label>
                     </div>
-                    <div class="transmit-toggle-card sensitive-card">
-                        <label class="fancy-ghost-container" id="sensitiveModeContainer" title="Mark as sensitive content" style="opacity:1; visibility:visible; width:100%;">
-                            <input type="checkbox" name="isSensitive" id="sensitiveToggle" style="position:absolute; opacity:0; width:0; height:0;">
-                            <div class="switch-track"><div class="switch-thumb"></div></div>
-                            <span id="sensitiveModeLabel" style="font-size:11px; font-weight:900; color:#ffea00; letter-spacing:1px; opacity:1;">⚠️ SENSITIVE</span>
-                        </label>
-                    </div>
-                    <div class="transmit-secondary-row">
+                    <div class="transmit-secondary-row glass-surface" style="padding:12px; border-radius:16px;">
                         <label style="cursor:pointer; opacity:1; color:var(--cyan); display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700;" title="Image/Video"><i class="fas fa-image fa-lg"></i> MEDIA<input type="file" name="media" hidden accept="image/*,video/*,image/gif"></label>
-                        <label class="genz-time-capsule">
-                            <div class="capsule-icon-box"><i class="fas fa-meteor"></i></div>
-                            <div class="capsule-text">
-                                <span class="capsule-label">TIME CAPSULE</span>
-                                <input type="datetime-local" name="unlockAt" class="genz-datetime" title="Signal locked until this time">
-                            </div>
-                        </label>
                         <label class="genz-time-capsule" title="Schedule post for later">
                             <div class="capsule-icon-box" style="background:var(--v);"><i class="fas fa-clock"></i></div>
                             <div class="capsule-text">
@@ -1419,9 +1602,15 @@ app.get('/dashboard', async (req, res) => {
                         </label>
                     </div>
                     <div class="transmit-footer-row">
-                        <button type="button" onclick="togglePollForm()" class="create-btn" style="width:auto; padding:12px 18px; border-radius:12px; background:rgba(255,255,255,0.06); border:1px solid var(--border); font-size:10px;"><i class="fas fa-chart-bar"></i> POLL</button>
-                        <button class="create-btn" style="width:auto; padding:12px 30px; border-radius:12px;">TRANSMIT 🚀</button>
+                        <button type="button" onclick="togglePollForm()" class="create-btn glass-btn" style="width:auto; padding:12px 18px; border-radius:12px; font-size:10px;"><i class="fas fa-chart-bar"></i> POLL</button>
+                        <button class="create-btn glass-btn" style="width:auto; padding:12px 30px; border-radius:12px;">TRANSMIT 🚀</button>
                     </div>
+                </div>
+                <div class="time-capsule-create glass-surface" style="margin-top:18px; padding:18px; border-radius:20px;">
+                    <p style="font-size:10px; font-weight:900; letter-spacing:1.5px; color:var(--cyan); margin-bottom:12px;"><i class="fas fa-meteor"></i> SEAL TIME CAPSULE</p>
+                    <textarea id="timeCapsuleContent" class="ghost-input" style="min-height:70px; margin-bottom:10px;" placeholder="Message locked until unlock time..."></textarea>
+                    <input type="datetime-local" id="timeCapsuleUnlock" class="ghost-input" style="margin-bottom:12px;">
+                    <button type="button" class="create-btn glass-btn" onclick="sealTimeCapsule()" style="width:100%; font-size:11px;">SEAL TIME CAPSULE 🔒</button>
                 </div>
                 <div id="pollFormSection" style="display:none; margin-top:15px; border-top:1px solid var(--border); padding-top:15px;">
                     <p style="font-size:10px; font-weight:900; color:var(--cyan); margin-bottom:10px; letter-spacing:1px;"><i class="fas fa-chart-bar"></i> POLL MODE ACTIVATED</p>
@@ -1461,7 +1650,6 @@ app.get('/dashboard', async (req, res) => {
 
     const html = posts.map(p => {
         const isSaved = user && user.savedPosts && user.savedPosts.includes(p._id.toString());
-        const isCapsuleLocked = p.isTimeCapsule && p.unlockAt && new Date() < new Date(p.unlockAt);
         const postAuthor = p.author === 'GHOST_SIGNAL' ? null : allUsers.find(u => u.username === p.author);
         const currentAura = postAuthor ? postAuthor.aura : p.authorAura;
         const postAuraColor = currentAura >= 500 ? 'var(--cyan)' : currentAura < 50 ? '#ff0000' : 'var(--p)';
@@ -1522,17 +1710,9 @@ app.get('/dashboard', async (req, res) => {
         const isVideo = p.mediaUrl && (p.mediaUrl.startsWith('data:video') || p.mediaUrl.includes('video'));
         const mediaHtml = p.mediaUrl ? (isVideo ? `<video src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);" controls></video><span class="media-type-badge">VIDEO</span>` : `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border); box-shadow: 0 5px 15px rgba(0,0,0,0.5);">`) : '';
 
-        const timeCapsuleLockHtml = isCapsuleLocked ? `<div class="card p-node time-capsule-locked" style="position:relative; margin-bottom:25px;">
-            <div class="tc-blur-layer"></div>
-            <span class="tc-locked-text">SIGNAL LOCKED IN TIME...<span class="tc-unlock-hint">UNLOCKS ${new Date(p.unlockAt).toLocaleString()}</span></span>
-        </div>` : '';
+        const sensitiveBodyClass = p.isSensitive ? 'sensitive-post-content is-sensitive' : 'sensitive-post-content';
 
-        if (isCapsuleLocked) {
-            return timeCapsuleLockHtml;
-        }
-
-        return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}" style="position:relative;">
-            ${cwOverlay}
+        return `<div class="card post-card glass-surface p-node ${p.isAnonymous ? 'ghost-card' : ''}" data-post-id="${p._id.toString()}" style="position:relative;">
             ${p.isTimeCapsule && p.unlockAt ? `<div class="pinned-indicator" style="color:var(--cyan);"><i class="fas fa-meteor"></i> TIME CAPSULE UNSEALED</div>` : ''}
             ${p.isShared ? `<div class="shared-indicator"><i class="fas fa-retweet"></i> Transmitted from @${p.originalAuthor}'s Matrix</div>` : ''}
             ${user && user.pinnedPost === p._id.toString() ? `<div class="pinned-indicator"><i class="fas fa-thumbtack"></i> PINNED TRANSMISSION</div>` : ''}
@@ -1546,14 +1726,17 @@ app.get('/dashboard', async (req, res) => {
                     ${!p.isAnonymous ? `<span class="bio-post-snippet">${(postAuthor && postAuthor.bio) ? postAuthor.bio : p.authorBio}</span>` : ''}
                     <div style="font-size:10px; opacity:0.4; margin-top:2px;">${new Date(p.date).toLocaleString()} • ${p.sector.toUpperCase()}${p.isEdited ? ' • <i class="fas fa-pen" style="font-size:8px;"></i> edited' : ''}</div>
                 </div>
-                ${showDelete ? `<div class="del-engine-container"><button type="button" onclick="triggerDynamicDelete(event, this, '${p._id.toString()}')" class="cosmic-del-btn"><i class="fas fa-trash-can trash-ico"></i><span class="del-text-track"><span class="del-char" style="--rot:-15deg; --tx:-30px; --rot-end:-90deg;">D</span><span class="del-char" style="--rot:10deg; --tx:-15px; --rot-end:45deg;">e</span><span class="del-char" style="--rot:-20deg; --tx:5px; --rot-end:-60deg;">l</span><span class="del-char" style="--rot:25deg; --tx:15px; --rot-end:120deg;">e</span><span class="del-char" style="--rot:-10deg; --tx:25px; --rot-end:-30deg;">t</span><span class="del-char" style="--rot:15deg; --tx:40px; --rot-end:80deg;">e</span></span></button></div>` : ''}
+                ${showDelete ? `<div class="del-engine-container"><button type="button" class="delete-btn glass-btn" data-post-id="${p._id.toString()}" title="Delete post"><i class="fas fa-trash-can"></i></button></div>` : ''}
             </div>
             
+            <div class="${sensitiveBodyClass}">
+            ${p.isSensitive ? cwOverlay : ''}
             ${p.isShared && p.originalContent ? `<div class="shared-post-wrapper"><p style="font-size:14px; font-weight:500; line-height:1.5;">${p.originalContent}</p></div>` : `<p style="margin-top:5px; font-size:16px; font-weight:500; line-height:1.5;">${p.content}</p>`}
             ${tagsHtml}
             ${pollHtml}
             ${mediaHtml}
             ${linkPreviewHtml}
+            </div>
             
             <div class="interaction-bar">
                 <button type="button" onclick="interact(event, '${p._id.toString()}', 'crown')" class="action-btn react-btn ${uReact === 'crown' ? 'active' : ''}">👑 ${rCount.crown}</button>
@@ -1683,7 +1866,7 @@ app.get('/portfolio', async (req, res) => {
 app.post('/addpost', upload.single('media'), async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     try {
-        const isAnon = req.body.isAnonymous === 'on' || req.body.isAnonymous === 'true';
+        const isAnon = req.body.isAnonymous === 'on' || req.body.isAnonymous === 'true' || !!user.isGhost;
         const isSensitive = req.body.isSensitive === 'on';
         const user = await User.findOne({ username: req.session.user.username });
         if (!user) return res.redirect('/login');
@@ -1933,21 +2116,94 @@ app.get('/dms', async (req, res) => {
 });
 
 // --- [REMAINING ROUTES] ---
+
+// V87: Time Capsule creation API
+app.post('/create-time-capsule', async (req, res) => {
+    if (!isAuthenticated(req)) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+        const userDoc = req.user || await resolveRequestUser(req);
+        if (!userDoc) return res.status(401).json({ error: 'Unauthorized' });
+        req.user = userDoc;
+
+        const { content, unlockDateTime } = req.body;
+        if (!content || !String(content).trim() || !unlockDateTime) {
+            return res.status(400).json({ error: 'Content and unlockDateTime are required.' });
+        }
+
+        const unlockAt = new Date(unlockDateTime);
+        if (isNaN(unlockAt.getTime()) || unlockAt <= new Date()) {
+            return res.status(400).json({ error: 'Unlock time must be in the future.' });
+        }
+
+        const isAnon = !!userDoc.isGhost;
+        const capsulePost = await new Post({
+            author: isAnon ? 'GHOST_SIGNAL' : userDoc.username,
+            authorId: userDoc._id,
+            ghostOwner: isAnon ? userDoc.username : null,
+            authorAura: userDoc.aura,
+            authorAvatar: isAnon ? null : userDoc.avatarUrl,
+            authorBio: isAnon ? 'Anonymous void transmission...' : userDoc.bio,
+            content: String(content).trim(),
+            sector: req.body.sector || 'Global',
+            isTimeCapsule: true,
+            unlockAt,
+            isAnonymous: isAnon
+        }).save();
+
+        return res.json({ success: true, postId: capsulePost._id, unlockAt });
+    } catch (err) {
+        console.error('create-time-capsule error:', err);
+        return res.status(500).json({ error: 'Failed to create time capsule.' });
+    }
+});
+
+// V87: Global Ghost Mode toggle
+app.post('/toggle-ghost-mode', async (req, res) => {
+    if (!isAuthenticated(req)) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+        const userDoc = req.user || await resolveRequestUser(req);
+        if (!userDoc) return res.status(401).json({ error: 'Unauthorized' });
+        req.user = userDoc;
+
+        userDoc.isGhost = !userDoc.isGhost;
+        await userDoc.save();
+
+        if (req.session && req.session.user) {
+            req.session.user.isGhost = userDoc.isGhost;
+        }
+
+        return res.json({ success: true, isGhost: userDoc.isGhost });
+    } catch (err) {
+        console.error('toggle-ghost-mode error:', err);
+        return res.status(500).json({ error: 'Failed to toggle ghost mode.' });
+    }
+});
+
 app.post('/delete-post', async (req, res) => {
     if (!isAuthenticated(req)) return res.status(401).json({ error: 'Unauthorized' });
     try {
-        const currentUser = await resolveRequestUser(req);
-        if (!currentUser) return res.status(401).json({ error: 'Unauthorized' });
+        const userDoc = req.user || await resolveRequestUser(req);
+        if (!userDoc) return res.status(401).json({ error: 'Unauthorized' });
+        req.user = userDoc;
 
         const post = await Post.findById(req.body.postId);
         if (!post) return res.status(404).json({ error: 'Not found' });
 
-        const isAuthorById = post.authorId && currentUser._id && post.authorId.toString() === currentUser._id.toString();
-        const isAuthorByUsername = post.author && post.author === currentUser.username;
-        const isGhostOwner = post.ghostOwner && post.ghostOwner === currentUser.username;
-        const isAdmin = currentUser.username === 'xavirox';
+        let authorized = false;
+        if (post.authorId && userDoc._id && post.authorId.toString() === userDoc._id.toString()) {
+            authorized = true;
+        }
+        if (post.author && userDoc.username && post.author === userDoc.username) {
+            authorized = true;
+        }
+        if (post.ghostOwner && post.ghostOwner === userDoc.username) {
+            authorized = true;
+        }
+        if (userDoc.username === 'xavirox') {
+            authorized = true;
+        }
 
-        if (!isAuthorById && !isAuthorByUsername && !isGhostOwner && !isAdmin) {
+        if (!authorized) {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
