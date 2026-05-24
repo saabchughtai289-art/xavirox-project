@@ -88,6 +88,31 @@ const { GoogleGenAI } = require('@google/genai');
 
 const app = express();
 
+// Vercel / reverse-proxy: required for secure cookies & OAuth HTTPS callbacks
+app.set('trust proxy', 1);
+
+const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || (
+    process.env.NODE_ENV === 'production'
+        ? 'https://xavirox-project.vercel.app/auth/google/callback'
+        : 'http://localhost:3000/auth/google/callback'
+);
+
+// Unified auth helpers (express-session + Passport)
+const isAuthenticated = (req) => {
+    return (typeof req.isAuthenticated === 'function' && req.isAuthenticated()) || !!(req.session && req.session.user);
+};
+
+const resolveRequestUser = async (req) => {
+    if (req.session && req.session.user && req.session.user.username) {
+        return User.findOne({ username: req.session.user.username });
+    }
+    if (typeof req.isAuthenticated === 'function' && req.isAuthenticated() && req.user) {
+        if (req.user._id) return User.findById(req.user._id);
+        if (req.user.username) return User.findOne({ username: req.user.username });
+    }
+    return null;
+};
+
 // ✅ SECURITY FIX: Environment Variables Setup
 const dbURI = process.env.MONGODB_URI;
 
@@ -155,7 +180,8 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
 }));
 
 const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema({
-    author: String, 
+    author: String,
+    authorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     authorAura: { type: Number, default: 100 },
     authorAvatar: { type: String, default: null }, 
     authorBio: { type: String, default: 'No vibe announced yet...' }, 
@@ -266,7 +292,12 @@ passport.deserializeUser(async (username, done) => {
     try {
         const userDoc = await User.findOne({ username });
         if (!userDoc) return done(null, false);
-        done(null, { username: userDoc.username, aura: userDoc.aura, avatarUrl: userDoc.avatarUrl });
+        done(null, {
+            _id: userDoc._id,
+            username: userDoc.username,
+            aura: userDoc.aura,
+            avatarUrl: userDoc.avatarUrl
+        });
     } catch (err) {
         done(err);
     }
@@ -276,7 +307,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || '/auth/google/callback'
+    callbackURL: GOOGLE_CALLBACK_URL,
+    proxy: true
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         let userDoc = await User.findOne({ googleId: profile.id });
@@ -328,7 +360,13 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'xavirox_cosmic_secret_shh', 
     resave: false, 
     saveUninitialized: false,
-    cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 } 
+    proxy: true,
+    cookie: {
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
+        httpOnly: true
+    }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -491,15 +529,17 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         /* Hide the search input that was previously inside the nav — it is now in its own wrapper */
         .top-left-nav .genz-search { display: none; }
 
-        /* ================================================================
-           V85 FIX — SEARCH BAR: fixed to top-right of the feed area
-           ================================================================ */
+        /* V86 — Search bar: fixed top-left (see style.css for overrides) */
         .feed-search-bar {
             position: fixed;
-            top: 85px;
-            right: 25px;
-            z-index: 10001;
+            top: 1rem;
+            left: 1rem;
+            right: auto;
+            z-index: 10002;
+            width: 16rem;
+            max-width: calc(100vw - 2rem);
         }
+        .feed-search-bar .genz-search { width: 100%; }
         .genz-search { background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 50px; padding: 12px 20px; color: #fff; width: 200px; outline: none; backdrop-filter: blur(15px); font-size: 11px; font-weight: 700; letter-spacing: 1px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); }
         .genz-search:focus { width: 280px; border-color: var(--cyan); box-shadow: var(--neon-cyan-glow), inset 0 2px 8px rgba(0,0,0,0.4); background: rgba(0,0,0,0.7); }
 
@@ -514,12 +554,76 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .nav-item:hover .icon-label { color: var(--cyan); }
         .notif-badge { position: absolute; top: -2px; right: -2px; background: #ff0000; color: #fff; font-size: 8px; font-weight: 900; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #000; box-shadow: 0 0 8px rgba(255,0,0,0.7); }
 
-        /* Dynamic Island */
-        /* ================================================================
-           V85 FIX — DYNAMIC ISLAND: anchored top-right, above search bar
-           ================================================================ */
-        .dynamic-island { position: fixed; top: 20px; right: 25px; left: auto; transform: none; width: 290px; height: 48px; background: rgba(0,0,0,0.8); border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; padding: 0 15px; gap: 12px; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; cursor: pointer; overflow: hidden; backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        .dynamic-island:hover { width: 420px; height: 75px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); background: #000; }
+        /* V86 — Dynamic Island: fixed top-center on all viewports */
+        .dynamic-island {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            right: auto;
+            transform: translateX(-50%);
+            width: min(320px, 90vw);
+            height: 48px;
+            background: rgba(0,0,0,0.85);
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            gap: 12px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            overflow: hidden;
+            backdrop-filter: blur(24px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .dynamic-island:hover { width: min(420px, 92vw); height: 75px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); background: #000; }
+
+        /* V86 — Transmit actions: Ghost Mode + Sensitive toggles always visible */
+        .transmit-actions-bento {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            width: 100%;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+        .transmit-toggle-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(0,242,255,0.15);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            opacity: 1;
+            visibility: visible;
+            min-height: 52px;
+        }
+        .transmit-toggle-card.sensitive-card { border-color: rgba(255,234,0,0.25); background: rgba(255,234,0,0.04); }
+        .transmit-toggle-card .fancy-ghost-container { opacity: 1; visibility: visible; }
+        .transmit-secondary-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            width: 100%;
+            grid-column: 1 / -1;
+        }
+        .transmit-footer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            width: 100%;
+            grid-column: 1 / -1;
+            margin-top: 4px;
+        }
         .global-navbar-avatar-frame { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(0,242,255,0.4); flex-shrink: 0; box-shadow: 0 0 8px rgba(0,242,255,0.3); }
         .user-avatar-fallback { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #fff; flex-shrink: 0; }
 
@@ -727,12 +831,13 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             .nav-item { flex-direction: column; }
             .icon-label { display: none !important; }
             .nav-btn-circle { width: 36px; height: 36px; font-size: 14px; border-radius: 50%; }
-            /* Search bar drops below top nav on mobile */
-            .feed-search-bar { top: 70px; right: 10px; }
-            .genz-search { width: 160px; padding: 8px 14px; font-size: 10px; }
-            .genz-search:focus { width: 200px; }
-            /* Dynamic Island also repositions */
-            .dynamic-island { top: 70px; right: auto; left: 50%; transform: translateX(-50%); width: 85%; height: 42px; font-size: 9px; letter-spacing: 1px; display: none; }
+            /* Search stays top-left; offset below mobile nav strip */
+            .feed-search-bar { top: 4.5rem; left: 0.75rem; right: auto; width: 14rem; }
+            .feed-search-bar .genz-search { width: 100%; padding: 8px 14px; font-size: 10px; }
+            .feed-search-bar .genz-search:focus { width: 100%; }
+            /* Dynamic Island stays centered and visible */
+            .dynamic-island { top: 0.75rem; left: 50%; transform: translateX(-50%); width: min(300px, 88vw); height: 42px; font-size: 9px; letter-spacing: 1px; display: flex !important; }
+            .transmit-actions-bento { grid-template-columns: 1fr 1fr; }
             /* Main container: no left offset on mobile, stack vertically */
             .main-container { margin: 120px auto 30px auto; margin-left: auto; flex-direction: column; gap: 15px; padding: 0 12px; width: 100%; }
             .feed { order: 1; width: 100%; } .sidebar { order: 2; width: 100%; }
@@ -762,11 +867,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             ${isGuest ? `<div class="nav-item" style="margin-top:20px; padding-top:15px; border-top:1px solid var(--border);"><a href="/auth/google" class="google-oauth-badge google-oauth-sidebar"><i class="fab fa-google"></i> GOOGLE SYNC</a></div>` : ''}
         </div>
     </div>
-    <!-- V85 FIX: Search bar relocated to top-right, above feed -->
-    <div class="feed-search-bar">
+    <!-- V86: Search top-left | Dynamic Island top-center -->
+    <div class="feed-search-bar fixed top-4 left-4 z-50 w-64">
         <input type="text" class="genz-search" placeholder="SEARCH THE VOID..." onkeyup="searchVoid(this.value)">
     </div>
-    <div class="dynamic-island">
+    <div class="dynamic-island fixed top-4 left-1/2 -translate-x-1/2 z-50">
         ${userAvatarHtml}
         <div style="flex: 1;">
             <div class="island-main">${isGuest ? "⚡ AURA: MAKE AN ACC LIL BRO 💀" : "⚡ AURA LEVEL: " + user.aura}</div>
@@ -904,8 +1009,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             btnElement.classList.add('is-destroying');
             await new Promise(resolve => setTimeout(resolve, 600));
             try {
-                const res = await fetch('/delete-post', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: postId }) });
+                const res = await fetch('/delete-post', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ postId: postId })
+                });
                 if(res.status === 200) { btnElement.closest('.p-node').remove(); }
+                else if(res.status === 401) { alert('Session expired — log in again to delete.'); window.location.href = '/login'; }
+                else if(res.status === 403) { alert('You cannot delete this transmission.'); btnElement.classList.remove('is-destroying', 'is-primed'); }
+                else { alert('Delete sync failed.'); btnElement.classList.remove('is-destroying', 'is-primed'); }
             } catch(err) { btnElement.classList.remove('is-destroying', 'is-primed'); }
         }
 
@@ -994,8 +1107,10 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             const ghostLabel = document.getElementById('ghostModeLabel');
             const ghostContainer = document.getElementById('ghostModeContainer');
             const ghostHidden = document.getElementById('ghostModeHidden');
-            if (!ghostToggle) return;
+            const sensitiveToggle = document.getElementById('sensitiveToggle');
+            const sensitiveLabel = document.getElementById('sensitiveModeLabel');
             const syncGhostVisual = () => {
+                if (!ghostToggle) return;
                 const isOn = ghostToggle.checked;
                 if (ghostHidden) ghostHidden.value = isOn ? 'true' : 'false';
                 if (ghostLabel) {
@@ -1003,11 +1118,21 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                     ghostLabel.classList.toggle('ghost-mode-label-active', isOn);
                 }
                 if (ghostContainer) {
-                    ghostContainer.classList.toggle('ghost-mode-purple', isOn && Math.random() > 0.5);
+                    ghostContainer.classList.toggle('ghost-mode-purple', isOn);
                 }
             };
-            ghostToggle.addEventListener('change', syncGhostVisual);
-            syncGhostVisual();
+            const syncSensitiveVisual = () => {
+                if (!sensitiveToggle || !sensitiveLabel) return;
+                sensitiveLabel.classList.toggle('sensitive-mode-label-active', sensitiveToggle.checked);
+            };
+            if (ghostToggle) {
+                ghostToggle.addEventListener('change', syncGhostVisual);
+                syncGhostVisual();
+            }
+            if (sensitiveToggle) {
+                sensitiveToggle.addEventListener('change', syncSensitiveVisual);
+                syncSensitiveVisual();
+            }
         })();
 
         // V86 Ghost Poll vote handler
@@ -1261,35 +1386,39 @@ app.get('/dashboard', async (req, res) => {
                 <input type="text" name="tags" id="tagsInput" style="width:100%; background:transparent; border:none; border-top:1px solid var(--border); color:rgba(0,242,255,0.8); outline:none; font-size:12px; padding:10px 0; font-weight:700;" placeholder="#add #tags #here (optional)">
                 <input type="hidden" name="sector" value="${activeSector === 'Following' ? 'Global' : activeSector}">
                 <input type="hidden" name="isAnonymous" id="ghostModeHidden" value="${activeSector==='confessions'?'true':'false'}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; flex-wrap:wrap; gap:12px; border-top: 1px solid var(--border); padding-top: 15px;">
-                    <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
-                        <label style="cursor:pointer; opacity:0.8; color:var(--cyan);" title="Image/Video"><i class="fas fa-image fa-lg"></i><input type="file" name="media" hidden accept="image/*,video/*,image/gif"></label>
-                        <label class="fancy-ghost-container" id="ghostModeContainer">
-                            <input type="checkbox" id="ghostToggle" ${activeSector==='confessions'?'checked':''} style="display:none;">
+                <div class="transmit-actions-bento">
+                    <div class="transmit-toggle-card ghost-toggle-card">
+                        <label class="fancy-ghost-container" id="ghostModeContainer" style="opacity:1; visibility:visible; width:100%;">
+                            <input type="checkbox" id="ghostToggle" ${activeSector==='confessions'?'checked':''} style="position:absolute; opacity:0; width:0; height:0;">
                             <div class="switch-track"><div class="switch-thumb"></div></div>
-                            <span id="ghostModeLabel" style="font-size:11px; font-weight:900; color:#aaa; letter-spacing:1px;">GHOST MODE</span>
+                            <span id="ghostModeLabel" style="font-size:11px; font-weight:900; color:#fff; letter-spacing:1px; opacity:1;">GHOST MODE</span>
                         </label>
-                        <label class="fancy-ghost-container" title="Mark as sensitive content">
-                            <input type="checkbox" name="isSensitive" id="sensitiveToggle" style="display:none;">
+                    </div>
+                    <div class="transmit-toggle-card sensitive-card">
+                        <label class="fancy-ghost-container" id="sensitiveModeContainer" title="Mark as sensitive content" style="opacity:1; visibility:visible; width:100%;">
+                            <input type="checkbox" name="isSensitive" id="sensitiveToggle" style="position:absolute; opacity:0; width:0; height:0;">
                             <div class="switch-track"><div class="switch-thumb"></div></div>
-                            <span style="font-size:11px; font-weight:900; color:#ffea00; letter-spacing:1px;">⚠️ SENSITIVE</span>
+                            <span id="sensitiveModeLabel" style="font-size:11px; font-weight:900; color:#ffea00; letter-spacing:1px; opacity:1;">⚠️ SENSITIVE</span>
                         </label>
+                    </div>
+                    <div class="transmit-secondary-row">
+                        <label style="cursor:pointer; opacity:1; color:var(--cyan); display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700;" title="Image/Video"><i class="fas fa-image fa-lg"></i> MEDIA<input type="file" name="media" hidden accept="image/*,video/*,image/gif"></label>
                         <label class="genz-time-capsule">
                             <div class="capsule-icon-box"><i class="fas fa-meteor"></i></div>
                             <div class="capsule-text">
-                                <span class="capsule-label">TIME CAPSULE UNLOCK</span>
+                                <span class="capsule-label">TIME CAPSULE</span>
                                 <input type="datetime-local" name="unlockAt" class="genz-datetime" title="Signal locked until this time">
                             </div>
                         </label>
-                        <label class="genz-time-capsule" title="Legacy schedule — still supported">
+                        <label class="genz-time-capsule" title="Schedule post for later">
                             <div class="capsule-icon-box" style="background:var(--v);"><i class="fas fa-clock"></i></div>
                             <div class="capsule-text">
-                                <span class="capsule-label" style="color:var(--v);">SCHEDULE POST</span>
+                                <span class="capsule-label" style="color:var(--v);">SCHEDULE</span>
                                 <input type="datetime-local" name="scheduledTime" class="genz-datetime">
                             </div>
                         </label>
                     </div>
-                    <div style="display:flex; gap:10px;">
+                    <div class="transmit-footer-row">
                         <button type="button" onclick="togglePollForm()" class="create-btn" style="width:auto; padding:12px 18px; border-radius:12px; background:rgba(255,255,255,0.06); border:1px solid var(--border); font-size:10px;"><i class="fas fa-chart-bar"></i> POLL</button>
                         <button class="create-btn" style="width:auto; padding:12px 30px; border-radius:12px;">TRANSMIT 🚀</button>
                     </div>
@@ -1336,7 +1465,12 @@ app.get('/dashboard', async (req, res) => {
         const postAuthor = p.author === 'GHOST_SIGNAL' ? null : allUsers.find(u => u.username === p.author);
         const currentAura = postAuthor ? postAuthor.aura : p.authorAura;
         const postAuraColor = currentAura >= 500 ? 'var(--cyan)' : currentAura < 50 ? '#ff0000' : 'var(--p)';
-        const showDelete = user && (user.username === p.author || user.username === p.ghostOwner || user.username === 'xavirox');
+        const showDelete = user && (
+            user.username === p.author ||
+            user.username === p.ghostOwner ||
+            (p.authorId && user._id && String(p.authorId) === String(user._id)) ||
+            user.username === 'xavirox'
+        );
         const showEdit = user && (user.username === p.author || user.username === p.ghostOwner) && !p.isAnonymous;
         const showPin = user && user.username === p.author && !p.isAnonymous;
         const postComments = allComments.filter(c => String(c.postId) === String(p._id));
@@ -1610,6 +1744,7 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         const displayAuthor = isAnon ? 'GHOST_SIGNAL' : user.username;
         const newPost = await new Post({ 
             author: displayAuthor,
+            authorId: user._id,
             ghostOwner: isAnon ? user.username : null,
             authorAura: user.aura,
             authorAvatar: isAnon ? null : user.avatarUrl,
@@ -1799,14 +1934,29 @@ app.get('/dms', async (req, res) => {
 
 // --- [REMAINING ROUTES] ---
 app.post('/delete-post', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
+    if (!isAuthenticated(req)) return res.status(401).json({ error: 'Unauthorized' });
     try {
+        const currentUser = await resolveRequestUser(req);
+        if (!currentUser) return res.status(401).json({ error: 'Unauthorized' });
+
         const post = await Post.findById(req.body.postId);
         if (!post) return res.status(404).json({ error: 'Not found' });
-        if (post.author !== req.session.user.username && post.ghostOwner !== req.session.user.username && req.session.user.username !== 'xavirox') return res.status(403).json({ error: 'Forbidden' });
+
+        const isAuthorById = post.authorId && currentUser._id && post.authorId.toString() === currentUser._id.toString();
+        const isAuthorByUsername = post.author && post.author === currentUser.username;
+        const isGhostOwner = post.ghostOwner && post.ghostOwner === currentUser.username;
+        const isAdmin = currentUser.username === 'xavirox';
+
+        if (!isAuthorById && !isAuthorByUsername && !isGhostOwner && !isAdmin) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
         await Post.findByIdAndDelete(req.body.postId);
         return res.sendStatus(200);
-    } catch (err) { return res.status(500).json({ error: 'Error' }); }
+    } catch (err) {
+        console.error('delete-post error:', err);
+        return res.status(500).json({ error: 'Error' });
+    }
 });
 
 app.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
@@ -1854,7 +2004,7 @@ app.post('/login', async (req, res) => {
     const user = await User.findOne({ username: username.toLowerCase().trim() });
     if (!user || !user.password) return res.send("<script>alert('SYNC FAILED — try Google login'); window.history.back();</script>");
     if (!(await bcrypt.compare(password, user.password))) return res.send("<script>alert('SYNC FAILED'); window.history.back();</script>");
-    req.session.user = { username: user.username, aura: user.aura, avatarUrl: user.avatarUrl };
+    req.session.user = { _id: user._id.toString(), username: user.username, aura: user.aura, avatarUrl: user.avatarUrl };
     res.redirect('/dashboard');
 });
 app.get('/register', (req, res) => { res.send(MASTER_UI(`<div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--p);"><div style="text-align:center; margin-bottom:25px;"><i class="fas fa-user-astronaut fa-3x" style="color:var(--p); margin-bottom:15px;"></i><h2 style="color: #fff;">GENERATE IDENTITY</h2></div><a href="/auth/google" class="google-oauth-badge"><i class="fab fa-google"></i> REGISTER WITH GOOGLE</a><div class="auth-divider">or build manually</div><form action="/register" method="POST"><input type="text" name="username" class="auth-input" placeholder="Choose @username" required><input type="password" name="password" class="auth-input" placeholder="Secure Password" required><button class="create-btn" style="margin-top:15px; background:var(--p);">BUILD MATRIX</button></form><p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">Already got keys? <a href="/login" style="color:var(--p); font-weight:bold;">Let him in</a></p></div>`, null, [], 'Register')); });
@@ -1864,7 +2014,7 @@ app.post('/register', async (req, res) => {
     if (existing) return res.send("<script>alert('IDENTITY REJECTED'); window.history.back();</script>");
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await new User({ username: username.toLowerCase().trim(), password: hashedPassword }).save();
-    req.session.user = { username: newUser.username, aura: newUser.aura, avatarUrl: newUser.avatarUrl };
+    req.session.user = { _id: newUser._id.toString(), username: newUser.username, aura: newUser.aura, avatarUrl: newUser.avatarUrl };
     res.redirect('/dashboard');
 });
 app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/dashboard'); });
@@ -1886,6 +2036,7 @@ app.get('/auth/google/callback',
             const userDoc = req.user || await User.findOne({ username: req.session.passport?.user });
             if (userDoc) {
                 req.session.user = {
+                    _id: userDoc._id.toString(),
                     username: userDoc.username,
                     aura: userDoc.aura,
                     avatarUrl: userDoc.avatarUrl
