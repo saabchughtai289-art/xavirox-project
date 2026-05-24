@@ -10,10 +10,20 @@
     --neon-green: #39ff14;
     --neon-pink: #ff007f;
     --sidebar-width: 185px;
-    --dynamic-island-top: 20px;
-    --search-top: 24px;
-    --search-left: 24px;
+    --dynamic-island-top: 1rem;
+    --search-top: 1rem;
+    --search-left: 1rem;
 }
+
+/* Tailwind-equivalent utilities used in HTML */
+.fixed { position: fixed !important; }
+.top-4 { top: 1rem !important; }
+.left-4 { left: 1rem !important; }
+.left-1\/2 { left: 50% !important; }
+.-translate-x-1\/2 { transform: translateX(-50%) !important; }
+.z-50 { z-index: 10000 !important; }
+.w-64 { width: 16rem !important; max-width: calc(100vw - 2rem) !important; }
+.rounded-full { border-radius: 9999px !important; }
 
 /* ================================================================================
    V86 LAYOUT — Dynamic Island TOP-CENTER
@@ -38,6 +48,8 @@
 .dynamic-island:hover {
     width: min(420px, 92vw) !important;
     height: 75px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
     border-color: var(--neon-cyan) !important;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.75), 0 0 30px rgba(0, 240, 255, 0.35) !important;
 }
@@ -64,6 +76,15 @@
     left: var(--search-left) !important;
     right: auto !important;
     z-index: 10002 !important;
+    width: 16rem !important;
+    max-width: calc(100vw - 2rem) !important;
+}
+
+/* Dynamic Island + search: keep search left of sidebar on desktop */
+@media (min-width: 769px) {
+    .feed-search-bar {
+        left: calc(var(--sidebar-width) + 1rem) !important;
+    }
 }
 
 .feed-search-bar .genz-search {
@@ -176,6 +197,42 @@
     left: 3px;
     transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+/* Transmit bento — Ghost / Sensitive always visible */
+.transmit-actions-bento {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    width: 100%;
+}
+
+.transmit-toggle-card {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 16px;
+    opacity: 1 !important;
+    visibility: visible !important;
+    min-height: 52px;
+}
+
+.transmit-toggle-card.sensitive-card {
+    border-color: rgba(255, 234, 0, 0.3);
+    background: rgba(255, 234, 0, 0.05);
+}
+
+.transmit-toggle-card .fancy-ghost-container {
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: 100%;
+}
+
+.sensitive-mode-label-active {
+    color: #ffea00 !important;
+    text-shadow: 0 0 12px rgba(255, 234, 0, 0.7);
 }
 
 .fancy-ghost-container input:checked + .switch-track {
@@ -500,14 +557,21 @@
    ================================================================================ */
 @media (max-width: 768px) {
     .feed-search-bar {
-        top: 72px !important;
-        left: 12px !important;
+        top: 4.5rem !important;
+        left: 0.75rem !important;
+        width: 14rem !important;
     }
 
     .dynamic-island {
-        top: 12px !important;
-        width: min(280px, 88vw) !important;
+        top: 0.75rem !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: min(300px, 88vw) !important;
         display: flex !important;
+    }
+
+    .transmit-actions-bento {
+        grid-template-columns: 1fr 1fr;
     }
 
     .main-container {
