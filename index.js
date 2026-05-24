@@ -682,48 +682,71 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         }
         .dynamic-island:hover { width: min(420px, 92vw); height: 75px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); background: #000; }
 
-        /* V86 — Transmit actions: Ghost Mode + Sensitive toggles always visible */
-        .transmit-actions-bento {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
-            width: 100%;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid var(--border);
-        }
-        .transmit-toggle-card {
+        /* V88 — Unified transmit pill row (GHOST / SENSITIVE / TIME CAPSULE) */
+        .transmit-pill-row {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 10px;
-            padding: 12px 14px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(0,242,255,0.15);
-            border-radius: 16px;
+            gap: 12px;
+            margin-top: 16px;
+            padding-bottom: 8px;
+        }
+        .transmit-pill-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(24, 24, 27, 0.4);
             backdrop-filter: blur(12px);
-            opacity: 1;
-            visibility: visible;
-            min-height: 52px;
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgb(39, 39, 42);
+            color: rgb(161, 161, 170);
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
         }
-        .transmit-toggle-card.sensitive-card { border-color: rgba(255,234,0,0.25); background: rgba(255,234,0,0.04); }
-        .transmit-toggle-card .fancy-ghost-container { opacity: 1; visibility: visible; }
-        .transmit-secondary-row {
+        .transmit-pill-btn:hover {
+            border-color: #a855f7;
+            color: #e4e4e7;
+            transform: scale(1.02);
+        }
+        .transmit-pill-btn:active { transform: scale(0.98); }
+        .transmit-pill-btn.is-active {
+            border-color: #a855f7;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+            background: rgba(24, 24, 27, 0.65);
+        }
+        #timeCapsuleBtn.is-active { border-color: rgba(0, 240, 255, 0.5); box-shadow: 0 0 20px rgba(0, 240, 255, 0.15); }
+        #postSensitiveBtn.is-active { border-color: rgba(255, 234, 0, 0.45); box-shadow: 0 0 16px rgba(255, 234, 0, 0.12); }
+        #ghostModeBtn.is-active { border-color: rgba(57, 255, 20, 0.45); box-shadow: 0 0 16px rgba(57, 255, 20, 0.15); }
+        .time-capsule-picker-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .transmit-tools-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
             align-items: center;
-            width: 100%;
-            grid-column: 1 / -1;
-        }
-        .transmit-footer-row {
-            display: flex;
             justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
             gap: 12px;
-            width: 100%;
-            grid-column: 1 / -1;
-            margin-top: 4px;
+            margin-top: 12px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
         .global-navbar-avatar-frame { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(0,242,255,0.4); flex-shrink: 0; box-shadow: 0 0 8px rgba(0,242,255,0.3); }
         .user-avatar-fallback { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #fff; flex-shrink: 0; }
@@ -938,7 +961,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             .feed-search-bar .genz-search:focus { width: 100%; }
             /* Dynamic Island stays centered and visible */
             .dynamic-island { top: 0.75rem; left: 50%; transform: translateX(-50%); width: min(300px, 88vw); height: 42px; font-size: 9px; letter-spacing: 1px; display: flex !important; }
-            .transmit-actions-bento { grid-template-columns: 1fr 1fr; }
+            .transmit-pill-row { gap: 8px; }
+            .transmit-pill-btn { font-size: 10px; padding: 8px 12px; }
             /* Main container: no left offset on mobile, stack vertically */
             .main-container { margin: 120px auto 30px auto; margin-left: auto; flex-direction: column; gap: 15px; padding: 0 12px; width: 100%; }
             .feed { order: 1; width: 100%; } .sidebar { order: 2; width: 100%; }
@@ -980,14 +1004,9 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         </div>
     </div>
     ${!isGuest ? `<div class="cosmic-controls-bar glass-surface">
-        <button type="button" id="ghostModeBtn" class="cosmic-toggle-btn glass-btn ${user && user.isGhost ? 'is-active' : ''}" data-is-ghost="${user && user.isGhost ? 'true' : 'false'}">
+        <button type="button" id="sensitiveFilterBtn" class="cosmic-toggle-btn glass-btn is-active" data-filter-on="true" title="Blur sensitive posts in feed">
             <span class="indicator-dot"></span>
-            <span>GHOST</span>
-            <span class="toggle-status-text">${user && user.isGhost ? 'ON' : 'OFF'}</span>
-        </button>
-        <button type="button" id="sensitiveFilterBtn" class="cosmic-toggle-btn glass-btn is-active" data-filter-on="true">
-            <span class="indicator-dot"></span>
-            <span>SENSITIVE</span>
+            <span>FEED FILTER</span>
             <span class="toggle-status-text">ON</span>
         </button>
     </div>` : ''}
@@ -1148,18 +1167,19 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             }
         });
 
-        // V87: Ghost Mode — POST /toggle-ghost-mode
+        // V88: Ghost Mode pill in transmit card — POST /toggle-ghost-mode
         (function initGhostModeBtn() {
             const ghostModeBtn = document.getElementById('ghostModeBtn');
             if (!ghostModeBtn) return;
-            const statusText = ghostModeBtn.querySelector('.toggle-status-text');
+
             const syncGhostBtnUI = (isGhost) => {
                 ghostModeBtn.classList.toggle('is-active', isGhost);
                 ghostModeBtn.dataset.isGhost = isGhost ? 'true' : 'false';
-                if (statusText) statusText.textContent = isGhost ? 'ON' : 'OFF';
+                ghostModeBtn.textContent = isGhost ? '👻 GHOST: ON' : '👻 GHOST: OFF';
                 const ghostHidden = document.getElementById('ghostModeHidden');
                 if (ghostHidden) ghostHidden.value = isGhost ? 'true' : 'false';
             };
+
             ghostModeBtn.addEventListener('click', async () => {
                 try {
                     const res = await fetch('/toggle-ghost-mode', {
@@ -1177,6 +1197,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                     alert('Ghost mode uplink failed.');
                 }
             });
+
             syncGhostBtnUI(ghostModeBtn.dataset.isGhost === 'true');
         })();
 
@@ -1208,35 +1229,64 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             syncSensitiveBtnUI();
         })();
 
-        // V87: Create Time Capsule via API
-        async function sealTimeCapsule() {
-            const contentEl = document.getElementById('timeCapsuleContent');
-            const unlockEl = document.getElementById('timeCapsuleUnlock');
-            if (!contentEl || !unlockEl || !contentEl.value.trim() || !unlockEl.value) {
-                alert('Enter capsule content and unlock date/time.');
-                return;
-            }
-            try {
-                const res = await fetch('/create-time-capsule', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({
-                        content: contentEl.value.trim(),
-                        unlockDateTime: unlockEl.value
-                    })
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    alert('Time capsule sealed in the void! 🔒');
-                    window.location.reload();
-                } else {
-                    alert(data.error || 'Failed to seal time capsule.');
+        // V88: Time Capsule pill — native datetime picker
+        (function initTimeCapsuleBtn() {
+            const timeCapsuleBtn = document.getElementById('timeCapsuleBtn');
+            const timeCapsuleInput = document.getElementById('timeCapsuleUnlockInput');
+            if (!timeCapsuleBtn || !timeCapsuleInput) return;
+
+            const formatCapsuleLabel = (isoValue) => {
+                if (!isoValue) return '⏳ TIME CAPSULE: OFF';
+                const d = new Date(isoValue);
+                if (isNaN(d.getTime())) return '⏳ TIME CAPSULE: OFF';
+                const stamp = d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                return '⏳ ' + stamp;
+            };
+
+            const syncCapsuleUI = () => {
+                const hasValue = !!timeCapsuleInput.value;
+                timeCapsuleBtn.classList.toggle('is-active', hasValue);
+                timeCapsuleBtn.textContent = formatCapsuleLabel(timeCapsuleInput.value);
+            };
+
+            timeCapsuleBtn.addEventListener('click', () => {
+                if (timeCapsuleInput.value && timeCapsuleBtn.classList.contains('is-active')) {
+                    if (confirm('Clear scheduled unlock time?')) {
+                        timeCapsuleInput.value = '';
+                        syncCapsuleUI();
+                    }
+                    return;
                 }
-            } catch (err) {
-                alert('Time capsule uplink failed.');
-            }
-        }
+                if (typeof timeCapsuleInput.showPicker === 'function') {
+                    timeCapsuleInput.showPicker();
+                } else {
+                    timeCapsuleInput.click();
+                }
+            });
+
+            timeCapsuleInput.addEventListener('change', syncCapsuleUI);
+            syncCapsuleUI();
+        })();
+
+        // V88: Post sensitive pill — marks this transmission as sensitive
+        (function initPostSensitiveBtn() {
+            const postSensitiveBtn = document.getElementById('postSensitiveBtn');
+            const postSensitiveToggle = document.getElementById('postSensitiveToggle');
+            if (!postSensitiveBtn || !postSensitiveToggle) return;
+
+            const syncPostSensitiveUI = () => {
+                const isOn = postSensitiveToggle.checked;
+                postSensitiveBtn.classList.toggle('is-active', isOn);
+                postSensitiveBtn.textContent = isOn ? '⚠️ SENSITIVE: ON' : '⚠️ SENSITIVE: OFF';
+            };
+
+            postSensitiveBtn.addEventListener('click', () => {
+                postSensitiveToggle.checked = !postSensitiveToggle.checked;
+                syncPostSensitiveUI();
+            });
+
+            syncPostSensitiveUI();
+        })();
 
         function searchVoid(query) {
             let cards = document.querySelectorAll('.feed .post-card, .feed .card.p-node');
@@ -1318,17 +1368,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         }
 
         // V86 Ghost Mode Toggle — client-side neon state without reload
-        (function initPostTransmitToggles() {
-            const postSensitiveToggle = document.getElementById('postSensitiveToggle');
-            const postSensitiveLabel = document.getElementById('postSensitiveLabel');
-            if (postSensitiveToggle && postSensitiveLabel) {
-                const syncPostSensitive = () => {
-                    postSensitiveLabel.classList.toggle('sensitive-mode-label-active', postSensitiveToggle.checked);
-                };
-                postSensitiveToggle.addEventListener('change', syncPostSensitive);
-                syncPostSensitive();
-            }
-        })();
 
         // V86 Ghost Poll vote handler
         async function voteGhostPoll(pollId, optionIndex) {
@@ -1576,41 +1615,36 @@ app.get('/dashboard', async (req, res) => {
         ${!user ? `<button type="button" class="create-btn" onclick="location.href='/login'">SYNC TO TRANSMIT ⚡</button>` : `
             <form action="/addpost" method="POST" enctype="multipart/form-data" id="mainPostForm">
                 <textarea id="txBarEngine" name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px; font-weight:500;" placeholder="Transmit a signal... You can @mention and #tag users too!" required></textarea>
-                <input type="text" name="tags" id="tagsInput" style="width:100%; background:transparent; border:none; border-top:1px solid var(--border); color:rgba(0,242,255,0.8); outline:none; font-size:12px; padding:10px 0; font-weight:700;" placeholder="#add #tags #here (optional)">
                 <input type="hidden" name="sector" value="${activeSector === 'Following' ? 'Global' : activeSector}">
-                <div class="transmit-actions-bento">
-                    <div class="transmit-toggle-card ghost-toggle-card glass-surface" style="opacity:1; visibility:visible;">
-                        <p style="font-size:9px; font-weight:900; letter-spacing:1px; color:var(--cyan); margin-bottom:8px;">POST AS ANONYMOUS</p>
-                        <p style="font-size:10px; opacity:0.55;">Use the <strong>GHOST</strong> button (top-right) to toggle matrix ghost mode for your account.</p>
-                        <input type="hidden" name="isAnonymous" id="ghostModeHidden" value="${(user.isGhost || activeSector==='confessions') ? 'true' : 'false'}">
-                    </div>
-                    <div class="transmit-toggle-card sensitive-card glass-surface" style="opacity:1; visibility:visible;">
-                        <label class="fancy-ghost-container" id="postSensitiveContainer" title="Mark this post as sensitive" style="opacity:1; visibility:visible; width:100%; display:flex; align-items:center; gap:10px;">
-                            <input type="checkbox" name="isSensitive" id="postSensitiveToggle" style="position:absolute; opacity:0; width:1px; height:1px;">
-                            <div class="switch-track"><div class="switch-thumb"></div></div>
-                            <span id="postSensitiveLabel" style="font-size:11px; font-weight:900; color:#ffea00; letter-spacing:1px;">⚠️ MARK SENSITIVE</span>
-                        </label>
-                    </div>
-                    <div class="transmit-secondary-row glass-surface" style="padding:12px; border-radius:16px;">
-                        <label style="cursor:pointer; opacity:1; color:var(--cyan); display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700;" title="Image/Video"><i class="fas fa-image fa-lg"></i> MEDIA<input type="file" name="media" hidden accept="image/*,video/*,image/gif"></label>
-                        <label class="genz-time-capsule" title="Schedule post for later">
-                            <div class="capsule-icon-box" style="background:var(--v);"><i class="fas fa-clock"></i></div>
-                            <div class="capsule-text">
-                                <span class="capsule-label" style="color:var(--v);">SCHEDULE</span>
-                                <input type="datetime-local" name="scheduledTime" class="genz-datetime">
-                            </div>
-                        </label>
-                    </div>
-                    <div class="transmit-footer-row">
-                        <button type="button" onclick="togglePollForm()" class="create-btn glass-btn" style="width:auto; padding:12px 18px; border-radius:12px; font-size:10px;"><i class="fas fa-chart-bar"></i> POLL</button>
-                        <button class="create-btn glass-btn" style="width:auto; padding:12px 30px; border-radius:12px;">TRANSMIT 🚀</button>
-                    </div>
+                <input type="hidden" name="isAnonymous" id="ghostModeHidden" value="${(user.isGhost || activeSector==='confessions') ? 'true' : 'false'}">
+                <input type="checkbox" name="isSensitive" id="postSensitiveToggle" class="time-capsule-picker-hidden" tabindex="-1" aria-hidden="true">
+
+                <div class="transmit-pill-row flex flex-wrap items-center gap-3 mt-4 pb-2">
+                    <button type="button" id="ghostModeBtn" class="transmit-pill-btn bg-zinc-900/40 backdrop-blur-md border border-zinc-800 text-zinc-400 px-4 py-2 rounded-xl text-xs font-semibold tracking-wider hover:border-purple-500 transition-all duration-300 ${(user.isGhost || activeSector==='confessions') ? 'is-active' : ''}" data-is-ghost="${(user.isGhost || activeSector==='confessions') ? 'true' : 'false'}">
+                        ${(user.isGhost || activeSector==='confessions') ? '👻 GHOST: ON' : '👻 GHOST: OFF'}
+                    </button>
+                    <button type="button" id="postSensitiveBtn" class="transmit-pill-btn bg-zinc-900/40 backdrop-blur-md border border-zinc-800 text-zinc-400 px-4 py-2 rounded-xl text-xs font-semibold tracking-wider hover:border-purple-500 transition-all duration-300">
+                        ⚠️ SENSITIVE: OFF
+                    </button>
+                    <button type="button" id="timeCapsuleBtn" class="transmit-pill-btn bg-zinc-900/40 backdrop-blur-md border border-zinc-800 text-zinc-400 px-4 py-2 rounded-xl text-xs font-semibold tracking-wider hover:border-purple-500 transition-all duration-300">
+                        ⏳ TIME CAPSULE: OFF
+                    </button>
+                    <input type="datetime-local" id="timeCapsuleUnlockInput" name="unlockAt" class="time-capsule-picker-hidden" aria-label="Time capsule unlock schedule">
                 </div>
-                <div class="time-capsule-create glass-surface" style="margin-top:18px; padding:18px; border-radius:20px;">
-                    <p style="font-size:10px; font-weight:900; letter-spacing:1.5px; color:var(--cyan); margin-bottom:12px;"><i class="fas fa-meteor"></i> SEAL TIME CAPSULE</p>
-                    <textarea id="timeCapsuleContent" class="ghost-input" style="min-height:70px; margin-bottom:10px;" placeholder="Message locked until unlock time..."></textarea>
-                    <input type="datetime-local" id="timeCapsuleUnlock" class="ghost-input" style="margin-bottom:12px;">
-                    <button type="button" class="create-btn glass-btn" onclick="sealTimeCapsule()" style="width:100%; font-size:11px;">SEAL TIME CAPSULE 🔒</button>
+
+                <input type="text" name="tags" id="tagsInput" style="width:100%; background:transparent; border:none; border-top:1px solid var(--border); color:rgba(0,242,255,0.8); outline:none; font-size:12px; padding:10px 0; font-weight:700;" placeholder="#add #tags #here (optional)">
+
+                <div class="transmit-tools-row">
+                    <label class="transmit-pill-btn bg-zinc-900/40 backdrop-blur-md border border-zinc-800 text-zinc-400 px-4 py-2 rounded-xl text-xs font-semibold tracking-wider hover:border-purple-500 transition-all duration-300" style="cursor:pointer; margin:0;">
+                        <i class="fas fa-image"></i> MEDIA
+                        <input type="file" name="media" hidden accept="image/*,video/*,image/gif">
+                    </label>
+                    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                        <button type="button" onclick="togglePollForm()" class="transmit-pill-btn bg-zinc-900/40 backdrop-blur-md border border-zinc-800 text-zinc-400 px-4 py-2 rounded-xl text-xs font-semibold tracking-wider hover:border-purple-500 transition-all duration-300">
+                            <i class="fas fa-chart-bar"></i> POLL
+                        </button>
+                        <button type="submit" class="create-btn glass-btn hover:scale-[1.02] active:scale-[0.98] transition-all duration-300" style="width:auto; padding:12px 28px; border-radius:12px; font-size:12px;">TRANSMIT 🚀</button>
+                    </div>
                 </div>
                 <div id="pollFormSection" style="display:none; margin-top:15px; border-top:1px solid var(--border); padding-top:15px;">
                     <p style="font-size:10px; font-weight:900; color:var(--cyan); margin-bottom:10px; letter-spacing:1px;"><i class="fas fa-chart-bar"></i> POLL MODE ACTIVATED</p>
