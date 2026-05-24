@@ -1,0 +1,531 @@
+/* ================================================================================
+   XAVIROX COSMIC OS — V86 EXTERNAL STYLESHEET
+   Layout re-engineering + Ghost Mode + Glitch Market + Time Capsule overlays
+   Complements inline MASTER_UI styles — do not remove baseline rules
+   ================================================================================ */
+
+:root {
+    --neon-cyan: #00f0ff;
+    --neon-purple: #7000ff;
+    --neon-green: #39ff14;
+    --neon-pink: #ff007f;
+    --sidebar-width: 185px;
+    --dynamic-island-top: 20px;
+    --search-top: 24px;
+    --search-left: 24px;
+}
+
+/* ================================================================================
+   V86 LAYOUT — Dynamic Island TOP-CENTER
+   ================================================================================ */
+.dynamic-island {
+    position: fixed !important;
+    top: var(--dynamic-island-top) !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: min(320px, 90vw) !important;
+    height: 48px !important;
+    z-index: 10000 !important;
+    background: rgba(0, 0, 0, 0.82) !important;
+    border: 1px solid rgba(0, 240, 255, 0.25) !important;
+    border-radius: 50px !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 240, 255, 0.15) !important;
+}
+
+.dynamic-island:hover {
+    width: min(420px, 92vw) !important;
+    height: 75px !important;
+    border-color: var(--neon-cyan) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.75), 0 0 30px rgba(0, 240, 255, 0.35) !important;
+}
+
+.island-main {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: #fff;
+}
+
+.island-detail {
+    font-size: 9px;
+    opacity: 0.55;
+    letter-spacing: 1px;
+}
+
+/* ================================================================================
+   V86 LAYOUT — Search bar TOP-LEFT
+   ================================================================================ */
+.feed-search-bar {
+    position: fixed !important;
+    top: var(--search-top) !important;
+    left: var(--search-left) !important;
+    right: auto !important;
+    z-index: 10002 !important;
+}
+
+.feed-search-bar .genz-search {
+    width: 220px;
+    background: rgba(4, 8, 16, 0.72) !important;
+    border: 1px solid rgba(0, 240, 255, 0.2) !important;
+    backdrop-filter: blur(20px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.feed-search-bar .genz-search:focus {
+    width: 300px;
+    border-color: var(--neon-cyan) !important;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.4), 0 0 40px rgba(0, 240, 255, 0.12) !important;
+}
+
+/* ================================================================================
+   V86 LAYOUT — Left nav locked far-left, no feed overlap
+   ================================================================================ */
+.top-left-nav {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: var(--sidebar-width) !important;
+    height: 100vh !important;
+    z-index: 10001 !important;
+    pointer-events: auto;
+}
+
+/* ================================================================================
+   V86 LAYOUT — Center feed stack + glassmorphism boost
+   ================================================================================ */
+.main-container {
+    margin-top: 95px !important;
+    margin-left: calc(var(--sidebar-width) + 20px) !important;
+    margin-right: auto !important;
+    max-width: 1100px !important;
+    width: calc(100% - var(--sidebar-width) - 40px) !important;
+    padding: 0 24px !important;
+    display: flex !important;
+    gap: 28px !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+}
+
+.feed {
+    flex: 1 1 640px !important;
+    max-width: 680px !important;
+    min-width: 0 !important;
+}
+
+.sidebar {
+    flex: 0 0 300px !important;
+    max-width: 320px !important;
+    min-width: 260px !important;
+}
+
+.card,
+.ghost-poll-card,
+.duel-card,
+.glitch-market-card,
+.time-capsule-locked {
+    background: rgba(8, 14, 28, 0.62) !important;
+    backdrop-filter: blur(42px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(42px) saturate(190%) !important;
+    border: 1px solid rgba(0, 240, 255, 0.14) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(0, 240, 255, 0.06) !important;
+}
+
+.card:hover,
+.bento-item:hover {
+    border-color: rgba(0, 240, 255, 0.38) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 240, 255, 0.22), 0 0 48px rgba(112, 0, 255, 0.12) !important;
+}
+
+.transmit-card {
+    border-color: rgba(0, 240, 255, 0.22) !important;
+}
+
+/* ================================================================================
+   GHOST MODE TOGGLE — cyber switch with neon pulse when ON
+   ================================================================================ */
+.fancy-ghost-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.switch-track {
+    width: 48px;
+    height: 26px;
+    background: rgba(0, 0, 0, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 50px;
+    position: relative;
+    transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.switch-thumb {
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, #333, #111);
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.fancy-ghost-container input:checked + .switch-track {
+    background: rgba(57, 255, 20, 0.12);
+    border-color: var(--neon-green);
+    box-shadow: 0 0 16px rgba(57, 255, 20, 0.45), 0 0 32px rgba(57, 255, 20, 0.15), inset 0 0 12px rgba(57, 255, 20, 0.08);
+    animation: ghostPulseGreen 2s ease-in-out infinite;
+}
+
+.fancy-ghost-container input:checked + .switch-track .switch-thumb {
+    left: 24px;
+    background: linear-gradient(135deg, var(--neon-green), #1a9900);
+    box-shadow: 0 0 14px var(--neon-green);
+}
+
+.fancy-ghost-container.ghost-mode-purple input:checked + .switch-track {
+    background: rgba(112, 0, 255, 0.15);
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 16px rgba(112, 0, 255, 0.5), 0 0 32px rgba(112, 0, 255, 0.2);
+    animation: ghostPulsePurple 2s ease-in-out infinite;
+}
+
+.fancy-ghost-container.ghost-mode-purple input:checked + .switch-track .switch-thumb {
+    background: linear-gradient(135deg, var(--neon-purple), #3d00a0);
+    box-shadow: 0 0 14px var(--neon-purple);
+}
+
+.ghost-mode-label-active {
+    color: var(--neon-green) !important;
+    text-shadow: 0 0 12px rgba(57, 255, 20, 0.8);
+}
+
+@keyframes ghostPulseGreen {
+    0%, 100% { box-shadow: 0 0 12px rgba(57, 255, 20, 0.35), inset 0 0 8px rgba(57, 255, 20, 0.05); }
+    50% { box-shadow: 0 0 24px rgba(57, 255, 20, 0.65), 0 0 48px rgba(57, 255, 20, 0.2), inset 0 0 16px rgba(57, 255, 20, 0.12); }
+}
+
+@keyframes ghostPulsePurple {
+    0%, 100% { box-shadow: 0 0 12px rgba(112, 0, 255, 0.4); }
+    50% { box-shadow: 0 0 28px rgba(112, 0, 255, 0.7), 0 0 56px rgba(112, 0, 255, 0.25); }
+}
+
+/* ================================================================================
+   GOOGLE OAUTH — premium glowing login badge
+   ================================================================================ */
+.google-oauth-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 22px;
+    margin-top: 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(66, 133, 244, 0.45);
+    border-radius: 16px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+    text-decoration: none;
+    text-transform: uppercase;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 0 20px rgba(66, 133, 244, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+}
+
+.google-oauth-badge:hover {
+    background: rgba(66, 133, 244, 0.12);
+    border-color: rgba(66, 133, 244, 0.8);
+    box-shadow: 0 0 28px rgba(66, 133, 244, 0.55), 0 0 48px rgba(155, 81, 224, 0.2);
+    transform: translateY(-2px);
+}
+
+.google-oauth-badge i {
+    font-size: 18px;
+    color: #4285f4;
+    filter: drop-shadow(0 0 8px rgba(66, 133, 244, 0.8));
+}
+
+.google-oauth-sidebar {
+    margin-top: 12px;
+    padding: 10px 14px;
+    font-size: 10px;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0 8px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    opacity: 0.4;
+    text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.3), transparent);
+}
+
+/* ================================================================================
+   TIME CAPSULE — locked signal placeholder
+   ================================================================================ */
+.time-capsule-locked {
+    position: relative;
+    overflow: hidden;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-color: rgba(0, 240, 255, 0.25) !important;
+}
+
+.time-capsule-locked .tc-blur-layer {
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    background: rgba(2, 4, 8, 0.75);
+    z-index: 2;
+}
+
+.time-capsule-locked .tc-locked-text {
+    position: relative;
+    z-index: 3;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: var(--neon-cyan);
+    text-align: center;
+    text-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+    animation: tcPulse 2.5s ease-in-out infinite;
+}
+
+.time-capsule-locked .tc-unlock-hint {
+    display: block;
+    font-size: 10px;
+    opacity: 0.5;
+    margin-top: 10px;
+    letter-spacing: 1px;
+}
+
+@keyframes tcPulse {
+    0%, 100% { opacity: 0.85; }
+    50% { opacity: 1; text-shadow: 0 0 30px rgba(0, 240, 255, 0.9); }
+}
+
+/* ================================================================================
+   GLITCH MARKET — bento shop grid
+   ================================================================================ */
+.glitch-market-card {
+    border-color: rgba(255, 234, 0, 0.25) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 234, 0, 0.08) !important;
+}
+
+.glitch-market-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 16px;
+}
+
+.market-item-bento {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(0, 240, 255, 0.15);
+    border-radius: 20px;
+    padding: 18px 14px;
+    text-align: center;
+    backdrop-filter: blur(24px);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.market-item-bento::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.04), transparent 50%, rgba(112, 0, 255, 0.04));
+    pointer-events: none;
+}
+
+.market-item-bento:hover {
+    border-color: var(--neon-cyan);
+    transform: translateY(-3px);
+    box-shadow: 0 0 24px rgba(0, 240, 255, 0.25);
+}
+
+.market-item-bento.owned {
+    border-color: rgba(57, 255, 20, 0.35);
+    opacity: 0.85;
+}
+
+.market-item-icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+    display: block;
+    filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.4));
+}
+
+.market-item-name {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.market-item-cost {
+    font-size: 12px;
+    font-weight: 900;
+    color: #ffea00;
+    text-shadow: 0 0 10px rgba(255, 234, 0, 0.5);
+    margin-bottom: 12px;
+}
+
+.market-buy-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    cursor: pointer;
+    background: linear-gradient(90deg, var(--neon-purple), var(--neon-pink));
+    color: #fff;
+    box-shadow: 0 0 16px rgba(112, 0, 255, 0.4);
+    transition: all 0.25s ease;
+}
+
+.market-buy-btn:hover:not(:disabled) {
+    filter: brightness(1.15);
+    box-shadow: 0 0 24px rgba(255, 0, 127, 0.5);
+    transform: scale(1.03);
+}
+
+.market-buy-btn:disabled {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.35);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.aura-balance-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 234, 0, 0.08);
+    border: 1px solid rgba(255, 234, 0, 0.25);
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 900;
+    color: #ffea00;
+    margin-bottom: 14px;
+}
+
+/* ================================================================================
+   GHOST POLL — bento nested card enhancements
+   ================================================================================ */
+.ghost-poll-bento-wrap {
+    margin-bottom: 24px;
+}
+
+.ghost-poll-bento-wrap .bento-grid {
+    grid-template-columns: 1fr;
+}
+
+/* ================================================================================
+   AURA DUEL — challenge panel
+   ================================================================================ */
+.aura-duel-panel {
+    border-color: rgba(255, 0, 127, 0.3) !important;
+}
+
+.aura-duel-panel input[type="text"],
+.aura-duel-panel input[type="number"] {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(0, 240, 255, 0.15);
+    color: #fff;
+    padding: 12px 15px;
+    border-radius: 12px;
+    outline: none;
+    font-size: 13px;
+    margin-bottom: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.aura-duel-panel input:focus {
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 16px rgba(255, 0, 127, 0.35);
+}
+
+.duel-challenge-btn {
+    width: 100%;
+    background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple));
+    border: none;
+    color: #fff;
+    padding: 14px;
+    border-radius: 14px;
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(255, 0, 127, 0.4);
+}
+
+.duel-challenge-btn:hover {
+    filter: brightness(1.15);
+    transform: translateY(-2px);
+}
+
+/* ================================================================================
+   MOBILE — preserve responsive behavior with V86 positions
+   ================================================================================ */
+@media (max-width: 768px) {
+    .feed-search-bar {
+        top: 72px !important;
+        left: 12px !important;
+    }
+
+    .dynamic-island {
+        top: 12px !important;
+        width: min(280px, 88vw) !important;
+        display: flex !important;
+    }
+
+    .main-container {
+        margin-top: 130px !important;
+        margin-left: auto !important;
+        width: 100% !important;
+        padding: 0 12px !important;
+        flex-direction: column !important;
+    }
+
+    .feed,
+    .sidebar {
+        flex: 1 1 auto !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .glitch-market-grid {
+        grid-template-columns: 1fr;
+    }
+}
