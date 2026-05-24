@@ -1,6 +1,6 @@
 /* ================================================================================
-   XAVIROX COSMIC OS — V87 EXTERNAL STYLESHEET
-   Layout re-engineering + Ghost Mode + Glitch Market + Time Capsule overlays
+   XAVIROX COSMIC OS — V89 EXTERNAL STYLESHEET
+   Ultra crystal glass + GPU compositing + spring motion (layout IDs unchanged)
    Complements inline MASTER_UI styles — do not remove baseline rules
    ================================================================================ */
 
@@ -13,6 +13,14 @@
     --dynamic-island-top: 1rem;
     --search-top: 1rem;
     --search-left: 1rem;
+    --crystal-bg: rgba(9, 9, 11, 0.42);
+    --crystal-bg-deep: rgba(0, 0, 0, 0.32);
+    --crystal-blur-intense: blur(40px) saturate(220%);
+    --crystal-border: rgba(255, 255, 255, 0.1);
+    --crystal-inset: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+    --crystal-specular: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+    --spring-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --spring-transition: transform 0.4s var(--spring-ease), opacity 0.4s var(--spring-ease), border-color 0.4s var(--spring-ease), box-shadow 0.4s var(--spring-ease), color 0.35s var(--spring-ease);
 }
 
 /* Tailwind-equivalent utilities used in HTML */
@@ -33,25 +41,29 @@
     top: var(--dynamic-island-top) !important;
     left: 50% !important;
     right: auto !important;
-    transform: translateX(-50%) !important;
+    transform: translate3d(-50%, 0, 0) !important;
     width: min(320px, 90vw) !important;
     height: 48px !important;
     z-index: 10000 !important;
-    background: rgba(0, 0, 0, 0.82) !important;
-    border: 1px solid rgba(0, 240, 255, 0.25) !important;
+    background: rgba(9, 9, 11, 0.45) !important;
+    border: 1px solid var(--crystal-border) !important;
     border-radius: 50px !important;
-    backdrop-filter: blur(24px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 240, 255, 0.15) !important;
+    backdrop-filter: blur(40px) saturate(220%) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(220%) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), var(--crystal-inset), var(--crystal-specular) !important;
+    -webkit-transform: translate3d(-50%, 0, 0) !important;
+    will-change: transform, opacity, backdrop-filter, width, height;
+    contain: layout style paint;
+    transition: transform 0.4s var(--spring-ease), opacity 0.4s var(--spring-ease), width 0.4s var(--spring-ease), height 0.4s var(--spring-ease), border-color 0.4s var(--spring-ease), box-shadow 0.4s var(--spring-ease);
 }
 
 .dynamic-island:hover {
     width: min(420px, 92vw) !important;
     height: 75px !important;
     left: 50% !important;
-    transform: translateX(-50%) !important;
-    border-color: var(--neon-cyan) !important;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.75), 0 0 30px rgba(0, 240, 255, 0.35) !important;
+    transform: translate3d(-50%, 0, 0) !important;
+    border-color: rgba(0, 240, 255, 0.35) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65), 0 0 28px rgba(0, 240, 255, 0.22), var(--crystal-inset), var(--crystal-specular) !important;
 }
 
 .island-main {
@@ -87,19 +99,39 @@
     }
 }
 
+.feed-search-bar {
+    background: rgba(9, 9, 11, 0.45) !important;
+    backdrop-filter: blur(40px) saturate(220%) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(220%) !important;
+    border: 1px solid var(--crystal-border) !important;
+    border-radius: 9999px !important;
+    padding: 4px 6px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), var(--crystal-inset), var(--crystal-specular) !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform, opacity, backdrop-filter;
+    contain: layout style paint;
+    transition: var(--spring-transition);
+}
+
 .feed-search-bar .genz-search {
     width: 220px;
-    background: rgba(4, 8, 16, 0.72) !important;
-    border: 1px solid rgba(0, 240, 255, 0.2) !important;
-    backdrop-filter: blur(20px) saturate(160%) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+    background: rgba(0, 0, 0, 0.32) !important;
+    border: 1px solid var(--crystal-border) !important;
+    backdrop-filter: blur(24px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+    box-shadow: var(--crystal-inset) !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform, opacity, backdrop-filter;
+    transition: var(--spring-transition);
 }
 
 .feed-search-bar .genz-search:focus {
     width: 300px;
-    border-color: var(--neon-cyan) !important;
-    box-shadow: 0 0 20px rgba(0, 240, 255, 0.4), 0 0 40px rgba(0, 240, 255, 0.12) !important;
+    border-color: rgba(0, 240, 255, 0.35) !important;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.35), var(--crystal-inset) !important;
+    transform: translateZ(0) scale(1.01);
 }
 
 /* ================================================================================
@@ -147,22 +179,36 @@
 .ghost-poll-card,
 .duel-card,
 .glitch-market-card,
-.time-capsule-locked {
-    background: rgba(8, 14, 28, 0.62) !important;
-    backdrop-filter: blur(42px) saturate(190%) !important;
-    -webkit-backdrop-filter: blur(42px) saturate(190%) !important;
-    border: 1px solid rgba(0, 240, 255, 0.14) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(0, 240, 255, 0.06) !important;
+.time-capsule-locked,
+.transmit-card,
+.sidebar .card {
+    background: var(--crystal-bg) !important;
+    backdrop-filter: var(--crystal-blur-intense) !important;
+    -webkit-backdrop-filter: var(--crystal-blur-intense) !important;
+    border: 1px solid var(--crystal-border) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), var(--crystal-inset), var(--crystal-specular) !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform, opacity, backdrop-filter;
+    contain: layout style paint;
+    transition: var(--spring-transition);
+}
+
+.transmit-card {
+    background: rgba(9, 9, 11, 0.48) !important;
+}
+
+.sidebar .card {
+    background: rgba(9, 9, 11, 0.44) !important;
+    backdrop-filter: blur(32px) saturate(210%) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(210%) !important;
 }
 
 .card:hover,
 .bento-item:hover {
-    border-color: rgba(0, 240, 255, 0.38) !important;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 240, 255, 0.22), 0 0 48px rgba(112, 0, 255, 0.12) !important;
-}
-
-.transmit-card {
-    border-color: rgba(0, 240, 255, 0.22) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    transform: translateZ(0) translateY(-2px);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 24px rgba(0, 240, 255, 0.18), var(--crystal-inset), var(--crystal-specular) !important;
 }
 
 /* ================================================================================
@@ -179,12 +225,16 @@
 .switch-track {
     width: 48px;
     height: 26px;
-    background: rgba(0, 0, 0, 0.65);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--crystal-border);
     border-radius: 50px;
     position: relative;
-    transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px) saturate(190%);
+    -webkit-backdrop-filter: blur(20px) saturate(190%);
+    box-shadow: var(--crystal-inset);
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    transition: transform 0.4s var(--spring-ease), opacity 0.4s var(--spring-ease), border-color 0.4s var(--spring-ease), box-shadow 0.4s var(--spring-ease);
 }
 
 .switch-thumb {
@@ -195,7 +245,9 @@
     position: absolute;
     top: 2px;
     left: 3px;
-    transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform: translateZ(0);
+    will-change: transform;
+    transition: transform 0.4s var(--spring-ease), left 0.4s var(--spring-ease), box-shadow 0.4s var(--spring-ease);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 
@@ -602,48 +654,24 @@
 }
 
 /* ================================================================================
-   V87 — Global premium glass (Tailwind: bg-zinc-900/40 backdrop-blur-lg border-white/10)
+   V89 — Crystal glass controls + GPU compositing (sync with MASTER_UI inline)
    ================================================================================ */
-.glass-surface,
-.card,
-.post-card,
-.bento-item,
-.transmit-card,
-.ghost-poll-card,
-.duel-card,
-.glitch-market-card,
-.top-left-nav,
-.cosmic-footer {
-    background: rgba(24, 24, 27, 0.4) !important;
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-.dynamic-island,
-.feed-search-bar {
-    background: rgba(0, 0, 0, 0.4) !important;
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-.feed-search-bar .genz-search {
-    background: rgba(0, 0, 0, 0.35) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
 .glass-btn,
 .action-btn,
-.create-btn,
 .nav-btn-circle,
 .cosmic-toggle-btn,
 .market-buy-btn,
-.duel-challenge-btn {
-    background: rgba(0, 0, 0, 0.4) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+.duel-challenge-btn,
+.transmit-pill-btn {
+    background: var(--crystal-bg-deep) !important;
+    backdrop-filter: blur(24px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+    border: 1px solid var(--crystal-border) !important;
+    box-shadow: var(--crystal-inset) !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform, opacity, backdrop-filter;
+    transition: var(--spring-transition);
 }
 
 .cosmic-controls-bar {
@@ -655,6 +683,14 @@
     gap: 10px;
     padding: 10px 14px;
     border-radius: 9999px;
+    background: rgba(9, 9, 11, 0.42) !important;
+    backdrop-filter: blur(32px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
+    border: 1px solid var(--crystal-border) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), var(--crystal-inset), var(--crystal-specular) !important;
+    transform: translateZ(0);
+    will-change: transform, opacity, backdrop-filter;
+    contain: layout style paint;
 }
 
 .cosmic-toggle-btn {
@@ -670,11 +706,21 @@
     cursor: pointer;
 }
 
+.cosmic-toggle-btn:hover {
+    transform: translateZ(0) scale(1.015);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.06), var(--crystal-inset);
+}
+
+.cosmic-toggle-btn:active {
+    transform: translateZ(0) scale(0.995);
+}
+
 .cosmic-toggle-btn .indicator-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.25);
+    transition: background 0.4s var(--spring-ease), box-shadow 0.4s var(--spring-ease);
 }
 
 .cosmic-toggle-btn.is-active .indicator-dot {
@@ -682,9 +728,22 @@
     box-shadow: 0 0 12px var(--neon-green);
 }
 
+.cosmic-toggle-btn.is-active {
+    border-color: rgba(57, 255, 20, 0.45) !important;
+    box-shadow: 0 0 20px rgba(57, 255, 20, 0.2), var(--crystal-inset) !important;
+}
+
 #sensitiveFilterBtn.is-active .indicator-dot {
     background: #ffea00;
     box-shadow: 0 0 12px #ffea00;
+}
+
+#sensitiveFilterBtn.is-active {
+    border-color: rgba(255, 234, 0, 0.45) !important;
+}
+
+.action-btn:hover {
+    transform: translateZ(0) scale(1.015);
 }
 
 .sensitive-post-content.sensitive-blurred,
@@ -711,16 +770,13 @@
     gap: 12px;
     margin-top: 16px;
     padding-bottom: 8px;
+    contain: layout style;
 }
 
 .transmit-pill-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(24, 24, 27, 0.4) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgb(39, 39, 42) !important;
     color: rgb(161, 161, 170) !important;
     padding: 8px 16px;
     border-radius: 12px;
@@ -729,23 +785,33 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.3s ease;
+    white-space: nowrap;
+    background: rgba(9, 9, 11, 0.5) !important;
+    backdrop-filter: blur(24px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+    border: 1px solid var(--crystal-border) !important;
+    box-shadow: var(--crystal-inset), var(--crystal-specular) !important;
+    transform: translateZ(0);
+    will-change: transform, opacity, backdrop-filter;
+    transition: var(--spring-transition);
 }
 
 .transmit-pill-btn:hover {
     border-color: #a855f7 !important;
     color: #e4e4e7 !important;
-    transform: scale(1.02);
+    transform: translateZ(0) scale(1.015);
+    box-shadow: 0 0 24px rgba(168, 85, 247, 0.18), var(--crystal-inset) !important;
 }
 
 .transmit-pill-btn:active {
-    transform: scale(0.98);
+    transform: translateZ(0) scale(0.995);
 }
 
 .transmit-pill-btn.is-active {
     border-color: #a855f7 !important;
     color: #fff !important;
-    box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+    background: rgba(9, 9, 11, 0.62) !important;
+    box-shadow: 0 0 28px rgba(168, 85, 247, 0.28), var(--crystal-inset), var(--crystal-specular) !important;
 }
 
 #timeCapsuleBtn.is-active {
