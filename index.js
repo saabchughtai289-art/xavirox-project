@@ -1,6 +1,6 @@
 /* 
 ====================================================================================================
-    🚀 XAVIROX COSMIC OS - V85 [GLASSMORPHISM OVERHAUL + GHOST POLLS + AURA DUELS + LEFT SIDEBAR]
+    🚀 XAVIROX COSMIC OS - V86 [GOOGLE OAUTH + GHOST MODE + GLITCH MARKET + TIME CAPSULES]
     STATUS: MASTER REFACTOR + ASYNCHRONOUS COMMENTING + 100% MOBILE RESPONSIVE + AI GATEKEEPER INTEGRATION
 
     [V85 NEW UPGRADES]:
@@ -75,10 +75,13 @@
 ==================================================================================================== */
 
 const express = require('express');
+const path = require('path');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 // [AI MODULE IMPORT]
 const { GoogleGenAI } = require('@google/genai');
@@ -108,8 +111,18 @@ const connectDB = async () => {
 // --- [MODELS] ---
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
     username: { type: String, required: true, unique: true, lowercase: true },
-    password: { type: String, required: true },
+    password: { type: String, required: false, default: '' },
+    googleId: { type: String, default: null, sparse: true },
+    email: { type: String, default: null },
     aura: { type: Number, default: 100 },
+    unlockedAssets: [{ type: String }],
+    auraHistory: [{
+        type: { type: String },
+        amount: { type: Number },
+        description: { type: String },
+        opponent: { type: String, default: null },
+        date: { type: Date, default: Date.now }
+    }],
     avatarUrl: { type: String, default: null }, 
     coverPic: { type: String, default: '' },    
     bio: { type: String, default: 'No vibe announced yet...' }, 
@@ -151,7 +164,10 @@ const Post = mongoose.models.Post || mongoose.model('Post', new mongoose.Schema(
     sector: { type: String, default: 'Global' }, 
     isAnonymous: { type: Boolean, default: false }, 
     date: { type: Date, default: Date.now },
-    scheduledFor: { type: Date, default: null }, 
+    scheduledFor: { type: Date, default: null },
+    isTimeCapsule: { type: Boolean, default: false },
+    unlockAt: { type: Date, default: null },
+    ghostOwner: { type: String, default: null },
     likes: { type: [String], default: [] },
     dislikes: { type: [String], default: [] },
     // 🧬 V83 REACTION & SHARE ENGINES
@@ -208,7 +224,7 @@ const GhostPoll = mongoose.models.GhostPoll || mongoose.model('GhostPoll', new m
     }],
     createdBy: { type: String, required: true }, // username, 'GHOST' if anonymous
     isAnonymous: { type: Boolean, default: false },
-    votedUsers: [{ type: String }], // usernames who have voted (prevents double voting)
+    votedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     sector: { type: String, default: 'Global' },
     date: { type: Date, default: Date.now },
     expiresAt: { type: Date, default: null }, // optional expiry
@@ -232,7 +248,80 @@ const AuraDuel = mongoose.models.AuraDuel || mongoose.model('AuraDuel', new mong
     resolvedAt: { type: Date, default: null }
 }));
 
+// 🧬 V86 GLITCH MARKET — Aura economy shop items
+const MarketItem = mongoose.models.MarketItem || mongoose.model('MarketItem', new mongoose.Schema({
+    itemName: { type: String, required: true, unique: true },
+    costInAura: { type: Number, required: true, min: 1 },
+    itemType: { type: String, default: 'cosmetic' },
+    iconClass: { type: String, default: 'fa-bolt' },
+    description: { type: String, default: '' }
+}));
+
+// --- [PASSPORT GOOGLE OAUTH 2.0] ---
+passport.serializeUser((userDoc, done) => {
+    done(null, userDoc.username);
+});
+
+passport.deserializeUser(async (username, done) => {
+    try {
+        const userDoc = await User.findOne({ username });
+        if (!userDoc) return done(null, false);
+        done(null, { username: userDoc.username, aura: userDoc.aura, avatarUrl: userDoc.avatarUrl });
+    } catch (err) {
+        done(err);
+    }
+});
+
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || '/auth/google/callback'
+}, async (accessToken, refreshToken, profile, done) => {
+    try {
+        let userDoc = await User.findOne({ googleId: profile.id });
+        const profileEmail = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
+        if (!userDoc && profileEmail) {
+            userDoc = await User.findOne({ email: profileEmail });
+        }
+        if (!userDoc) {
+            const rawBase = (profile.displayName || (profileEmail ? profileEmail.split('@')[0] : 'cosmic'))
+                .toLowerCase()
+                .replace(/[^a-z0-9_]/g, '')
+                .slice(0, 14) || 'cosmic';
+            let candidateUsername = rawBase;
+            let suffix = 1;
+            while (await User.findOne({ username: candidateUsername })) {
+                candidateUsername = `${rawBase}${suffix}`;
+                suffix += 1;
+            }
+            const randomPasswordHash = await bcrypt.hash(Math.random().toString(36) + Date.now(), 10);
+            userDoc = await new User({
+                username: candidateUsername,
+                password: randomPasswordHash,
+                googleId: profile.id,
+                email: profileEmail,
+                aura: 100,
+                avatarUrl: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
+                bio: 'Synced via Google Matrix uplink...'
+            }).save();
+        } else {
+            if (!userDoc.googleId) userDoc.googleId = profile.id;
+            if (!userDoc.email && profileEmail) userDoc.email = profileEmail;
+            if (!userDoc.avatarUrl && profile.photos && profile.photos[0]) {
+                userDoc.avatarUrl = profile.photos[0].value;
+            }
+            await userDoc.save();
+        }
+        return done(null, userDoc);
+    } catch (err) {
+        return done(err);
+    }
+}));
+}
+
 // --- [MIDDLEWARE] ---
+app.use(express.static(path.join(__dirname)));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(session({ 
@@ -241,7 +330,53 @@ app.use(session({
     saveUninitialized: false,
     cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 } 
 }));
-app.use(async (req, res, next) => { await connectDB(); next(); });
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Seed default Glitch Market inventory if void is empty
+const seedGlitchMarket = async () => {
+    const count = await MarketItem.countDocuments();
+    if (count === 0) {
+        await MarketItem.insertMany([
+            { itemName: 'neon-glow', costInAura: 150, itemType: 'cosmetic', iconClass: 'fa-sun', description: 'Neon cyan aura frame glow' },
+            { itemName: 'cyber-badge', costInAura: 250, itemType: 'badge', iconClass: 'fa-shield-halved', description: 'Elite cyber verification badge' },
+            { itemName: 'ghost-cloak', costInAura: 400, itemType: 'cosmetic', iconClass: 'fa-ghost', description: 'Purple ghost transmission cloak' },
+            { itemName: 'sigma-crown', costInAura: 750, itemType: 'badge', iconClass: 'fa-crown', description: 'Golden sigma rank crown asset' }
+        ]);
+    }
+    const pollCount = await GhostPoll.countDocuments();
+    if (pollCount === 0) {
+        await GhostPoll.insertMany([
+            {
+                question: 'Which void sector dominates the matrix tonight?',
+                options: [
+                    { text: 'Global Feed', voteCount: 0 },
+                    { text: '#Confessions', voteCount: 0 }
+                ],
+                createdBy: 'SYSTEM',
+                isAnonymous: true,
+                votedUsers: [],
+                totalVotes: 0
+            },
+            {
+                question: 'Ghost Mode: stay anonymous or reveal aura?',
+                options: [
+                    { text: 'Stay GHOST_SIGNAL', voteCount: 0 },
+                    { text: 'Show my Aura', voteCount: 0 }
+                ],
+                createdBy: 'SYSTEM',
+                isAnonymous: true,
+                votedUsers: [],
+                totalVotes: 0
+            }
+        ]);
+    }
+};
+app.use(async (req, res, next) => {
+    await connectDB();
+    await seedGlitchMarket();
+    next();
+});
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
@@ -266,6 +401,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XAVIROX | ${activeSector}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
     <style>
         /* ================================================================
            V85 GLASSMORPHISM & NEON GLOW UPGRADE — Enhanced Core Styles
@@ -623,6 +759,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             <div class="nav-item"><a href="/portfolio" class="nav-btn-circle"><i class="fas fa-fingerprint"></i></a><span class="icon-label">Identity</span></div>
             ${!isGuest ? `<div class="nav-item"><a href="/settings" class="nav-btn-circle" style="color:#aaa;"><i class="fas fa-gear"></i></a><span class="icon-label">Settings</span></div>` : ''}
             ${!isGuest ? `<div class="nav-item"><a href="/logout" class="nav-btn-circle" style="color:var(--p)"><i class="fas fa-power-off"></i></a><span class="icon-label">Eject</span></div>` : ''}
+            ${isGuest ? `<div class="nav-item" style="margin-top:20px; padding-top:15px; border-top:1px solid var(--border);"><a href="/auth/google" class="google-oauth-badge google-oauth-sidebar"><i class="fab fa-google"></i> GOOGLE SYNC</a></div>` : ''}
         </div>
     </div>
     <!-- V85 FIX: Search bar relocated to top-right, above feed -->
@@ -675,7 +812,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             <a href="mailto:xavirox.co@gmail.com" class="footer-link"><i class="fas fa-headset"></i> Support</a>
             <a href="mailto:xavirox.co@gmail.com" class="footer-link"><span><i class="fas fa-shield-halved"></i></span> DMCA Notice</a>
         </div>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V84 // ALL ENGINES OPERATIONAL</p>
+        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V86 // ALL ENGINES OPERATIONAL</p>
     </footer>
 
     <script>
@@ -851,6 +988,108 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             } catch(e) {}
         }
 
+        // V86 Ghost Mode Toggle — client-side neon state without reload
+        (function initGhostModeToggle() {
+            const ghostToggle = document.getElementById('ghostToggle');
+            const ghostLabel = document.getElementById('ghostModeLabel');
+            const ghostContainer = document.getElementById('ghostModeContainer');
+            const ghostHidden = document.getElementById('ghostModeHidden');
+            if (!ghostToggle) return;
+            const syncGhostVisual = () => {
+                const isOn = ghostToggle.checked;
+                if (ghostHidden) ghostHidden.value = isOn ? 'true' : 'false';
+                if (ghostLabel) {
+                    ghostLabel.textContent = 'GHOST MODE';
+                    ghostLabel.classList.toggle('ghost-mode-label-active', isOn);
+                }
+                if (ghostContainer) {
+                    ghostContainer.classList.toggle('ghost-mode-purple', isOn && Math.random() > 0.5);
+                }
+            };
+            ghostToggle.addEventListener('change', syncGhostVisual);
+            syncGhostVisual();
+        })();
+
+        // V86 Ghost Poll vote handler
+        async function voteGhostPoll(pollId, optionIndex) {
+            try {
+                const res = await fetch('/api/poll/' + pollId + '/vote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ optionIndex: optionIndex })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Vote rejected by the void.');
+                }
+            } catch (e) {
+                alert('Ghost poll sync failed.');
+            }
+        }
+
+        // V86 Glitch Market purchase
+        async function buyMarketItem(itemName, cost) {
+            if (!confirm('Spend ' + cost + ' Aura on ' + itemName + '?')) return;
+            try {
+                const res = await fetch('/api/market/buy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ itemName: itemName })
+                });
+                const data = await res.json();
+                alert(data.message || (res.ok ? 'Asset unlocked!' : 'Purchase failed.'));
+                if (res.ok) window.location.reload();
+            } catch (e) {
+                alert('Market uplink failed.');
+            }
+        }
+
+        // V86 Create Ghost Poll
+        async function createGhostPoll(formEl) {
+            const fd = new FormData(formEl);
+            try {
+                const res = await fetch('/api/ghost-poll/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question: fd.get('question'),
+                        optionA: fd.get('optionA'),
+                        optionB: fd.get('optionB'),
+                        isAnonymous: true
+                    })
+                });
+                if (res.ok) window.location.reload();
+                else alert('Ghost poll deployment failed.');
+            } catch (e) {
+                alert('Ghost poll uplink failed.');
+            }
+        }
+
+        // V86 Aura Duel challenge
+        async function submitAuraDuel(event) {
+            event.preventDefault();
+            const opponentInput = document.getElementById('duelOpponent');
+            const wagerInput = document.getElementById('duelWager');
+            if (!opponentInput || !wagerInput) return;
+            try {
+                const res = await fetch('/api/aura/challenge', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        targetUsername: opponentInput.value.trim(),
+                        wager: parseInt(wagerInput.value, 10)
+                    })
+                });
+                const data = await res.json();
+                alert(data.message || data.error || 'Duel resolved.');
+                if (res.ok) window.location.reload();
+            } catch (e) {
+                alert('Duel matrix sync failed.');
+            }
+        }
+
         // Feature 50: Edit post
         function editPost(postId, currentContent) {
             const newContent = prompt('Edit your transmission:', currentContent);
@@ -942,19 +1181,93 @@ app.get('/dashboard', async (req, res) => {
     const sectors = await Sector.find();
     const allUsers = await User.find({}, 'username avatarUrl aura nameChanged coverPic bio');
 
-    const postForm = `<div class="card" style="border-color: rgba(255,255,255,0.2);">
+    const marketItems = await MarketItem.find().sort({ costInAura: 1 });
+    const ghostPolls = await GhostPoll.find().sort({ date: -1 }).limit(6);
+    const unlockedSet = user && user.unlockedAssets ? user.unlockedAssets : [];
+
+    const glitchMarketHtml = user ? `<div class="card glitch-market-card">
+        <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:8px;"><i class="fas fa-store" style="color:#ffea00;"></i> GLITCH MARKET</h4>
+        <div class="aura-balance-pill"><i class="fas fa-bolt"></i> ${user.aura} AURA AVAILABLE</div>
+        <div class="glitch-market-grid">
+            ${marketItems.map(item => {
+                const owned = unlockedSet.includes(item.itemName);
+                return `<div class="market-item-bento ${owned ? 'owned' : ''}">
+                    <span class="market-item-icon"><i class="fas ${item.iconClass}"></i></span>
+                    <div class="market-item-name">${item.itemName.toUpperCase()}</div>
+                    <div class="market-item-cost">${item.costInAura} AURA</div>
+                    <button type="button" class="market-buy-btn" ${owned ? 'disabled' : ''} onclick="buyMarketItem('${item.itemName}', ${item.costInAura})">${owned ? 'OWNED ✓' : 'BUY ASSET'}</button>
+                </div>`;
+            }).join('')}
+        </div>
+    </div>` : '';
+
+    const ghostPollCreateForm = user ? `<form onsubmit="event.preventDefault(); createGhostPoll(this);" style="margin-bottom:20px; padding:18px; background:rgba(112,0,255,0.06); border-radius:20px; border:1px dashed rgba(112,0,255,0.3);">
+        <p style="font-size:10px; font-weight:900; color:var(--v); margin-bottom:10px; letter-spacing:1px;">DEPLOY NEW GHOST POLL</p>
+        <input type="text" name="question" class="comment-mini-input" style="margin-bottom:8px;" placeholder="Poll question..." required>
+        <input type="text" name="optionA" class="comment-mini-input" style="margin-bottom:8px;" placeholder="Option A" required>
+        <input type="text" name="optionB" class="comment-mini-input" style="margin-bottom:10px;" placeholder="Option B" required>
+        <button type="submit" class="create-btn" style="font-size:10px; background:linear-gradient(90deg, var(--v), var(--p));">LAUNCH GHOST POLL 👻</button>
+    </form>` : '';
+
+    const ghostPollsHtml = `<div class="ghost-poll-bento-wrap">
+        <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:12px;"><i class="fas fa-mask" style="color:var(--v);"></i> GHOST POLLS — ANONYMOUS VOTE MATRIX</h4>
+        ${ghostPollCreateForm}
+        <div class="bento-grid">
+            ${ghostPolls.length > 0 ? ghostPolls.map((gp) => {
+                const fillClasses = ['gpo-fill-cyan', 'gpo-fill-purple', 'gpo-fill-pink', 'gpo-fill-yellow'];
+                const totalVotes = gp.totalVotes || gp.options.reduce((s, o) => s + (o.voteCount || 0), 0);
+                const userVoted = user && gp.votedUsers && gp.votedUsers.some(vid => String(vid) === String(user._id));
+                const optionsHtml = gp.options.map((opt, idx) => {
+                    const pct = totalVotes > 0 ? Math.round(((opt.voteCount || 0) / totalVotes) * 100) : 0;
+                    const fillClass = fillClasses[idx % fillClasses.length];
+                    const canVote = user && !userVoted;
+                    return `<div class="ghost-poll-option ${userVoted ? 'gpo-voted' : ''}" ${canVote ? `onclick="voteGhostPoll('${gp._id}', ${idx})"` : ''}>
+                        <div class="gpo-fill ${fillClass}" style="width:${userVoted ? pct : 0}%;"></div>
+                        <span class="gpo-option-text">${opt.text}</span>
+                        ${userVoted ? `<span class="gpo-vote-count">${opt.voteCount || 0}</span><span class="gpo-pct-bar-label">${pct}%</span>` : ''}
+                    </div>`;
+                }).join('');
+                return `<div class="ghost-poll-card">
+                    <div class="ghost-poll-header">
+                        <div class="ghost-poll-icon"><i class="fas fa-ghost"></i></div>
+                        <div>
+                            <div class="ghost-poll-question">${gp.question}</div>
+                            <div class="ghost-poll-meta">${gp.isAnonymous ? '👻 ANONYMOUS SIGNAL' : 'MATRIX POLL'} • ${totalVotes} VOTES</div>
+                        </div>
+                    </div>
+                    ${optionsHtml}
+                    <div class="ghost-poll-footer">
+                        <span class="gpo-total-votes">${totalVotes} total transmissions</span>
+                    </div>
+                </div>`;
+            }).join('') : '<p style="opacity:0.3; font-size:12px; text-align:center; padding:20px;">No ghost polls in orbit. Deploy one above.</p>'}
+        </div>
+    </div>`;
+
+    const auraDuelPanelHtml = user ? `<div class="card aura-duel-panel duel-card">
+        <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--p); font-weight:900;"><i class="fas fa-bolt"></i> AURA DUELS — PvP WAGER MATRIX</h4>
+        <p style="font-size:11px; opacity:0.5; margin-bottom:15px;">Challenge another user. Winner takes the wager instantly via secure void algorithm.</p>
+        <form class="duel-challenge-form" onsubmit="submitAuraDuel(event)">
+            <input type="text" id="duelOpponent" placeholder="@opponent username" required>
+            <input type="number" id="duelWager" placeholder="Aura wager amount" min="1" max="${user.aura}" required>
+            <button type="submit" class="duel-challenge-btn">INITIATE DUEL ⚔️</button>
+        </form>
+    </div>` : '';
+
+    const postForm = `<div class="card transmit-card" style="border-color: rgba(255,255,255,0.2);">
         ${!user ? `<button type="button" class="create-btn" onclick="location.href='/login'">SYNC TO TRANSMIT ⚡</button>` : `
             <form action="/addpost" method="POST" enctype="multipart/form-data" id="mainPostForm">
                 <textarea id="txBarEngine" name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px; font-weight:500;" placeholder="Transmit a signal... You can @mention and #tag users too!" required></textarea>
                 <input type="text" name="tags" id="tagsInput" style="width:100%; background:transparent; border:none; border-top:1px solid var(--border); color:rgba(0,242,255,0.8); outline:none; font-size:12px; padding:10px 0; font-weight:700;" placeholder="#add #tags #here (optional)">
                 <input type="hidden" name="sector" value="${activeSector === 'Following' ? 'Global' : activeSector}">
+                <input type="hidden" name="isAnonymous" id="ghostModeHidden" value="${activeSector==='confessions'?'true':'false'}">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; flex-wrap:wrap; gap:12px; border-top: 1px solid var(--border); padding-top: 15px;">
                     <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
                         <label style="cursor:pointer; opacity:0.8; color:var(--cyan);" title="Image/Video"><i class="fas fa-image fa-lg"></i><input type="file" name="media" hidden accept="image/*,video/*,image/gif"></label>
-                        <label class="fancy-ghost-container">
-                            <input type="checkbox" name="isAnonymous" id="ghostToggle" ${activeSector==='confessions'?'checked':''} style="display:none;">
+                        <label class="fancy-ghost-container" id="ghostModeContainer">
+                            <input type="checkbox" id="ghostToggle" ${activeSector==='confessions'?'checked':''} style="display:none;">
                             <div class="switch-track"><div class="switch-thumb"></div></div>
-                            <span style="font-size:11px; font-weight:900; color:#aaa; letter-spacing:1px;">GHOST MODE</span>
+                            <span id="ghostModeLabel" style="font-size:11px; font-weight:900; color:#aaa; letter-spacing:1px;">GHOST MODE</span>
                         </label>
                         <label class="fancy-ghost-container" title="Mark as sensitive content">
                             <input type="checkbox" name="isSensitive" id="sensitiveToggle" style="display:none;">
@@ -964,7 +1277,14 @@ app.get('/dashboard', async (req, res) => {
                         <label class="genz-time-capsule">
                             <div class="capsule-icon-box"><i class="fas fa-meteor"></i></div>
                             <div class="capsule-text">
-                                <span class="capsule-label">TIME CAPSULE</span>
+                                <span class="capsule-label">TIME CAPSULE UNLOCK</span>
+                                <input type="datetime-local" name="unlockAt" class="genz-datetime" title="Signal locked until this time">
+                            </div>
+                        </label>
+                        <label class="genz-time-capsule" title="Legacy schedule — still supported">
+                            <div class="capsule-icon-box" style="background:var(--v);"><i class="fas fa-clock"></i></div>
+                            <div class="capsule-text">
+                                <span class="capsule-label" style="color:var(--v);">SCHEDULE POST</span>
                                 <input type="datetime-local" name="scheduledTime" class="genz-datetime">
                             </div>
                         </label>
@@ -1012,11 +1332,12 @@ app.get('/dashboard', async (req, res) => {
 
     const html = posts.map(p => {
         const isSaved = user && user.savedPosts && user.savedPosts.includes(p._id.toString());
-        const postAuthor = allUsers.find(u => u.username === p.author);
+        const isCapsuleLocked = p.isTimeCapsule && p.unlockAt && new Date() < new Date(p.unlockAt);
+        const postAuthor = p.author === 'GHOST_SIGNAL' ? null : allUsers.find(u => u.username === p.author);
         const currentAura = postAuthor ? postAuthor.aura : p.authorAura;
         const postAuraColor = currentAura >= 500 ? 'var(--cyan)' : currentAura < 50 ? '#ff0000' : 'var(--p)';
-        const showDelete = user && (user.username === p.author || user.username === 'xavirox');
-        const showEdit = user && user.username === p.author && !p.isAnonymous;
+        const showDelete = user && (user.username === p.author || user.username === p.ghostOwner || user.username === 'xavirox');
+        const showEdit = user && (user.username === p.author || user.username === p.ghostOwner) && !p.isAnonymous;
         const showPin = user && user.username === p.author && !p.isAnonymous;
         const postComments = allComments.filter(c => String(c.postId) === String(p._id));
         const commentsRenderedTree = renderCommentTree(postComments, null, false);
@@ -1067,8 +1388,18 @@ app.get('/dashboard', async (req, res) => {
         const isVideo = p.mediaUrl && (p.mediaUrl.startsWith('data:video') || p.mediaUrl.includes('video'));
         const mediaHtml = p.mediaUrl ? (isVideo ? `<video src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);" controls></video><span class="media-type-badge">VIDEO</span>` : `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border); box-shadow: 0 5px 15px rgba(0,0,0,0.5);">`) : '';
 
+        const timeCapsuleLockHtml = isCapsuleLocked ? `<div class="card p-node time-capsule-locked" style="position:relative; margin-bottom:25px;">
+            <div class="tc-blur-layer"></div>
+            <span class="tc-locked-text">SIGNAL LOCKED IN TIME...<span class="tc-unlock-hint">UNLOCKS ${new Date(p.unlockAt).toLocaleString()}</span></span>
+        </div>` : '';
+
+        if (isCapsuleLocked) {
+            return timeCapsuleLockHtml;
+        }
+
         return `<div class="card p-node ${p.isAnonymous ? 'ghost-card' : ''}" style="position:relative;">
             ${cwOverlay}
+            ${p.isTimeCapsule && p.unlockAt ? `<div class="pinned-indicator" style="color:var(--cyan);"><i class="fas fa-meteor"></i> TIME CAPSULE UNSEALED</div>` : ''}
             ${p.isShared ? `<div class="shared-indicator"><i class="fas fa-retweet"></i> Transmitted from @${p.originalAuthor}'s Matrix</div>` : ''}
             ${user && user.pinnedPost === p._id.toString() ? `<div class="pinned-indicator"><i class="fas fa-thumbtack"></i> PINNED TRANSMISSION</div>` : ''}
             <div class="post-header">
@@ -1111,7 +1442,7 @@ app.get('/dashboard', async (req, res) => {
         </div>`
     }).join('');
 
-    res.send(MASTER_UI(postForm + html, user, sectors, activeSector, allUsers, notifCount));
+    res.send(MASTER_UI(postForm + ghostPollsHtml + auraDuelPanelHtml + glitchMarketHtml + html, user, sectors, activeSector, allUsers, notifCount));
 });
 
 // --- [🌐 V83 PORTFOLIO & SOCIAL FABRIC ROUTES] ---
@@ -1218,7 +1549,7 @@ app.get('/portfolio', async (req, res) => {
 app.post('/addpost', upload.single('media'), async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     try {
-        const isAnon = req.body.isAnonymous === 'on';
+        const isAnon = req.body.isAnonymous === 'on' || req.body.isAnonymous === 'true';
         const isSensitive = req.body.isSensitive === 'on';
         const user = await User.findOne({ username: req.session.user.username });
         if (!user) return res.redirect('/login');
@@ -1252,6 +1583,16 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
             if (parsedTime > new Date()) finalScheduledDate = parsedTime;
         }
 
+        let unlockAt = null;
+        let isTimeCapsule = false;
+        if (req.body.unlockAt) {
+            const parsedUnlock = new Date(req.body.unlockAt);
+            if (!isNaN(parsedUnlock.getTime()) && parsedUnlock > new Date()) {
+                unlockAt = parsedUnlock;
+                isTimeCapsule = true;
+            }
+        }
+
         // Feature 27: Parse hashtags from content and tags field
         const tagsFromContent = (textContent.match(/#([a-zA-Z0-9_]+)/g) || []).map(t => t.replace('#','').toLowerCase());
         const tagsFromField = req.body.tags ? req.body.tags.replace(/#/g,'').split(/[\s,]+/).filter(Boolean).map(t => t.toLowerCase()) : [];
@@ -1266,10 +1607,24 @@ app.post('/addpost', upload.single('media'), async (req, res) => {
         let linkPreview = {};
         if (urlMatch) { linkPreview = { url: urlMatch[0], title: '', description: '', image: '' }; }
 
+        const displayAuthor = isAnon ? 'GHOST_SIGNAL' : user.username;
         const newPost = await new Post({ 
-            author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl, authorBio: user.bio, 
-            content: textContent, sector: req.body.sector || 'Global', mediaUrl, isAnonymous: isAnon,
-            scheduledFor: finalScheduledDate, tags: allTags, isPoll, pollOptions, isSensitive,
+            author: displayAuthor,
+            ghostOwner: isAnon ? user.username : null,
+            authorAura: user.aura,
+            authorAvatar: isAnon ? null : user.avatarUrl,
+            authorBio: isAnon ? 'Anonymous void transmission...' : user.bio, 
+            content: textContent,
+            sector: req.body.sector || 'Global',
+            mediaUrl,
+            isAnonymous: isAnon,
+            scheduledFor: finalScheduledDate,
+            isTimeCapsule,
+            unlockAt,
+            tags: allTags,
+            isPoll,
+            pollOptions,
+            isSensitive,
             linkPreview: Object.keys(linkPreview).length ? linkPreview : undefined
         }).save();
         
@@ -1448,7 +1803,7 @@ app.post('/delete-post', async (req, res) => {
     try {
         const post = await Post.findById(req.body.postId);
         if (!post) return res.status(404).json({ error: 'Not found' });
-        if (post.author !== req.session.user.username && req.session.user.username !== 'xavirox') return res.status(403).json({ error: 'Forbidden' });
+        if (post.author !== req.session.user.username && post.ghostOwner !== req.session.user.username && req.session.user.username !== 'xavirox') return res.status(403).json({ error: 'Forbidden' });
         await Post.findByIdAndDelete(req.body.postId);
         return res.sendStatus(200);
     } catch (err) { return res.status(500).json({ error: 'Error' }); }
@@ -1493,15 +1848,16 @@ app.post('/change-username', async (req, res) => {
     res.redirect('/portfolio');
 });
 
-app.get('/login', (req, res) => { res.send(MASTER_UI(`<div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--cyan);"><div style="text-align:center; margin-bottom:25px;"><i class="fas fa-fingerprint fa-3x" style="color:var(--cyan); margin-bottom:15px;"></i><h2 style="color: #fff;">ENTER THE MATRIX</h2></div><form action="/login" method="POST"><input type="text" name="username" class="auth-input" placeholder="@username" required><input type="password" name="password" class="auth-input" placeholder="Password" required><button class="create-btn" style="margin-top:15px; background:var(--cyan); color:#000;">LET ME IN</button></form><p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">No account? <a href="/register" style="color:var(--cyan); font-weight:bold;">Fix that</a></p></div>`, null, [], 'Login')); });
+app.get('/login', (req, res) => { res.send(MASTER_UI(`<div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--cyan);"><div style="text-align:center; margin-bottom:25px;"><i class="fas fa-fingerprint fa-3x" style="color:var(--cyan); margin-bottom:15px;"></i><h2 style="color: #fff;">ENTER THE MATRIX</h2></div><a href="/auth/google" class="google-oauth-badge"><i class="fab fa-google"></i> LOGIN WITH GOOGLE</a><div class="auth-divider">or sync manually</div><form action="/login" method="POST"><input type="text" name="username" class="auth-input" placeholder="@username" required><input type="password" name="password" class="auth-input" placeholder="Password" required><button class="create-btn" style="margin-top:15px; background:var(--cyan); color:#000;">LET ME IN</button></form><p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">No account? <a href="/register" style="color:var(--cyan); font-weight:bold;">Fix that</a></p></div>`, null, [], 'Login')); });
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     const user = await User.findOne({ username: username.toLowerCase().trim() });
-    if (!user || !(await bcrypt.compare(password, user.password))) return res.send("<script>alert('SYNC FAILED'); window.history.back();</script>");
+    if (!user || !user.password) return res.send("<script>alert('SYNC FAILED — try Google login'); window.history.back();</script>");
+    if (!(await bcrypt.compare(password, user.password))) return res.send("<script>alert('SYNC FAILED'); window.history.back();</script>");
     req.session.user = { username: user.username, aura: user.aura, avatarUrl: user.avatarUrl };
     res.redirect('/dashboard');
 });
-app.get('/register', (req, res) => { res.send(MASTER_UI(`<div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--p);"><div style="text-align:center; margin-bottom:25px;"><i class="fas fa-user-astronaut fa-3x" style="color:var(--p); margin-bottom:15px;"></i><h2 style="color: #fff;">GENERATE IDENTITY</h2></div><form action="/register" method="POST"><input type="text" name="username" class="auth-input" placeholder="Choose @username" required><input type="password" name="password" class="auth-input" placeholder="Secure Password" required><button class="create-btn" style="margin-top:15px; background:var(--p);">BUILD MATRIX</button></form><p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">Already got keys? <a href="/login" style="color:var(--p); font-weight:bold;">Let him in</a></p></div>`, null, [], 'Register')); });
+app.get('/register', (req, res) => { res.send(MASTER_UI(`<div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--p);"><div style="text-align:center; margin-bottom:25px;"><i class="fas fa-user-astronaut fa-3x" style="color:var(--p); margin-bottom:15px;"></i><h2 style="color: #fff;">GENERATE IDENTITY</h2></div><a href="/auth/google" class="google-oauth-badge"><i class="fab fa-google"></i> REGISTER WITH GOOGLE</a><div class="auth-divider">or build manually</div><form action="/register" method="POST"><input type="text" name="username" class="auth-input" placeholder="Choose @username" required><input type="password" name="password" class="auth-input" placeholder="Secure Password" required><button class="create-btn" style="margin-top:15px; background:var(--p);">BUILD MATRIX</button></form><p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">Already got keys? <a href="/login" style="color:var(--p); font-weight:bold;">Let him in</a></p></div>`, null, [], 'Register')); });
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     const existing = await User.findOne({ username: username.toLowerCase().trim() });
@@ -1513,6 +1869,251 @@ app.post('/register', async (req, res) => {
 });
 app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/dashboard'); });
 
+// ============================================================
+// 🧬 V86 GOOGLE OAUTH ROUTING MATRIX
+// ============================================================
+app.get('/auth/google', (req, res, next) => {
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+        return res.send("<script>alert('Google OAuth not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.'); window.location.href='/login';</script>");
+    }
+    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
+
+app.get('/auth/google/callback',
+    passport.authenticate('google', { failureRedirect: '/login?error=google_failed' }),
+    async (req, res) => {
+        try {
+            const userDoc = req.user || await User.findOne({ username: req.session.passport?.user });
+            if (userDoc) {
+                req.session.user = {
+                    username: userDoc.username,
+                    aura: userDoc.aura,
+                    avatarUrl: userDoc.avatarUrl
+                };
+            }
+            res.redirect('/dashboard');
+        } catch (err) {
+            res.redirect('/login?error=google_callback');
+        }
+    }
+);
+
+app.get('/auth/logout', (req, res) => {
+    req.logout(() => {});
+    req.session.destroy(() => {
+        res.redirect('/dashboard');
+    });
+});
+
+// ============================================================
+// 🧬 V86 GHOST POLL VOTE — /api/poll/:pollId/vote
+// ============================================================
+app.post('/api/poll/:pollId/vote', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Login required to vote in the void.' });
+    try {
+        const voter = await User.findOne({ username: req.session.user.username });
+        if (!voter) return res.status(401).json({ error: 'Identity not found.' });
+        const poll = await GhostPoll.findById(req.params.pollId);
+        if (!poll) return res.status(404).json({ error: 'Poll signal lost in the void.' });
+        const optionIndex = parseInt(req.body.optionIndex, 10);
+        if (isNaN(optionIndex) || optionIndex < 0 || optionIndex >= poll.options.length) {
+            return res.status(400).json({ error: 'Invalid option index.' });
+        }
+        const alreadyVoted = poll.votedUsers.some(vid => String(vid) === String(voter._id));
+        if (alreadyVoted) return res.status(400).json({ error: 'You already voted in this ghost poll.' });
+        poll.options[optionIndex].voteCount = (poll.options[optionIndex].voteCount || 0) + 1;
+        poll.votedUsers.push(voter._id);
+        poll.totalVotes = (poll.totalVotes || 0) + 1;
+        await poll.save();
+        return res.json({ status: 'success', totalVotes: poll.totalVotes, options: poll.options });
+    } catch (err) {
+        return res.status(500).json({ error: 'Ghost poll vote execution failed.' });
+    }
+});
+
+// ============================================================
+// 🧬 V86 AURA DUELS — POST /api/aura/challenge
+// ============================================================
+app.post('/api/aura/challenge', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized matrix access.' });
+    try {
+        const wager = parseInt(req.body.wager, 10);
+        const targetUsername = (req.body.targetUsername || '').toLowerCase().trim().replace('@', '');
+        if (!targetUsername || !wager || wager < 1) {
+            return res.status(400).json({ error: 'Invalid duel parameters.' });
+        }
+        const challenger = await User.findOne({ username: req.session.user.username });
+        const opponent = await User.findOne({ username: targetUsername });
+        if (!challenger || !opponent) return res.status(404).json({ error: 'Combatant not found in the matrix.' });
+        if (challenger.username === opponent.username) {
+            return res.status(400).json({ error: 'You cannot duel yourself.' });
+        }
+        if (challenger.aura < wager) {
+            return res.status(400).json({ error: 'Insufficient aura to wager.' });
+        }
+        if (opponent.aura < wager) {
+            return res.status(400).json({ error: 'Opponent lacks sufficient aura for this wager.' });
+        }
+
+        const challengerPower = challenger.aura + (challenger.loginStreak || 0) * 8 + (challenger.duelWins || 0) * 12 + Math.floor(Math.random() * 100);
+        const opponentPower = opponent.aura + (opponent.loginStreak || 0) * 8 + (opponent.duelWins || 0) * 12 + Math.floor(Math.random() * 100);
+        const challengerWins = challengerPower >= opponentPower;
+        const winner = challengerWins ? challenger : opponent;
+        const loser = challengerWins ? opponent : challenger;
+        const winMethod = challengerWins
+            ? `Challenger power ${challengerPower} vs ${opponentPower}`
+            : `Opponent power ${opponentPower} vs ${challengerPower}`;
+
+        winner.aura += wager;
+        loser.aura = Math.max(0, loser.aura - wager);
+        if (challengerWins) {
+            challenger.duelWins = (challenger.duelWins || 0) + 1;
+            opponent.duelLosses = (opponent.duelLosses || 0) + 1;
+        } else {
+            opponent.duelWins = (opponent.duelWins || 0) + 1;
+            challenger.duelLosses = (challenger.duelLosses || 0) + 1;
+        }
+
+        const duelRecord = await new AuraDuel({
+            challenger: challenger.username,
+            opponent: opponent.username,
+            wager,
+            status: 'completed',
+            winner: winner.username,
+            loser: loser.username,
+            winMethod,
+            challengerStreak: challenger.loginStreak || 0,
+            opponentStreak: opponent.loginStreak || 0,
+            challengerAura: challenger.aura,
+            opponentAura: opponent.aura,
+            resolvedAt: new Date()
+        }).save();
+
+        const winnerHistory = {
+            type: 'duel_win',
+            amount: wager,
+            description: `Won duel vs @${loser.username}`,
+            opponent: loser.username,
+            date: new Date()
+        };
+        const loserHistory = {
+            type: 'duel_loss',
+            amount: -wager,
+            description: `Lost duel vs @${winner.username}`,
+            opponent: winner.username,
+            date: new Date()
+        };
+        if (!winner.auraHistory) winner.auraHistory = [];
+        if (!loser.auraHistory) loser.auraHistory = [];
+        winner.auraHistory.push(winnerHistory);
+        loser.auraHistory.push(loserHistory);
+        winner.duelHistory = winner.duelHistory || [];
+        loser.duelHistory = loser.duelHistory || [];
+        winner.duelHistory.push(duelRecord._id);
+        loser.duelHistory.push(duelRecord._id);
+
+        await winner.save();
+        await loser.save();
+
+        if (req.session.user.username === winner.username) {
+            req.session.user.aura = winner.aura;
+        } else {
+            req.session.user.aura = loser.aura;
+        }
+
+        await new Notification({
+            recipient: winner.username,
+            sender: 'SYSTEM',
+            type: 'duel_win',
+            referenceId: String(duelRecord._id)
+        }).save();
+        await new Notification({
+            recipient: loser.username,
+            sender: 'SYSTEM',
+            type: 'duel_loss',
+            referenceId: String(duelRecord._id)
+        }).save();
+
+        return res.json({
+            status: 'completed',
+            message: challengerWins
+                ? `Victory! You won ${wager} Aura from @${opponent.username}.`
+                : `Defeat. @${opponent.username} claimed ${wager} of your Aura.`,
+            winner: winner.username,
+            wager
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Aura duel execution failed.' });
+    }
+});
+
+// ============================================================
+// 🧬 V86 GLITCH MARKET — POST /api/market/buy
+// ============================================================
+app.post('/api/market/buy', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Login required to access Glitch Market.' });
+    try {
+        const itemName = (req.body.itemName || '').trim();
+        const buyer = await User.findOne({ username: req.session.user.username });
+        const item = await MarketItem.findOne({ itemName });
+        if (!buyer || !item) return res.status(404).json({ error: 'Item or identity not found.' });
+        if (!buyer.unlockedAssets) buyer.unlockedAssets = [];
+        if (buyer.unlockedAssets.includes(item.itemName)) {
+            return res.status(400).json({ message: 'You already own this asset.' });
+        }
+        if (buyer.aura < item.costInAura) {
+            return res.status(400).json({ message: 'Insufficient Aura for this purchase.' });
+        }
+        buyer.aura -= item.costInAura;
+        buyer.unlockedAssets.push(item.itemName);
+        if (!buyer.auraHistory) buyer.auraHistory = [];
+        buyer.auraHistory.push({
+            type: 'market_purchase',
+            amount: -item.costInAura,
+            description: `Purchased ${item.itemName} from Glitch Market`,
+            date: new Date()
+        });
+        await buyer.save();
+        req.session.user.aura = buyer.aura;
+        return res.json({
+            status: 'success',
+            message: `${item.itemName} unlocked! -${item.costInAura} Aura`,
+            aura: buyer.aura,
+            unlockedAssets: buyer.unlockedAssets
+        });
+    } catch (err) {
+        return res.status(500).json({ error: 'Market transaction failed.' });
+    }
+});
+
+// ============================================================
+// 🧬 V86 GHOST POLL CREATION — seed interactive polls in feed
+// ============================================================
+app.post('/api/ghost-poll/create', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+        const { question, optionA, optionB, isAnonymous } = req.body;
+        if (!question || !optionA || !optionB) {
+            return res.status(400).json({ error: 'Question and two options required.' });
+        }
+        const poll = await new GhostPoll({
+            question: question.substring(0, 280),
+            options: [
+                { text: optionA.substring(0, 100), voteCount: 0 },
+                { text: optionB.substring(0, 100), voteCount: 0 }
+            ],
+            createdBy: isAnonymous ? 'GHOST' : req.session.user.username,
+            isAnonymous: isAnonymous === true || isAnonymous === 'true',
+            votedUsers: [],
+            totalVotes: 0
+        }).save();
+        return res.json({ status: 'success', pollId: poll._id });
+    } catch (err) {
+        return res.status(500).json({ error: 'Failed to create ghost poll.' });
+    }
+});
+
 app.get('/create-sector', async (req, res) => {
     if (!req.session.user) return res.sendStatus(401);
     if (req.query.name) { try { await new Sector({ name: req.query.name.toLowerCase().trim() }).save(); } catch (e) {} }
@@ -1521,6 +2122,6 @@ app.get('/create-sector', async (req, res) => {
 
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => { console.log("🚀 COSMIC ENGINE V83 LIVE ON PORT " + PORT); });
+    app.listen(PORT, () => { console.log("🚀 COSMIC ENGINE V86 LIVE ON PORT " + PORT); });
 }
 module.exports = app;
