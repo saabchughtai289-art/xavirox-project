@@ -480,8 +480,18 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             --neon-purple-glow: 0 0 20px rgba(112, 0, 255, 0.5), 0 0 40px rgba(112, 0, 255, 0.2);
             --neon-pink-glow: 0 0 20px rgba(255, 0, 127, 0.5), 0 0 40px rgba(255, 0, 127, 0.2);
             --card-blur: blur(40px) saturate(180%);
+            --crystal-bg: rgba(9, 9, 11, 0.42);
+            --crystal-bg-deep: rgba(0, 0, 0, 0.32);
+            --crystal-blur: blur(24px) saturate(200%);
+            --crystal-blur-intense: blur(40px) saturate(220%);
+            --crystal-border: rgba(255, 255, 255, 0.1);
+            --crystal-inset: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+            --crystal-specular: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+            --spring-ease: cubic-bezier(0.16, 1, 0.3, 1);
+            --spring-transition: transform 0.4s var(--spring-ease), opacity 0.4s var(--spring-ease), border-color 0.4s var(--spring-ease), box-shadow 0.4s var(--spring-ease), color 0.35s var(--spring-ease);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
         body { background: var(--bg); color: #fff; font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
 
         /* Animated cosmic background gradient mesh */
@@ -494,31 +504,60 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         /* ================================================================
            V85 GLASSMORPHISM CARD SYSTEM — Premium blur + neon borders
            ================================================================ */
-        /* V87 Premium glass — zinc-900/40 + backdrop-blur-lg + white/10 border */
-        .glass-surface, .card, .post-card, .bento-item, .ghost-poll-card, .duel-card, .glitch-market-card, .transmit-card {
-            background: rgba(24, 24, 27, 0.4) !important;
-            backdrop-filter: blur(16px) saturate(160%);
-            -webkit-backdrop-filter: blur(16px) saturate(160%);
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        /* V89 — Ultra crystal glass + GPU layer (no global transition:all) */
+        .glass-surface, .card, .post-card, .bento-item, .ghost-poll-card, .duel-card, .glitch-market-card,
+        .transmit-card, .sidebar .card, .cosmic-controls-bar {
+            background: var(--crystal-bg) !important;
+            backdrop-filter: var(--crystal-blur-intense);
+            -webkit-backdrop-filter: var(--crystal-blur-intense);
+            border: 1px solid var(--crystal-border) !important;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), var(--crystal-inset), var(--crystal-specular);
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: transform, opacity, backdrop-filter;
+            contain: layout style paint;
+            transition: var(--spring-transition);
+        }
+        .transmit-card {
+            background: rgba(9, 9, 11, 0.48) !important;
+            backdrop-filter: blur(40px) saturate(220%);
+            -webkit-backdrop-filter: blur(40px) saturate(220%);
+        }
+        .sidebar .card {
+            background: rgba(9, 9, 11, 0.44) !important;
+            backdrop-filter: blur(32px) saturate(210%);
+            -webkit-backdrop-filter: blur(32px) saturate(210%);
         }
         .card {
             border-radius: 28px;
             padding: 30px;
             margin-bottom: 25px;
             position: relative;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
         }
-        .glass-btn, .action-btn, .create-btn, .nav-btn-circle, .genz-search, .cosmic-toggle-btn {
-            background: rgba(0, 0, 0, 0.4) !important;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        .glass-btn, .action-btn, .create-btn, .nav-btn-circle, .genz-search, .cosmic-toggle-btn, .transmit-pill-btn {
+            background: var(--crystal-bg-deep) !important;
+            backdrop-filter: blur(20px) saturate(190%);
+            -webkit-backdrop-filter: blur(20px) saturate(190%);
+            border: 1px solid var(--crystal-border) !important;
+            box-shadow: var(--crystal-inset);
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: transform, opacity, backdrop-filter;
+            transition: var(--spring-transition);
         }
+        .cosmic-toggle-btn:hover { transform: translateZ(0) scale(1.015); box-shadow: 0 0 20px rgba(255,255,255,0.06), var(--crystal-inset); }
+        .cosmic-toggle-btn:active { transform: translateZ(0) scale(0.995); }
         .dynamic-island, .feed-search-bar {
-            background: rgba(24, 24, 27, 0.4) !important;
-            backdrop-filter: blur(16px) saturate(180%);
-            -webkit-backdrop-filter: blur(16px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            background: rgba(9, 9, 11, 0.45) !important;
+            backdrop-filter: blur(40px) saturate(220%);
+            -webkit-backdrop-filter: blur(40px) saturate(220%);
+            border: 1px solid var(--crystal-border) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), var(--crystal-inset), var(--crystal-specular);
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            will-change: transform, opacity, backdrop-filter;
+            contain: layout style paint;
+            transition: var(--spring-transition);
         }
         .cosmic-controls-bar {
             position: fixed;
@@ -531,6 +570,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             border-radius: 9999px;
             flex-wrap: wrap;
             max-width: min(420px, 92vw);
+            backdrop-filter: blur(32px) saturate(200%);
+            -webkit-backdrop-filter: blur(32px) saturate(200%);
         }
         .cosmic-toggle-btn {
             display: inline-flex;
@@ -543,7 +584,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             font-weight: 900;
             letter-spacing: 1px;
             cursor: pointer;
-            transition: all 0.25s ease;
         }
         .cosmic-toggle-btn .indicator-dot {
             width: 8px;
@@ -581,8 +621,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             backdrop-filter: blur(8px);
         }
         .delete-btn:hover { transform: scale(1.08); box-shadow: 0 0 16px rgba(255,0,127,0.45); }
-        .card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, rgba(0,242,255,0.03) 0%, transparent 50%, rgba(112,0,255,0.03) 100%); pointer-events: none; }
-        .card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.7), var(--neon-cyan-glow), inset 0 1px 0 rgba(0,242,255,0.1); }
+        .card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, rgba(0,242,255,0.04) 0%, transparent 50%, rgba(112,0,255,0.04) 100%); pointer-events: none; }
+        .card:hover { border-color: var(--border-hover); transform: translateZ(0) translateY(-2px); box-shadow: 0 16px 48px rgba(0,0,0,0.55), var(--neon-cyan-glow), var(--crystal-inset), var(--crystal-specular); }
         .ghost-card { border: 1px dashed rgba(112, 0, 255, 0.5); background: rgba(112, 0, 255, 0.04); box-shadow: 0 8px 32px rgba(0,0,0,0.5), var(--neon-purple-glow); }
 
         .bento-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 20px; padding: 20px; text-align: center; backdrop-filter: blur(20px); }
@@ -647,8 +687,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         /* Left sidebar nav — vertical full-width column inside the sidebar panel */
         .nav-row { display: flex; flex-direction: column; gap: 6px; background: transparent; padding: 8px 4px; border-radius: 0; border: none; backdrop-filter: none; box-shadow: none; width: 100%; }
         .nav-item { position: relative; display: flex; flex-direction: row; align-items: center; width: 100%; }
-        .nav-btn-circle { width: 44px; height: 44px; background: var(--glass); border: 1px solid transparent; border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 16px; position: relative; transition: all 0.25s ease; flex-shrink: 0; }
-        .nav-btn-circle:hover { border-color: var(--cyan); box-shadow: var(--neon-cyan-glow); background: rgba(0,242,255,0.08); color: var(--cyan); transform: scale(1.08); }
+        .nav-btn-circle { width: 44px; height: 44px; background: var(--glass); border: 1px solid transparent; border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 16px; position: relative; flex-shrink: 0; transform: translateZ(0); will-change: transform, opacity; transition: var(--spring-transition); }
+        .nav-btn-circle:hover { border-color: var(--cyan); box-shadow: var(--neon-cyan-glow), var(--crystal-inset); background: rgba(0,242,255,0.08); color: var(--cyan); transform: translateZ(0) scale(1.05); }
         /* Inline label to the right of icon */
         .icon-label { position: static; background: transparent; color: rgba(255,255,255,0.5); font-size: 10px; font-weight: 700; padding: 0 0 0 10px; border-radius: 0; opacity: 1; transform: none; pointer-events: none; text-transform: uppercase; letter-spacing: 1px; z-index: 100; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .nav-item:hover .nav-btn-circle { border-color: var(--cyan); }
@@ -661,11 +701,9 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             top: 1rem;
             left: 50%;
             right: auto;
-            transform: translateX(-50%);
+            transform: translate3d(-50%, 0, 0);
             width: min(320px, 90vw);
             height: 48px;
-            background: rgba(0,0,0,0.85);
-            border: 1px solid var(--border);
             border-radius: 9999px;
             z-index: 10000;
             display: flex;
@@ -677,10 +715,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             letter-spacing: 1.5px;
             cursor: pointer;
             overflow: hidden;
-            backdrop-filter: blur(24px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            will-change: transform, opacity, backdrop-filter, width, height;
+            transition: transform 0.4s var(--spring-ease), opacity 0.4s var(--spring-ease), width 0.4s var(--spring-ease), height 0.4s var(--spring-ease), border-color 0.4s var(--spring-ease), box-shadow 0.4s var(--spring-ease);
         }
-        .dynamic-island:hover { width: min(420px, 92vw); height: 75px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); background: #000; }
+        .dynamic-island:hover {
+            width: min(420px, 92vw);
+            height: 75px;
+            border-color: ${auraColor};
+            box-shadow: var(--dynamic-glow), var(--crystal-inset), var(--crystal-specular);
+            will-change: transform, opacity, width, height;
+        }
 
         /* V88 — Unified transmit pill row (GHOST / SENSITIVE / TIME CAPSULE) */
         .transmit-pill-row {
@@ -690,15 +734,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             gap: 12px;
             margin-top: 16px;
             padding-bottom: 8px;
+            contain: layout style;
         }
         .transmit-pill-btn {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(24, 24, 27, 0.4);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgb(39, 39, 42);
             color: rgb(161, 161, 170);
             padding: 8px 16px;
             border-radius: 12px;
@@ -707,20 +748,28 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             letter-spacing: 0.08em;
             text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.3s ease;
             white-space: nowrap;
+            background: rgba(9, 9, 11, 0.5) !important;
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: var(--crystal-inset), var(--crystal-specular);
+            transform: translateZ(0);
+            will-change: transform, opacity, backdrop-filter;
+            transition: var(--spring-transition);
         }
         .transmit-pill-btn:hover {
             border-color: #a855f7;
             color: #e4e4e7;
-            transform: scale(1.02);
+            transform: translateZ(0) scale(1.015);
+            box-shadow: 0 0 24px rgba(168, 85, 247, 0.18), var(--crystal-inset);
         }
-        .transmit-pill-btn:active { transform: scale(0.98); }
+        .transmit-pill-btn:active { transform: translateZ(0) scale(0.995); }
         .transmit-pill-btn.is-active {
             border-color: #a855f7;
             color: #fff;
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
-            background: rgba(24, 24, 27, 0.65);
+            box-shadow: 0 0 28px rgba(168, 85, 247, 0.28), var(--crystal-inset), var(--crystal-specular);
+            background: rgba(9, 9, 11, 0.62) !important;
         }
         #timeCapsuleBtn.is-active { border-color: rgba(0, 240, 255, 0.5); box-shadow: 0 0 20px rgba(0, 240, 255, 0.15); }
         #postSensitiveBtn.is-active { border-color: rgba(255, 234, 0, 0.45); box-shadow: 0 0 16px rgba(255, 234, 0, 0.12); }
@@ -807,8 +856,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
 
         /* V83 INTERACTION BAR */
         .interaction-bar { display: flex !important; justify-content: flex-start !important; gap: 10px !important; flex-wrap: wrap !important; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.06); }
-        .action-btn { background: rgba(255,255,255,0.03); border: 1px solid transparent; color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; border-radius: 10px; padding: 6px 12px !important; backdrop-filter: blur(10px); }
-        .action-btn:hover { opacity: 1; color: var(--cyan); background: rgba(0,242,255,0.08); border-color: rgba(0,242,255,0.25); box-shadow: var(--neon-cyan-glow); transform: scale(1.05); }
+        .action-btn { background: rgba(255,255,255,0.03); border: 1px solid transparent; color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; border-radius: 10px; padding: 6px 12px !important; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transform: translateZ(0); will-change: transform, opacity; transition: var(--spring-transition); }
+        .action-btn:hover { opacity: 1; color: var(--cyan); background: rgba(0,242,255,0.08); border-color: rgba(0,242,255,0.25); box-shadow: var(--neon-cyan-glow), var(--crystal-inset); transform: translateZ(0) scale(1.015); }
         .react-btn.active { opacity: 1 !important; transform: scale(1.1); box-shadow: 0 0 15px rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.2) !important; background: rgba(255,255,255,0.06) !important; }
         .active-save { color: #ffea00 !important; opacity: 1 !important; text-shadow: 0 0 12px #ffea00; border-color: rgba(255,234,0,0.3) !important; }
         .share-btn { color: var(--cyan); opacity: 0.8; }
@@ -830,8 +879,9 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .cosmic-del-btn.is-primed .del-text-track { display: inline-flex; opacity: 1; }
         
         .aura-badge { font-size: 9px; background: ${auraColor}; color: #000; padding: 2px 8px; border-radius: 50px; font-weight: 900; margin-left: 8px; box-shadow: 0 0 8px ${auraColor}88; }
-        .create-btn { display: block; width: 100%; background: linear-gradient(90deg, var(--v), var(--p)); color: #fff; border: none; padding: 16px; border-radius: 16px; font-weight: 900; cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; text-align: center; box-shadow: 0 5px 20px rgba(112,0,255,0.4); }
-        .create-btn:hover { filter: brightness(1.2); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255,0,127,0.5), var(--neon-pink-glow); }
+        .create-btn { display: block; width: 100%; background: linear-gradient(90deg, var(--v), var(--p)); color: #fff; border: none; padding: 16px; border-radius: 16px; font-weight: 900; cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; text-align: center; box-shadow: 0 5px 20px rgba(112,0,255,0.4); transform: translateZ(0); will-change: transform, opacity; transition: var(--spring-transition); }
+        .create-btn:hover { filter: brightness(1.2); transform: translateZ(0) scale(1.015); box-shadow: 0 8px 25px rgba(255,0,127,0.5), var(--neon-pink-glow); }
+        .create-btn:active { transform: translateZ(0) scale(0.995); }
         .ghost-input { width: 100%; background: rgba(0,0,0,0.6); border: 1px solid var(--border); color: #fff; padding: 15px; border-radius: 16px; margin-bottom: 12px; outline: none; font-size: 13px; font-weight: 600; backdrop-filter: blur(10px); }
         .ghost-input:focus { border-color: var(--cyan); box-shadow: var(--neon-cyan-glow); }
         .auth-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); padding: 16px; border-radius: 14px; color: #fff; outline: none; font-size: 14px; margin-bottom: 16px; backdrop-filter: blur(10px); }
@@ -1620,13 +1670,13 @@ app.get('/dashboard', async (req, res) => {
                 <input type="checkbox" name="isSensitive" id="postSensitiveToggle" class="time-capsule-picker-hidden" tabindex="-1" aria-hidden="true">
 
                 <div class="transmit-pill-row flex flex-wrap items-center gap-3 mt-4 pb-2">
-                    <button type="button" id="ghostModeBtn" class="transmit-pill-btn bg-zinc-900/40 backdrop-blur-md border border-zinc-800 text-zinc-400 px-4 py-2 rounded-xl text-xs font-semibold tracking-wider hover:border-purple-500 transition-all duration-300 ${(user.isGhost || activeSector==='confessions') ? 'is-active' : ''}" data-is-ghost="${(user.isGhost || activeSector==='confessions') ? 'true' : 'false'}">
+                    <button type="button" id="ghostModeBtn" class="transmit-pill-btn ${(user.isGhost || activeSector==='confessions') ? 'is-active' : ''}" data-is-ghost="${(user.isGhost || activeSector==='confessions') ? 'true' : 'false'}">
                         ${(user.isGhost || activeSector==='confessions') ? '👻 GHOST: ON' : '👻 GHOST: OFF'}
                     </button>
-                    <button type="button" id="postSensitiveBtn" class="transmit-pill-btn bg-zinc-900/40 backdrop-blur-md border border-zinc-800 text-zinc-400 px-4 py-2 rounded-xl text-xs font-semibold tracking-wider hover:border-purple-500 transition-all duration-300">
+                    <button type="button" id="postSensitiveBtn" class="transmit-pill-btn">
                         ⚠️ SENSITIVE: OFF
                     </button>
-                    <button type="button" id="timeCapsuleBtn" class="transmit-pill-btn bg-zinc-900/40 backdrop-blur-md border border-zinc-800 text-zinc-400 px-4 py-2 rounded-xl text-xs font-semibold tracking-wider hover:border-purple-500 transition-all duration-300">
+                    <button type="button" id="timeCapsuleBtn" class="transmit-pill-btn">
                         ⏳ TIME CAPSULE: OFF
                     </button>
                     <input type="datetime-local" id="timeCapsuleUnlockInput" name="unlockAt" class="time-capsule-picker-hidden" aria-label="Time capsule unlock schedule">
@@ -1635,15 +1685,15 @@ app.get('/dashboard', async (req, res) => {
                 <input type="text" name="tags" id="tagsInput" style="width:100%; background:transparent; border:none; border-top:1px solid var(--border); color:rgba(0,242,255,0.8); outline:none; font-size:12px; padding:10px 0; font-weight:700;" placeholder="#add #tags #here (optional)">
 
                 <div class="transmit-tools-row">
-                    <label class="transmit-pill-btn bg-zinc-900/40 backdrop-blur-md border border-zinc-800 text-zinc-400 px-4 py-2 rounded-xl text-xs font-semibold tracking-wider hover:border-purple-500 transition-all duration-300" style="cursor:pointer; margin:0;">
+                    <label class="transmit-pill-btn" style="cursor:pointer; margin:0;">
                         <i class="fas fa-image"></i> MEDIA
                         <input type="file" name="media" hidden accept="image/*,video/*,image/gif">
                     </label>
                     <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-                        <button type="button" onclick="togglePollForm()" class="transmit-pill-btn bg-zinc-900/40 backdrop-blur-md border border-zinc-800 text-zinc-400 px-4 py-2 rounded-xl text-xs font-semibold tracking-wider hover:border-purple-500 transition-all duration-300">
+                        <button type="button" onclick="togglePollForm()" class="transmit-pill-btn">
                             <i class="fas fa-chart-bar"></i> POLL
                         </button>
-                        <button type="submit" class="create-btn glass-btn hover:scale-[1.02] active:scale-[0.98] transition-all duration-300" style="width:auto; padding:12px 28px; border-radius:12px; font-size:12px;">TRANSMIT 🚀</button>
+                        <button type="submit" class="create-btn glass-btn" style="width:auto; padding:12px 28px; border-radius:12px; font-size:12px;">TRANSMIT 🚀</button>
                     </div>
                 </div>
                 <div id="pollFormSection" style="display:none; margin-top:15px; border-top:1px solid var(--border); padding-top:15px;">
