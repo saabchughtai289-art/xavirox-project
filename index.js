@@ -331,23 +331,58 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         /* ================================================================
            A. LEFT SIDEBAR — Profile nav buttons left-aligned
            ================================================================ */
-        .top-left-nav { position: fixed; top: 25px; left: 25px; z-index: 10001; display: flex; align-items: center; gap: 15px; }
+        /* ================================================================
+           V85 FIX — LEFT SIDEBAR: fixed full-height panel, far-left edge
+           ================================================================ */
+        .top-left-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 10001;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: center;
+            padding: 30px 14px;
+            width: 185px;
+            background: rgba(4, 8, 16, 0.55);
+            backdrop-filter: blur(32px) saturate(160%);
+            -webkit-backdrop-filter: blur(32px) saturate(160%);
+            border-right: 1px solid var(--border);
+            box-shadow: 4px 0 32px rgba(0, 0, 0, 0.55), inset -1px 0 0 rgba(0, 242, 255, 0.04);
+        }
+        /* Hide the search input that was previously inside the nav — it is now in its own wrapper */
+        .top-left-nav .genz-search { display: none; }
+
+        /* ================================================================
+           V85 FIX — SEARCH BAR: fixed to top-right of the feed area
+           ================================================================ */
+        .feed-search-bar {
+            position: fixed;
+            top: 85px;
+            right: 25px;
+            z-index: 10001;
+        }
         .genz-search { background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 50px; padding: 12px 20px; color: #fff; width: 200px; outline: none; backdrop-filter: blur(15px); font-size: 11px; font-weight: 700; letter-spacing: 1px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); }
         .genz-search:focus { width: 280px; border-color: var(--cyan); box-shadow: var(--neon-cyan-glow), inset 0 2px 8px rgba(0,0,0,0.4); background: rgba(0,0,0,0.7); }
 
-        /* Left sidebar nav — vertical column layout on desktop */
-        .nav-row { display: flex; flex-direction: column; gap: 8px; background: rgba(4, 8, 16, 0.75); padding: 12px 10px; border-radius: 24px; border: 1px solid var(--border); backdrop-filter: blur(30px); box-shadow: 0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05); }
+        /* Left sidebar nav — vertical full-width column inside the sidebar panel */
+        .nav-row { display: flex; flex-direction: column; gap: 6px; background: transparent; padding: 8px 4px; border-radius: 0; border: none; backdrop-filter: none; box-shadow: none; width: 100%; }
         .nav-item { position: relative; display: flex; flex-direction: row; align-items: center; width: 100%; }
-        .nav-btn-circle { width: 44px; height: 44px; background: var(--glass); border: 1px solid transparent; border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 16px; position: relative; transition: all 0.25s ease; }
+        .nav-btn-circle { width: 44px; height: 44px; background: var(--glass); border: 1px solid transparent; border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 16px; position: relative; transition: all 0.25s ease; flex-shrink: 0; }
         .nav-btn-circle:hover { border-color: var(--cyan); box-shadow: var(--neon-cyan-glow); background: rgba(0,242,255,0.08); color: var(--cyan); transform: scale(1.08); }
         /* Inline label to the right of icon */
-        .icon-label { position: static; background: transparent; color: rgba(255,255,255,0.5); font-size: 10px; font-weight: 700; padding: 0 0 0 10px; border-radius: 0; opacity: 1; transform: none; pointer-events: none; text-transform: uppercase; letter-spacing: 1px; z-index: 100; white-space: nowrap; }
+        .icon-label { position: static; background: transparent; color: rgba(255,255,255,0.5); font-size: 10px; font-weight: 700; padding: 0 0 0 10px; border-radius: 0; opacity: 1; transform: none; pointer-events: none; text-transform: uppercase; letter-spacing: 1px; z-index: 100; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .nav-item:hover .nav-btn-circle { border-color: var(--cyan); }
         .nav-item:hover .icon-label { color: var(--cyan); }
         .notif-badge { position: absolute; top: -2px; right: -2px; background: #ff0000; color: #fff; font-size: 8px; font-weight: 900; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #000; box-shadow: 0 0 8px rgba(255,0,0,0.7); }
 
         /* Dynamic Island */
-        .dynamic-island { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); width: 290px; height: 48px; background: rgba(0,0,0,0.8); border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; padding: 0 15px; gap: 12px; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; cursor: pointer; overflow: hidden; backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        /* ================================================================
+           V85 FIX — DYNAMIC ISLAND: anchored top-right, above search bar
+           ================================================================ */
+        .dynamic-island { position: fixed; top: 20px; right: 25px; left: auto; transform: none; width: 290px; height: 48px; background: rgba(0,0,0,0.8); border: 1px solid var(--border); border-radius: 50px; z-index: 10000; display: flex; align-items: center; padding: 0 15px; gap: 12px; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; cursor: pointer; overflow: hidden; backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         .dynamic-island:hover { width: 420px; height: 75px; border-color: ${auraColor}; box-shadow: var(--dynamic-glow); background: #000; }
         .global-navbar-avatar-frame { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(0,242,255,0.4); flex-shrink: 0; box-shadow: 0 0 8px rgba(0,242,255,0.3); }
         .user-avatar-fallback { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #fff; flex-shrink: 0; }
@@ -356,7 +391,10 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .brand-logo-container { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
         .gemini-shield-badge { background: linear-gradient(90deg, #4285f4, #9b51e0); padding: 4px 10px; border-radius: 8px; font-size: 9px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 12px rgba(155, 81, 224, 0.6); }
 
-        .main-container { max-width: 1200px; margin: 130px auto 50px auto; display: flex; gap: 25px; padding: 0 20px; flex: 1; width: 100%; }
+        /* ================================================================
+           V85 FIX — MAIN CONTAINER: left-offset to clear the sidebar
+           ================================================================ */
+        .main-container { max-width: 1100px; margin: 90px auto 50px 195px; display: flex; gap: 25px; padding: 0 20px; flex: 1; width: calc(100% - 195px); }
         .feed { flex: 2; }
         .sidebar { flex: 1; }
 
@@ -547,15 +585,20 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .duel-challenge-form input:focus { border-color: var(--p); box-shadow: var(--neon-pink-glow); }
 
         @media (max-width: 768px) {
-            .top-left-nav { position: absolute; top: 15px; left: 10px; right: 10px; width: calc(100% - 20px); flex-direction: row; justify-content: space-between; gap: 5px; }
-            .genz-search { width: 35%; padding: 10px; font-size: 10px; }
-            /* On mobile, nav-row goes back to horizontal pill */
-            .nav-row { flex-direction: row; padding: 4px 8px; gap: 4px; border-radius: 50px; overflow-x: auto; }
+            /* Collapse the full-height sidebar to a thin top strip on mobile */
+            .top-left-nav { position: fixed; top: 0; left: 0; right: 0; height: auto; width: 100%; flex-direction: row; justify-content: center; padding: 8px 10px; border-right: none; border-bottom: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+            .nav-row { flex-direction: row; gap: 4px; padding: 2px 0; width: auto; }
             .nav-item { flex-direction: column; }
             .icon-label { display: none !important; }
             .nav-btn-circle { width: 36px; height: 36px; font-size: 14px; border-radius: 50%; }
-            .dynamic-island { top: 75px; width: 90%; height: 42px; font-size: 9px; letter-spacing: 1px; }
-            .main-container { margin: 140px auto 30px auto; flex-direction: column; gap: 15px; padding: 0 12px; }
+            /* Search bar drops below top nav on mobile */
+            .feed-search-bar { top: 70px; right: 10px; }
+            .genz-search { width: 160px; padding: 8px 14px; font-size: 10px; }
+            .genz-search:focus { width: 200px; }
+            /* Dynamic Island also repositions */
+            .dynamic-island { top: 70px; right: auto; left: 50%; transform: translateX(-50%); width: 85%; height: 42px; font-size: 9px; letter-spacing: 1px; display: none; }
+            /* Main container: no left offset on mobile, stack vertically */
+            .main-container { margin: 120px auto 30px auto; margin-left: auto; flex-direction: column; gap: 15px; padding: 0 12px; width: 100%; }
             .feed { order: 1; width: 100%; } .sidebar { order: 2; width: 100%; }
             .profile-banner { height: 140px; margin: -20px -20px 0 -20px; width: calc(100% + 40px); }
             .profile-pfp-container { width: 90px; height: 90px; margin-top: -45px; }
@@ -571,7 +614,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
 <body>
     <div class="stars-container" id="stars"></div>
     <div class="top-left-nav">
-        <input type="text" class="genz-search" placeholder="SEARCH THE VOID..." onkeyup="searchVoid(this.value)">
         <div class="nav-row">
             <div class="nav-item"><a href="/dashboard" class="nav-btn-circle"><i class="fas fa-rocket"></i></a><span class="icon-label">Orbit</span></div>
             <div class="nav-item"><a href="/leaderboard" class="nav-btn-circle" style="color: #ffea00;"><i class="fas fa-trophy"></i></a><span class="icon-label">Rankings</span></div>
@@ -582,6 +624,10 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             ${!isGuest ? `<div class="nav-item"><a href="/settings" class="nav-btn-circle" style="color:#aaa;"><i class="fas fa-gear"></i></a><span class="icon-label">Settings</span></div>` : ''}
             ${!isGuest ? `<div class="nav-item"><a href="/logout" class="nav-btn-circle" style="color:var(--p)"><i class="fas fa-power-off"></i></a><span class="icon-label">Eject</span></div>` : ''}
         </div>
+    </div>
+    <!-- V85 FIX: Search bar relocated to top-right, above feed -->
+    <div class="feed-search-bar">
+        <input type="text" class="genz-search" placeholder="SEARCH THE VOID..." onkeyup="searchVoid(this.value)">
     </div>
     <div class="dynamic-island">
         ${userAvatarHtml}
