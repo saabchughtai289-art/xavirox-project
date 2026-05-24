@@ -1,5 +1,5 @@
 /* ================================================================================
-   XAVIROX COSMIC OS — V86 EXTERNAL STYLESHEET
+   XAVIROX COSMIC OS — V87 EXTERNAL STYLESHEET
    Layout re-engineering + Ghost Mode + Glitch Market + Time Capsule overlays
    Complements inline MASTER_UI styles — do not remove baseline rules
    ================================================================================ */
@@ -592,4 +592,113 @@
     .glitch-market-grid {
         grid-template-columns: 1fr;
     }
+
+    .cosmic-controls-bar {
+        top: 3.75rem;
+        right: 0.5rem;
+        left: 0.5rem;
+        justify-content: center;
+    }
+}
+
+/* ================================================================================
+   V87 — Global premium glass (Tailwind: bg-zinc-900/40 backdrop-blur-lg border-white/10)
+   ================================================================================ */
+.glass-surface,
+.card,
+.post-card,
+.bento-item,
+.transmit-card,
+.ghost-poll-card,
+.duel-card,
+.glitch-market-card,
+.top-left-nav,
+.cosmic-footer {
+    background: rgba(24, 24, 27, 0.4) !important;
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.dynamic-island,
+.feed-search-bar {
+    background: rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.feed-search-bar .genz-search {
+    background: rgba(0, 0, 0, 0.35) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.glass-btn,
+.action-btn,
+.create-btn,
+.nav-btn-circle,
+.cosmic-toggle-btn,
+.market-buy-btn,
+.duel-challenge-btn {
+    background: rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.cosmic-controls-bar {
+    position: fixed;
+    top: 4.5rem;
+    right: 1rem;
+    z-index: 10001;
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 9999px;
+}
+
+.cosmic-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 9999px;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+.cosmic-toggle-btn .indicator-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.cosmic-toggle-btn.is-active .indicator-dot {
+    background: var(--neon-green);
+    box-shadow: 0 0 12px var(--neon-green);
+}
+
+#sensitiveFilterBtn.is-active .indicator-dot {
+    background: #ffea00;
+    box-shadow: 0 0 12px #ffea00;
+}
+
+.sensitive-post-content.sensitive-blurred,
+.sensitive-post-content.blur-md {
+    filter: blur(12px);
+    -webkit-filter: blur(12px);
+    user-select: none;
+    pointer-events: none;
+}
+
+.select-none {
+    user-select: none;
+}
+
+.time-capsule-create {
+    border: 1px dashed rgba(0, 240, 255, 0.25);
 }
