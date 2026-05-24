@@ -138,7 +138,7 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     username: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: false, default: '' },
     googleId: { type: String, default: null, sparse: true },
-    email: { type: String, default: null },
+    email: { type: String, default: null, sparse: true, unique: true },
     aura: { type: Number, default: 100 },
     unlockedAssets: [{ type: String }],
     auraHistory: [{
@@ -2254,7 +2254,7 @@ app.post('/change-username', async (req, res) => {
     res.redirect('/portfolio');
 });
 
-app.get('/login', (req, res) => { res.send(MASTER_UI(`<div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--cyan);"><div style="text-align:center; margin-bottom:25px;"><i class="fas fa-fingerprint fa-3x" style="color:var(--cyan); margin-bottom:15px;"></i><h2 style="color: #fff;">ENTER THE MATRIX</h2></div><a href="/auth/google" class="google-oauth-badge"><i class="fab fa-google"></i> LOGIN WITH GOOGLE</a><div class="auth-divider">or sync manually</div><form action="/login" method="POST"><input type="text" name="username" class="auth-input" placeholder="@username" required><input type="password" name="password" class="auth-input" placeholder="Password" required><button class="create-btn" style="margin-top:15px; background:var(--cyan); color:#000;">LET ME IN</button></form><p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">No account? <a href="/register" style="color:var(--cyan); font-weight:bold;">Fix that</a></p></div>`, null, [], 'Login')); });
+app.get('/login', (req, res) => { res.send(MASTER_UI(`<div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--cyan);"><div style="text-align:center; margin-bottom:25px;"><i class="fas fa-fingerprint fa-3x" style="color:var(--cyan); margin-bottom:15px;"></i><h2 style="color: #fff;">ENTER THE MATRIX</h2></div><a href="/auth/google" class="google-oauth-badge"><i class="fab fa-google"></i> LOGIN WITH GOOGLE</a><div class="auth-divider">or sync manually</div><form action="/login" method="POST"><input type="text" name="username" class="auth-input" placeholder="@username" required><input type="password" name="password" class="auth-input" placeholder="Password" required><button class="create-btn" style="margin-top:15px; background:var(--cyan); color:#000;">LET ME IN</button></form><p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">No account? <a href="/signup" style="color:var(--cyan); font-weight:bold;">Fix that</a></p></div>`, null, [], 'Login')); });
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     const user = await User.findOne({ username: username.toLowerCase().trim() });
@@ -2263,15 +2263,130 @@ app.post('/login', async (req, res) => {
     req.session.user = { _id: user._id.toString(), username: user.username, aura: user.aura, avatarUrl: user.avatarUrl };
     res.redirect('/dashboard');
 });
-app.get('/register', (req, res) => { res.send(MASTER_UI(`<div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--p);"><div style="text-align:center; margin-bottom:25px;"><i class="fas fa-user-astronaut fa-3x" style="color:var(--p); margin-bottom:15px;"></i><h2 style="color: #fff;">GENERATE IDENTITY</h2></div><a href="/auth/google" class="google-oauth-badge"><i class="fab fa-google"></i> REGISTER WITH GOOGLE</a><div class="auth-divider">or build manually</div><form action="/register" method="POST"><input type="text" name="username" class="auth-input" placeholder="Choose @username" required><input type="password" name="password" class="auth-input" placeholder="Secure Password" required><button class="create-btn" style="margin-top:15px; background:var(--p);">BUILD MATRIX</button></form><p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">Already got keys? <a href="/login" style="color:var(--p); font-weight:bold;">Let him in</a></p></div>`, null, [], 'Register')); });
+// V87: Premium standalone signup page
+app.get('/signup', (req, res) => {
+    res.sendFile(path.join(__dirname, 'signup.html'));
+});
+
+// Legacy /register redirects to new signup experience
+app.get('/register', (req, res) => {
+    res.redirect('/signup');
+});
+
+// V87: Manual registration handler — username, email, password, default aura 100
+const handleAuthSignup = async (req, res) => {
+    try {
+        await connectDB();
+
+        const rawUsername = (req.body.username || '').trim().replace(/^@/, '');
+        const username = rawUsername.toLowerCase();
+        const email = (req.body.email || '').toLowerCase().trim();
+        const password = req.body.password || '';
+
+        if (!username || username.length < 3 || username.length > 20) {
+            return res.status(400).json({
+                success: false,
+                error: 'Username must be between 3 and 20 characters.'
+            });
+        }
+
+        if (!/^[a-z0-9_]+$/.test(username)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Username may only contain letters, numbers, and underscores.'
+            });
+        }
+
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Please enter a valid email address.'
+            });
+        }
+
+        if (!password || password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must be at least 6 characters long.'
+            });
+        }
+
+        const existingByUsername = await User.findOne({ username });
+        if (existingByUsername) {
+            return res.status(409).json({
+                success: false,
+                error: 'This username is already claimed in the matrix. Try another handle.'
+            });
+        }
+
+        const existingByEmail = await User.findOne({ email });
+        if (existingByEmail) {
+            return res.status(409).json({
+                success: false,
+                error: 'This email is already synced to another identity.'
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = await new User({
+            username,
+            email,
+            password: hashedPassword,
+            aura: 100,
+            bio: 'New signal detected in the void...'
+        }).save();
+
+        req.session.user = {
+            _id: newUser._id.toString(),
+            username: newUser.username,
+            aura: newUser.aura,
+            avatarUrl: newUser.avatarUrl,
+            isGhost: false
+        };
+
+        return res.json({
+            success: true,
+            message: 'Identity forged successfully. Welcome to the void.',
+            redirect: '/dashboard',
+            user: {
+                username: newUser.username,
+                aura: newUser.aura
+            }
+        });
+    } catch (err) {
+        console.error('auth/signup error:', err);
+        if (err.code === 11000) {
+            const field = err.keyPattern?.username ? 'username' : 'email';
+            return res.status(409).json({
+                success: false,
+                error: field === 'username'
+                    ? 'This username is already taken.'
+                    : 'This email is already registered.'
+            });
+        }
+        return res.status(500).json({
+            success: false,
+            error: 'Matrix registration failed. Please try again shortly.'
+        });
+    }
+};
+
+app.post('/auth/signup', handleAuthSignup);
+
+// Legacy POST /register — same handler (HTML form fallback)
 app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
-    const existing = await User.findOne({ username: username.toLowerCase().trim() });
-    if (existing) return res.send("<script>alert('IDENTITY REJECTED'); window.history.back();</script>");
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await new User({ username: username.toLowerCase().trim(), password: hashedPassword }).save();
-    req.session.user = { _id: newUser._id.toString(), username: newUser.username, aura: newUser.aura, avatarUrl: newUser.avatarUrl };
-    res.redirect('/dashboard');
+    if (!req.body.email && req.body.username) {
+        req.body.email = `${String(req.body.username).trim().toLowerCase()}@legacy.xavirox.local`;
+    }
+    const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
+    const originalJson = res.json.bind(res);
+    if (!wantsJson) {
+        res.json = (payload) => {
+            if (payload.success) return res.redirect(payload.redirect || '/dashboard');
+            return res.send(`<script>alert(${JSON.stringify(payload.error)}); window.history.back();</script>`);
+        };
+    }
+    return handleAuthSignup(req, res);
 });
 app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/dashboard'); });
 
