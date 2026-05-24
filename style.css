@@ -702,3 +702,64 @@
 .time-capsule-create {
     border: 1px dashed rgba(0, 240, 255, 0.25);
 }
+
+/* V88 — Transmit card unified pill row */
+.transmit-pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding-bottom: 8px;
+}
+
+.transmit-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(24, 24, 27, 0.4) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgb(39, 39, 42) !important;
+    color: rgb(161, 161, 170) !important;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.transmit-pill-btn:hover {
+    border-color: #a855f7 !important;
+    color: #e4e4e7 !important;
+    transform: scale(1.02);
+}
+
+.transmit-pill-btn:active {
+    transform: scale(0.98);
+}
+
+.transmit-pill-btn.is-active {
+    border-color: #a855f7 !important;
+    color: #fff !important;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+}
+
+#timeCapsuleBtn.is-active {
+    border-color: rgba(0, 240, 255, 0.5) !important;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+}
+
+.transmit-tools-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
