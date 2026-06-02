@@ -1111,6 +1111,76 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             star.style.setProperty('--d', (Math.random() * 4 + 2) + 's');
             container.appendChild(star);
         }
+
+        // #region agent log H1-backdrop-blur-scan
+        try {
+            const feedCards = document.querySelectorAll('.feed .card, .feed .post-card');
+            const sample = Array.from(feedCards).slice(0, 25);
+            let firstBackdropFilter = null;
+            let backdropOnSample = 0;
+            for (const el of sample) {
+                const bf = getComputedStyle(el).backdropFilter;
+                if (firstBackdropFilter === null) firstBackdropFilter = bf;
+                if (bf && bf !== 'none') backdropOnSample++;
+            }
+            fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H1',location:'MASTER_UI:index.js:perf-scan',message:'feed backdrop-filter presence sample',data:{totalFeedCards:feedCards.length,sampleCount:sample.length,firstBackdropFilter:firstBackdropFilter,backdropOnSample:backdropOnSample},timestamp:Date.now()})}).catch(()=>{});
+        } catch(e) {}
+        // #endregion
+
+        // #region agent log H3-transition-all-scan
+        try {
+            const candidates = [
+                document.querySelector('.poll-option'),
+                document.querySelector('.leaderboard-row'),
+                document.querySelector('.dynamic-island'),
+                document.querySelector('.transmit-pill-btn')
+            ].filter(Boolean);
+            const sample = candidates.slice(0, 4);
+            const transitions = sample.map(el => {
+                const cs = getComputedStyle(el);
+                return { className: el.className, transitionProperty: cs.transitionProperty, transitionDuration: cs.transitionDuration };
+            });
+            fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H3',location:'MASTER_UI:index.js:transition-scan',message:'computed transition properties for interactive samples',data:{transitions:transitions},timestamp:Date.now()})}).catch(()=>{});
+        } catch(e) {}
+        // #endregion
+
+        // #region agent log H4-dynamic-island-hover-shift
+        try {
+            const di = document.querySelector('.dynamic-island');
+            if (di) {
+                di.addEventListener('mouseenter', () => {
+                    const before = di.getBoundingClientRect();
+                    requestAnimationFrame(() => {
+                        const after = di.getBoundingClientRect();
+                        fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H4',location:'MASTER_UI:index.js:dynamic-island-hover',message:'dynamic island hover size shift',data:{beforeW:before.width,beforeH:before.height,afterW:after.width,afterH:after.height},timestamp:Date.now()})}).catch(()=>{});
+                    });
+                }, { passive: true });
+            }
+        } catch(e) {}
+        // #endregion
+
+        // #region agent log H5-first-scroll-frame-scan
+        try {
+            let didLogScroll = false;
+            window.addEventListener('scroll', () => {
+                if (didLogScroll) return;
+                didLogScroll = true;
+
+                const y0 = window.scrollY || document.documentElement.scrollTop || 0;
+                const t0 = performance.now();
+                requestAnimationFrame(() => {
+                    const t1 = performance.now();
+                    requestAnimationFrame(() => {
+                        const t2 = performance.now();
+                        const dt1 = t1 - t0;
+                        const dt2 = t2 - t1;
+                        const y1 = window.scrollY || document.documentElement.scrollTop || 0;
+                        fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H5',location:'MASTER_UI:index.js:scroll-frame-scan',message:'first-scroll rAF frame deltas',data:{y0:y0,y1:y1,dt1:dt1,dt2:dt2},timestamp:Date.now()})}).catch(()=>{});
+                    });
+                });
+            }, { passive: true });
+        } catch(e) {}
+        // #endregion
         
         // V83 Legacy Like/Save Interaction (Modified to handle reacts and saves)
         async function interact(event, postId, type) {
@@ -1257,7 +1327,10 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             if (!sensitiveFilterBtn) return;
             let showSensitive = sensitiveFilterBtn.dataset.filterOn !== 'false';
             const statusText = sensitiveFilterBtn.querySelector('.toggle-status-text');
-            const applySensitiveBlur = () => {
+            const applySensitiveBlur = (reason = 'sync') => {
+                const tStart = performance.now();
+                const all = document.querySelectorAll('.sensitive-post-content');
+                const beforeBlurCount = Array.from(all).filter(el => el.classList.contains('sensitive-blurred') || el.classList.contains('blur-md')).length;
                 document.querySelectorAll('.sensitive-post-content').forEach(el => {
                     if (!showSensitive) {
                         el.classList.add('blur-md', 'select-none', 'sensitive-blurred');
@@ -1265,12 +1338,16 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                         el.classList.remove('blur-md', 'select-none', 'sensitive-blurred');
                     }
                 });
+                const afterBlurCount = Array.from(all).filter(el => el.classList.contains('sensitive-blurred') || el.classList.contains('blur-md')).length;
+                try {
+                    fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H2',location:'MASTER_UI:index.js:sensitive-filter',message:'sensitive filter toggle cost + blur application',data:{reason:reason,showSensitive:showSensitive,elementCount:all.length,beforeBlurCount:beforeBlurCount,afterBlurCount:afterBlurCount,durationMs:(performance.now()-tStart)},timestamp:Date.now()})}).catch(()=>{});
+                } catch(e) {}
             };
             const syncSensitiveBtnUI = () => {
                 sensitiveFilterBtn.classList.toggle('is-active', showSensitive);
                 sensitiveFilterBtn.dataset.filterOn = showSensitive ? 'true' : 'false';
                 if (statusText) statusText.textContent = showSensitive ? 'ON' : 'OFF';
-                applySensitiveBlur();
+                applySensitiveBlur('sync');
             };
             sensitiveFilterBtn.addEventListener('click', () => {
                 showSensitive = !showSensitive;
