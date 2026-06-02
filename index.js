@@ -75,6 +75,7 @@
 ==================================================================================================== */
 
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const session = require('express-session');
@@ -118,6 +119,14 @@ const dbURI = process.env.MONGODB_URI;
 
 // --- [AI INITIALIZATION] ---
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const DEBUG_LOG_PATH = path.join(__dirname, 'debug-f694f3.log');
+const appendDebugLog = (payload) => {
+    // #region agent log util-write-ndjson
+    try {
+        fs.appendFileSync(DEBUG_LOG_PATH, JSON.stringify(payload) + '\n', 'utf8');
+    } catch (e) {}
+    // #endregion
+};
 
 // --- [DATABASE] ---
 let isConnected = false;
@@ -357,6 +366,24 @@ passport.use(new GoogleStrategy({
 app.use(express.static(path.join(__dirname)));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// ============================================================
+// DEBUG MODE: client -> server relay -> ingest endpoint
+// (Allows logging even when running on HTTPS where http://127.0.0.1 is blocked)
+// ============================================================
+app.post('/__debug', express.json({ limit: '100kb' }), async (req, res) => {
+    try {
+        const payload = req.body || {};
+        appendDebugLog(payload);
+        await fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'f694f3' },
+            body: JSON.stringify(payload)
+        }).catch(() => {});
+    } catch (e) {}
+    return res.sendStatus(204);
+});
+
 app.use(session({ 
     secret: process.env.SESSION_SECRET || 'xavirox_cosmic_secret_shh', 
     resave: false, 
@@ -515,6 +542,9 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             transform: translateZ(0);
             -webkit-transform: translateZ(0);
             will-change: transform, opacity, backdrop-filter;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            perspective: 1000px;
             contain: layout style paint;
             transition: var(--spring-transition);
         }
@@ -556,9 +586,28 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             transform: translateZ(0);
             -webkit-transform: translateZ(0);
             will-change: transform, opacity, backdrop-filter;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            perspective: 1000px;
             contain: layout style paint;
             transition: var(--spring-transition);
         }
+
+        /* V90 — Scroll performance: remove heavy blur from scrolling feed surfaces */
+        .feed .card,
+        .feed .post-card,
+        .feed .bento-item,
+        .feed .ghost-poll-card,
+        .feed .duel-card,
+        .feed .glitch-market-card {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            background: rgba(9, 9, 11, 0.86) !important;
+            box-shadow: 0 10px 34px rgba(0,0,0,0.55), var(--crystal-inset) !important;
+            will-change: transform, opacity;
+            contain: layout paint style;
+        }
+        .feed .post-card { content-visibility: auto; contain-intrinsic-size: 420px 280px; }
         .cosmic-controls-bar {
             position: fixed;
             top: 4.5rem;
@@ -846,7 +895,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .cosmic-datetime { background: transparent; border: none; color: #fff; font-family: 'Inter', sans-serif; font-size: 11px; outline: none; font-weight: bold; cursor: pointer; }
         .cosmic-datetime::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; }
 
-        .genz-time-capsule { display: inline-flex; align-items: center; background: rgba(0,242,255,0.04); border: 1px solid rgba(0,242,255,0.2); border-radius: 30px; padding: 4px 14px 4px 4px; cursor: pointer; transition: all 0.3s; backdrop-filter: blur(10px); }
+        .genz-time-capsule { display: inline-flex; align-items: center; background: rgba(0,242,255,0.04); border: 1px solid rgba(0,242,255,0.2); border-radius: 30px; padding: 4px 14px 4px 4px; cursor: pointer; transition: transform 0.3s var(--spring-ease), opacity 0.3s var(--spring-ease), box-shadow 0.3s var(--spring-ease), background-color 0.3s var(--spring-ease), border-color 0.3s var(--spring-ease); transform: translateZ(0); will-change: transform, opacity; backface-visibility: hidden; -webkit-backface-visibility: hidden; perspective: 1000px; }
         .genz-time-capsule:hover { background: rgba(0,242,255,0.08); box-shadow: var(--neon-cyan-glow); }
         .capsule-icon-box { background: var(--cyan); color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; margin-right: 10px; box-shadow: var(--neon-cyan-glow); animation: pulseCapsule 2s infinite alternate; }
         @keyframes pulseCapsule { 0% { transform: scale(1); box-shadow: 0 0 8px var(--cyan); } 100% { transform: scale(1.1); box-shadow: 0 0 20px var(--cyan); } }
@@ -900,7 +949,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .podium-crown { font-size: 24px; margin-bottom: 5px; filter: drop-shadow(0 0 8px #ffea00); }
         .podium-rank-badge { position: absolute; bottom: -15px; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #000; }
         .rank-1 .podium-rank-badge { background: #ffea00; box-shadow: 0 0 15px #ffea00; } .rank-2 .podium-rank-badge { background: #ccc; } .rank-3 .podium-rank-badge { background: #cd7f32; }
-        .leaderboard-row { display: flex; align-items: center; background: rgba(255,255,255,0.02); backdrop-filter: blur(10px); border: 1px solid var(--border); padding: 14px 20px; border-radius: 20px; margin-bottom: 12px; gap: 15px; transition: all 0.2s; }
+        .leaderboard-row { display: flex; align-items: center; background: rgba(255,255,255,0.02); backdrop-filter: blur(10px); border: 1px solid var(--border); padding: 14px 20px; border-radius: 20px; margin-bottom: 12px; gap: 15px; transition: transform 0.25s var(--spring-ease), opacity 0.25s var(--spring-ease), box-shadow 0.25s var(--spring-ease), background-color 0.25s var(--spring-ease), border-color 0.25s var(--spring-ease); transform: translateZ(0); will-change: transform, opacity; backface-visibility: hidden; -webkit-backface-visibility: hidden; perspective: 1000px; }
         .leaderboard-row:hover { border-color: var(--border-hover); box-shadow: var(--neon-cyan-glow); background: rgba(0,242,255,0.03); }
 
         /* V83 SHARED POST STYLES */
@@ -910,7 +959,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         /* ================================================================
            V84 FEATURE STYLES — ALL PRESERVED
            ================================================================ */
-        .poll-option { background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); border: 1px solid var(--border); border-radius: 14px; padding: 12px 18px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.3s; position: relative; overflow: hidden; }
+        .poll-option { background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); border: 1px solid var(--border); border-radius: 14px; padding: 12px 18px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: transform 0.3s var(--spring-ease), opacity 0.3s var(--spring-ease), box-shadow 0.3s var(--spring-ease), background-color 0.3s var(--spring-ease), border-color 0.3s var(--spring-ease); transform: translateZ(0); will-change: transform, opacity; backface-visibility: hidden; -webkit-backface-visibility: hidden; perspective: 1000px; position: relative; overflow: hidden; }
         .poll-option:hover { border-color: var(--cyan); background: rgba(0,242,255,0.05); box-shadow: var(--neon-cyan-glow); }
         .poll-option.voted { border-color: var(--p); background: rgba(255,0,127,0.05); cursor: default; box-shadow: var(--neon-pink-glow); }
         .poll-bar { position: absolute; left: 0; top: 0; height: 100%; background: linear-gradient(90deg, rgba(112,0,255,0.18), rgba(255,0,127,0.12)); border-radius: 14px; z-index: 0; transition: width 0.8s ease; }
@@ -956,7 +1005,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .ghost-poll-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--v), #3d00a0); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: var(--neon-purple-glow); flex-shrink: 0; }
         .ghost-poll-question { font-size: 16px; font-weight: 900; color: #fff; line-height: 1.4; letter-spacing: 0.3px; }
         .ghost-poll-meta { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; letter-spacing: 0.5px; }
-        .ghost-poll-option { position: relative; overflow: hidden; background: rgba(112,0,255,0.06); border: 1px solid rgba(112,0,255,0.2); border-radius: 16px; padding: 14px 20px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease; }
+        .ghost-poll-option { position: relative; overflow: hidden; background: rgba(112,0,255,0.06); border: 1px solid rgba(112,0,255,0.2); border-radius: 16px; padding: 14px 20px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: transform 0.3s var(--spring-ease), opacity 0.3s var(--spring-ease), box-shadow 0.3s var(--spring-ease), background-color 0.3s var(--spring-ease), border-color 0.3s var(--spring-ease); transform: translateZ(0); will-change: transform, opacity; backface-visibility: hidden; -webkit-backface-visibility: hidden; perspective: 1000px; }
         .ghost-poll-option:hover:not(.gpo-voted) { border-color: var(--cyan); background: rgba(0,242,255,0.06); box-shadow: var(--neon-cyan-glow); transform: translateX(4px); }
         .ghost-poll-option.gpo-voted { cursor: default; border-color: rgba(0,242,255,0.35); }
         .ghost-poll-option.gpo-winner { border-color: rgba(255,234,0,0.5); background: rgba(255,234,0,0.04); box-shadow: 0 0 15px rgba(255,234,0,0.2); }
@@ -970,7 +1019,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .gpo-pct-bar-label { z-index: 1; font-size: 10px; color: rgba(255,255,255,0.5); margin-left: auto; }
         .ghost-poll-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(112,0,255,0.15); }
         .gpo-total-votes { font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 700; letter-spacing: 0.5px; }
-        .gpo-vote-btn { background: linear-gradient(90deg, var(--v), var(--p)); color: #fff; border: none; padding: 8px 20px; border-radius: 50px; font-size: 10px; font-weight: 900; cursor: pointer; letter-spacing: 1px; box-shadow: var(--neon-purple-glow); transition: all 0.3s; }
+        .gpo-vote-btn { background: linear-gradient(90deg, var(--v), var(--p)); color: #fff; border: none; padding: 8px 20px; border-radius: 50px; font-size: 10px; font-weight: 900; cursor: pointer; letter-spacing: 1px; box-shadow: var(--neon-purple-glow); transition: transform 0.3s var(--spring-ease), opacity 0.3s var(--spring-ease), box-shadow 0.3s var(--spring-ease), filter 0.3s var(--spring-ease); transform: translateZ(0); will-change: transform, opacity; backface-visibility: hidden; -webkit-backface-visibility: hidden; perspective: 1000px; }
         .gpo-vote-btn:hover { filter: brightness(1.2); transform: scale(1.05); }
 
         /* ================================================================
@@ -1112,6 +1161,20 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             container.appendChild(star);
         }
 
+        // #region agent log debug-relay-helper
+        const __xdbg = (payload) => {
+            try {
+                fetch('/__debug', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    keepalive: true
+                }).catch(() => {});
+            } catch (e) {}
+        };
+        __xdbg({ sessionId:'f694f3', runId:'pre-debug', hypothesisId:'H0', location:'MASTER_UI:index.js:relay', message:'debug relay online', data:{ protocol: location.protocol, host: location.host }, timestamp: Date.now() });
+        // #endregion
+
         // #region agent log H1-backdrop-blur-scan
         try {
             const feedCards = document.querySelectorAll('.feed .card, .feed .post-card');
@@ -1124,6 +1187,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                 if (bf && bf !== 'none') backdropOnSample++;
             }
             fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H1',location:'MASTER_UI:index.js:perf-scan',message:'feed backdrop-filter presence sample',data:{totalFeedCards:feedCards.length,sampleCount:sample.length,firstBackdropFilter:firstBackdropFilter,backdropOnSample:backdropOnSample},timestamp:Date.now()})}).catch(()=>{});
+            __xdbg({ sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H1',location:'MASTER_UI:index.js:perf-scan-relay',message:'feed backdrop-filter presence sample',data:{totalFeedCards:feedCards.length,sampleCount:sample.length,firstBackdropFilter:firstBackdropFilter,backdropOnSample:backdropOnSample},timestamp:Date.now() });
         } catch(e) {}
         // #endregion
 
@@ -1141,6 +1205,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                 return { className: el.className, transitionProperty: cs.transitionProperty, transitionDuration: cs.transitionDuration };
             });
             fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H3',location:'MASTER_UI:index.js:transition-scan',message:'computed transition properties for interactive samples',data:{transitions:transitions},timestamp:Date.now()})}).catch(()=>{});
+            __xdbg({ sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H3',location:'MASTER_UI:index.js:transition-scan-relay',message:'computed transition properties for interactive samples',data:{transitions:transitions},timestamp:Date.now() });
         } catch(e) {}
         // #endregion
 
@@ -1153,6 +1218,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                     requestAnimationFrame(() => {
                         const after = di.getBoundingClientRect();
                         fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H4',location:'MASTER_UI:index.js:dynamic-island-hover',message:'dynamic island hover size shift',data:{beforeW:before.width,beforeH:before.height,afterW:after.width,afterH:after.height},timestamp:Date.now()})}).catch(()=>{});
+                        __xdbg({ sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H4',location:'MASTER_UI:index.js:dynamic-island-hover-relay',message:'dynamic island hover size shift',data:{beforeW:before.width,beforeH:before.height,afterW:after.width,afterH:after.height},timestamp:Date.now() });
                     });
                 }, { passive: true });
             }
@@ -1176,6 +1242,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                         const dt2 = t2 - t1;
                         const y1 = window.scrollY || document.documentElement.scrollTop || 0;
                         fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H5',location:'MASTER_UI:index.js:scroll-frame-scan',message:'first-scroll rAF frame deltas',data:{y0:y0,y1:y1,dt1:dt1,dt2:dt2},timestamp:Date.now()})}).catch(()=>{});
+                        __xdbg({ sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H5',location:'MASTER_UI:index.js:scroll-frame-scan-relay',message:'first-scroll rAF frame deltas',data:{y0:y0,y1:y1,dt1:dt1,dt2:dt2},timestamp:Date.now() });
                     });
                 });
             }, { passive: true });
@@ -1341,6 +1408,9 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                 const afterBlurCount = Array.from(all).filter(el => el.classList.contains('sensitive-blurred') || el.classList.contains('blur-md')).length;
                 try {
                     fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H2',location:'MASTER_UI:index.js:sensitive-filter',message:'sensitive filter toggle cost + blur application',data:{reason:reason,showSensitive:showSensitive,elementCount:all.length,beforeBlurCount:beforeBlurCount,afterBlurCount:afterBlurCount,durationMs:(performance.now()-tStart)},timestamp:Date.now()})}).catch(()=>{});
+                } catch(e) {}
+                try {
+                    typeof __xdbg === 'function' && __xdbg({ sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H2',location:'MASTER_UI:index.js:sensitive-filter-relay',message:'sensitive filter toggle cost + blur application',data:{reason:reason,showSensitive:showSensitive,elementCount:all.length,beforeBlurCount:beforeBlurCount,afterBlurCount:afterBlurCount,durationMs:(performance.now()-tStart)},timestamp:Date.now() });
                 } catch(e) {}
             };
             const syncSensitiveBtnUI = () => {
@@ -1645,6 +1715,18 @@ app.get('/leaderboard', async (req, res) => {
 
 // --- [DASHBOARD RENDER ENGINE - V83 SOCIAL FEED] ---
 app.get('/dashboard', async (req, res) => {
+    // #region agent log H0-dashboard-route-hit
+    appendDebugLog({
+        sessionId: 'f694f3',
+        runId: 'pre-debug-v2',
+        hypothesisId: 'H0',
+        location: 'server:index.js:/dashboard',
+        message: 'dashboard route hit',
+        data: { hasSessionUser: !!(req.session && req.session.user), url: req.originalUrl || '/dashboard' },
+        timestamp: Date.now()
+    });
+    // #endregion
+
     const activeSector = req.query.sector || 'Global';
     const currentTime = new Date();
     const user = req.session.user ? await User.findOne({ username: req.session.user.username }) : null;
@@ -1662,6 +1744,24 @@ app.get('/dashboard', async (req, res) => {
     }
 
     const posts = await Post.find(buildFeedQuery(feedFilter, currentTime)).sort({ date: -1 });
+    // #region agent log H1-feed-query-shape
+    appendDebugLog({
+        sessionId: 'f694f3',
+        runId: 'pre-debug-v2',
+        hypothesisId: 'H1',
+        location: 'server:index.js:/dashboard',
+        message: 'feed query and post count',
+        data: {
+            activeSector,
+            hasUser: !!user,
+            blockedCount: user && user.blockedUsers ? user.blockedUsers.length : 0,
+            followingCount: user && user.following ? user.following.length : 0,
+            postsCount: posts.length,
+            feedFilter
+        },
+        timestamp: Date.now()
+    });
+    // #endregion
     const sectors = await Sector.find();
     const allUsers = await User.find({}, 'username avatarUrl aura nameChanged coverPic bio');
 
@@ -1920,6 +2020,21 @@ app.get('/dashboard', async (req, res) => {
         </div>`
     }).join('');
 
+    // #region agent log H2-feed-html-mount
+    appendDebugLog({
+        sessionId: 'f694f3',
+        runId: 'pre-debug-v2',
+        hypothesisId: 'H2',
+        location: 'server:index.js:/dashboard',
+        message: 'feed html mount payload',
+        data: {
+            postsMappedCount: posts.length,
+            htmlLength: html.length,
+            contentLength: (postForm + ghostPollsHtml + auraDuelPanelHtml + glitchMarketHtml + html).length
+        },
+        timestamp: Date.now()
+    });
+    // #endregion
     res.send(MASTER_UI(postForm + ghostPollsHtml + auraDuelPanelHtml + glitchMarketHtml + html, user, sectors, activeSector, allUsers, notifCount));
 });
 
@@ -2272,6 +2387,17 @@ app.get('/notifications', async (req, res) => {
 app.get('/dms', async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     const user = await User.findOne({ username: req.session.user.username });
+    // #region agent log H4-dms-route-state
+    appendDebugLog({
+        sessionId: 'f694f3',
+        runId: 'pre-debug-v2',
+        hypothesisId: 'H4',
+        location: 'server:index.js:/dms',
+        message: 'dms route rendered',
+        data: { hasUser: !!user, username: user ? user.username : null },
+        timestamp: Date.now()
+    });
+    // #endregion
     const content = `<div class="card" style="text-align:center; padding:50px;"><i class="fas fa-lock fa-3x" style="color:var(--cyan); margin-bottom:15px;"></i><h2>PRIVATE CHAT MATRIX SECURING...</h2><p style="opacity:0.5; font-size:12px; margin-top:10px;">Direct Messaging relays are currently synchronizing for end-to-end encryption in V84. Hang tight.</p></div>`;
     res.send(MASTER_UI(content, user, [], 'Direct Messages', [], 0));
 });
@@ -2415,7 +2541,20 @@ app.post('/change-username', async (req, res) => {
     res.redirect('/portfolio');
 });
 
-app.get('/login', (req, res) => { res.send(MASTER_UI(`<div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--cyan);"><div style="text-align:center; margin-bottom:25px;"><i class="fas fa-fingerprint fa-3x" style="color:var(--cyan); margin-bottom:15px;"></i><h2 style="color: #fff;">ENTER THE MATRIX</h2></div><a href="/auth/google" class="google-oauth-badge"><i class="fab fa-google"></i> LOGIN WITH GOOGLE</a><div class="auth-divider">or sync manually</div><form action="/login" method="POST"><input type="text" name="username" class="auth-input" placeholder="@username" required><input type="password" name="password" class="auth-input" placeholder="Password" required><button class="create-btn" style="margin-top:15px; background:var(--cyan); color:#000;">LET ME IN</button></form><p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">No account? <a href="/signup" style="color:var(--cyan); font-weight:bold;">Fix that</a></p></div>`, null, [], 'Login')); });
+app.get('/login', (req, res) => {
+    // #region agent log H3-login-route-mount
+    appendDebugLog({
+        sessionId: 'f694f3',
+        runId: 'pre-debug-v2',
+        hypothesisId: 'H3',
+        location: 'server:index.js:/login',
+        message: 'login route rendered through MASTER_UI',
+        data: { hasSessionUser: !!(req.session && req.session.user) },
+        timestamp: Date.now()
+    });
+    // #endregion
+    res.send(MASTER_UI(`<div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--cyan);"><div style="text-align:center; margin-bottom:25px;"><i class="fas fa-fingerprint fa-3x" style="color:var(--cyan); margin-bottom:15px;"></i><h2 style="color: #fff;">ENTER THE MATRIX</h2></div><a href="/auth/google" class="google-oauth-badge"><i class="fab fa-google"></i> LOGIN WITH GOOGLE</a><div class="auth-divider">or sync manually</div><form action="/login" method="POST"><input type="text" name="username" class="auth-input" placeholder="@username" required><input type="password" name="password" class="auth-input" placeholder="Password" required><button class="create-btn" style="margin-top:15px; background:var(--cyan); color:#000;">LET ME IN</button></form><p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">No account? <a href="/signup" style="color:var(--cyan); font-weight:bold;">Fix that</a></p></div>`, null, [], 'Login'));
+});
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     const user = await User.findOne({ username: username.toLowerCase().trim() });
@@ -2574,6 +2713,22 @@ app.get('/auth/google/callback',
                     avatarUrl: userDoc.avatarUrl
                 };
             }
+            // #region agent log H5-google-callback-session-sync
+            appendDebugLog({
+                sessionId: 'f694f3',
+                runId: 'pre-debug-v2',
+                hypothesisId: 'H5',
+                location: 'server:index.js:/auth/google/callback',
+                message: 'google callback session sync',
+                data: {
+                    hasReqUser: !!req.user,
+                    hasUserDoc: !!userDoc,
+                    hasSessionUserAfter: !!(req.session && req.session.user),
+                    sessionUsername: req.session && req.session.user ? req.session.user.username : null
+                },
+                timestamp: Date.now()
+            });
+            // #endregion
             res.redirect('/dashboard');
         } catch (err) {
             res.redirect('/login?error=google_callback');
