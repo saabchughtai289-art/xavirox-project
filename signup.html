@@ -285,6 +285,11 @@
             errorBanner.classList.remove('shake');
             void errorBanner.offsetWidth;
             errorBanner.classList.add('shake');
+            const card = document.querySelector('.signup-card');
+            if (card) {
+                card.classList.add('signup-glitch-flash');
+                setTimeout(() => card.classList.remove('signup-glitch-flash'), 1200);
+            }
         }
 
         function hideError() {
