@@ -75,8 +75,8 @@
 ==================================================================================================== */
 
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
+const { AUTH_UI, buildGlitchMarketHtml, COSMIC_CLIENT_JS } = require('./cosmic-shell-v91');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
@@ -119,14 +119,6 @@ const dbURI = process.env.MONGODB_URI;
 
 // --- [AI INITIALIZATION] ---
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const DEBUG_LOG_PATH = path.join(__dirname, 'debug-f694f3.log');
-const appendDebugLog = (payload) => {
-    // #region agent log util-write-ndjson
-    try {
-        fs.appendFileSync(DEBUG_LOG_PATH, JSON.stringify(payload) + '\n', 'utf8');
-    } catch (e) {}
-    // #endregion
-};
 
 // --- [DATABASE] ---
 let isConnected = false;
@@ -289,6 +281,7 @@ const MarketItem = mongoose.models.MarketItem || mongoose.model('MarketItem', ne
     itemName: { type: String, required: true, unique: true },
     costInAura: { type: Number, required: true, min: 1 },
     itemType: { type: String, default: 'cosmetic' },
+    tier: { type: String, default: 'STANDARD', enum: ['STANDARD', 'PRO'] },
     iconClass: { type: String, default: 'fa-bolt' },
     description: { type: String, default: '' }
 }));
@@ -367,23 +360,6 @@ app.use(express.static(path.join(__dirname)));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// ============================================================
-// DEBUG MODE: client -> server relay -> ingest endpoint
-// (Allows logging even when running on HTTPS where http://127.0.0.1 is blocked)
-// ============================================================
-app.post('/__debug', express.json({ limit: '100kb' }), async (req, res) => {
-    try {
-        const payload = req.body || {};
-        appendDebugLog(payload);
-        await fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'f694f3' },
-            body: JSON.stringify(payload)
-        }).catch(() => {});
-    } catch (e) {}
-    return res.sendStatus(204);
-});
-
 app.use(session({ 
     secret: process.env.SESSION_SECRET || 'xavirox_cosmic_secret_shh', 
     resave: false, 
@@ -404,10 +380,10 @@ const seedGlitchMarket = async () => {
     const count = await MarketItem.countDocuments();
     if (count === 0) {
         await MarketItem.insertMany([
-            { itemName: 'neon-glow', costInAura: 150, itemType: 'cosmetic', iconClass: 'fa-sun', description: 'Neon cyan aura frame glow' },
-            { itemName: 'cyber-badge', costInAura: 250, itemType: 'badge', iconClass: 'fa-shield-halved', description: 'Elite cyber verification badge' },
-            { itemName: 'ghost-cloak', costInAura: 400, itemType: 'cosmetic', iconClass: 'fa-ghost', description: 'Purple ghost transmission cloak' },
-            { itemName: 'sigma-crown', costInAura: 750, itemType: 'badge', iconClass: 'fa-crown', description: 'Golden sigma rank crown asset' }
+            { itemName: 'neon-glow', costInAura: 150, itemType: 'cosmetic', tier: 'STANDARD', iconClass: 'fa-sun', description: 'Neon cyan aura frame glow' },
+            { itemName: 'cyber-badge', costInAura: 250, itemType: 'badge', tier: 'STANDARD', iconClass: 'fa-shield-halved', description: 'Elite cyber verification badge' },
+            { itemName: 'ghost-cloak', costInAura: 400, itemType: 'cosmetic', tier: 'PRO', iconClass: 'fa-ghost', description: 'Purple ghost transmission cloak' },
+            { itemName: 'sigma-crown', costInAura: 750, itemType: 'badge', tier: 'PRO', iconClass: 'fa-crown', description: 'Golden sigma rank crown asset' }
         ]);
     }
     const pollCount = await GhostPoll.countDocuments();
@@ -1093,8 +1069,9 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
     </div>
     <!-- V86: Search top-left | Dynamic Island top-center -->
     <div class="feed-search-bar fixed top-4 left-4 z-50 w-64">
-        <input type="text" class="genz-search" placeholder="SEARCH THE VOID..." onkeyup="searchVoid(this.value)">
+        <input type="text" class="genz-search genz-search-pill rounded-full" placeholder="SEARCH THE VOID..." onkeyup="searchVoid(this.value)">
     </div>
+    <div class="system-status-node glass-surface" aria-live="polite">[ SYSTEM STATUS: OPERATIONAL // LATENCY: 14ms ]</div>
     <div class="dynamic-island glass-surface fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-full">
         ${userAvatarHtml}
         <div style="flex: 1;">
@@ -1107,6 +1084,10 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             <span class="indicator-dot"></span>
             <span>FEED FILTER</span>
             <span class="toggle-status-text">ON</span>
+        </button>
+        <button type="button" id="matrixModeBtn" class="cosmic-toggle-btn glass-btn" title="Cyber glitch matrix mode">
+            <span class="indicator-dot"></span>
+            <span>MATRIX</span>
         </button>
     </div>` : ''}
     <div class="main-container">
@@ -1122,6 +1103,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                 ${!isGuest ? `<a href="/dashboard?sector=Following" style="display:block; color:#00ff88; margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-user-group"></i> FOLLOWING FEED</a>` : ''}
                 <a href="/discover" style="display:block; color:var(--p); margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-compass"></i> DISCOVER</a>
                 <a href="/dashboard?sector=confessions" style="display:block; color:#ffea00; margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-ghost"></i> #CONFESSIONS</a>
+                <a href="/glitch-market" class="glitch-market-nav-link"><i class="fas fa-satellite-dish"></i> 📡 GLITCH MARKET</a>
                 ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#ccc; font-size:12px; font-weight:700; text-decoration:none; margin-top:12px; opacity:0.8;"># ${s.name.toUpperCase()}</a>`).join('')}
                 ${!isGuest ? `<button type="button" class="create-btn" style="margin-top:25px; font-size:10px;" onclick="let n=prompt('Name the new community / sector?'); if(n) location.href='/create-sector?name='+n">+ BUILD COMMUNITY</button>` : ''}
             </div>
@@ -1143,12 +1125,25 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         </div>
     </div>
 
-    <footer class="cosmic-footer">
-        <div class="footer-links">
-            <a href="mailto:xavirox.co@gmail.com" class="footer-link"><i class="fas fa-headset"></i> Support</a>
-            <a href="mailto:xavirox.co@gmail.com" class="footer-link"><span><i class="fas fa-shield-halved"></i></span> DMCA Notice</a>
+    <div id="dmComposer" class="dm-composer glass-surface" hidden>
+        <div class="dm-composer-header">
+            <span><i class="fas fa-envelope"></i> DM UPLINK — <strong id="dmPeerLabel">@void</strong></span>
+            <button type="button" class="action-btn" onclick="closeDmComposer()" aria-label="Close DM">✕</button>
         </div>
-        <p style="font-size: 9px; opacity: 0.3; letter-spacing: 2px; font-weight: 700;">&copy; 2026 XAVIROX COSMIC OS V86 // ALL ENGINES OPERATIONAL</p>
+        <div id="dmMessages" class="dm-messages-scroll"></div>
+        <form class="dm-send-form" onsubmit="sendDmMessage(event)">
+            <input type="text" id="dmMessageInput" class="comment-mini-input" placeholder="Transmit encrypted signal..." autocomplete="off">
+            <button type="submit" class="create-btn" style="width:auto;padding:0 18px;font-size:10px;">SEND</button>
+        </form>
+    </div>
+    <div id="matrixCommandBar" class="matrix-command-bar">
+        <span class="matrix-cmd-prefix">&gt;</span>
+        <input type="text" id="matrixCommandInput" class="matrix-cmd-input" placeholder="matrix command (help, orbit, market)..." onkeydown="if(event.key==='Enter'){event.preventDefault();runMatrixCommand();}">
+        <button type="button" class="create-btn" style="width:auto;font-size:10px;padding:8px 16px;" onclick="runMatrixCommand()">EXEC</button>
+    </div>
+
+    <footer class="cosmic-footer cosmic-brand-footer">
+        <p class="cosmic-footer-signature">getxavirox.xyz</p>
     </footer>
 
     <script>
@@ -1159,118 +1154,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             star.style.top = Math.random() * 100 + '%'; star.style.left = Math.random() * 100 + '%';
             star.style.setProperty('--d', (Math.random() * 4 + 2) + 's');
             container.appendChild(star);
-        }
-
-        // #region agent log debug-relay-helper
-        const __xdbg = (payload) => {
-            try {
-                fetch('/__debug', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                    keepalive: true
-                }).catch(() => {});
-            } catch (e) {}
-        };
-        __xdbg({ sessionId:'f694f3', runId:'pre-debug', hypothesisId:'H0', location:'MASTER_UI:index.js:relay', message:'debug relay online', data:{ protocol: location.protocol, host: location.host }, timestamp: Date.now() });
-        // #endregion
-
-        // #region agent log H1-backdrop-blur-scan
-        try {
-            const feedCards = document.querySelectorAll('.feed .card, .feed .post-card');
-            const sample = Array.from(feedCards).slice(0, 25);
-            let firstBackdropFilter = null;
-            let backdropOnSample = 0;
-            for (const el of sample) {
-                const bf = getComputedStyle(el).backdropFilter;
-                if (firstBackdropFilter === null) firstBackdropFilter = bf;
-                if (bf && bf !== 'none') backdropOnSample++;
-            }
-            fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H1',location:'MASTER_UI:index.js:perf-scan',message:'feed backdrop-filter presence sample',data:{totalFeedCards:feedCards.length,sampleCount:sample.length,firstBackdropFilter:firstBackdropFilter,backdropOnSample:backdropOnSample},timestamp:Date.now()})}).catch(()=>{});
-            __xdbg({ sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H1',location:'MASTER_UI:index.js:perf-scan-relay',message:'feed backdrop-filter presence sample',data:{totalFeedCards:feedCards.length,sampleCount:sample.length,firstBackdropFilter:firstBackdropFilter,backdropOnSample:backdropOnSample},timestamp:Date.now() });
-        } catch(e) {}
-        // #endregion
-
-        // #region agent log H3-transition-all-scan
-        try {
-            const candidates = [
-                document.querySelector('.poll-option'),
-                document.querySelector('.leaderboard-row'),
-                document.querySelector('.dynamic-island'),
-                document.querySelector('.transmit-pill-btn')
-            ].filter(Boolean);
-            const sample = candidates.slice(0, 4);
-            const transitions = sample.map(el => {
-                const cs = getComputedStyle(el);
-                return { className: el.className, transitionProperty: cs.transitionProperty, transitionDuration: cs.transitionDuration };
-            });
-            fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H3',location:'MASTER_UI:index.js:transition-scan',message:'computed transition properties for interactive samples',data:{transitions:transitions},timestamp:Date.now()})}).catch(()=>{});
-            __xdbg({ sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H3',location:'MASTER_UI:index.js:transition-scan-relay',message:'computed transition properties for interactive samples',data:{transitions:transitions},timestamp:Date.now() });
-        } catch(e) {}
-        // #endregion
-
-        // #region agent log H4-dynamic-island-hover-shift
-        try {
-            const di = document.querySelector('.dynamic-island');
-            if (di) {
-                di.addEventListener('mouseenter', () => {
-                    const before = di.getBoundingClientRect();
-                    requestAnimationFrame(() => {
-                        const after = di.getBoundingClientRect();
-                        fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H4',location:'MASTER_UI:index.js:dynamic-island-hover',message:'dynamic island hover size shift',data:{beforeW:before.width,beforeH:before.height,afterW:after.width,afterH:after.height},timestamp:Date.now()})}).catch(()=>{});
-                        __xdbg({ sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H4',location:'MASTER_UI:index.js:dynamic-island-hover-relay',message:'dynamic island hover size shift',data:{beforeW:before.width,beforeH:before.height,afterW:after.width,afterH:after.height},timestamp:Date.now() });
-                    });
-                }, { passive: true });
-            }
-        } catch(e) {}
-        // #endregion
-
-        // #region agent log H5-first-scroll-frame-scan
-        try {
-            let didLogScroll = false;
-            window.addEventListener('scroll', () => {
-                if (didLogScroll) return;
-                didLogScroll = true;
-
-                const y0 = window.scrollY || document.documentElement.scrollTop || 0;
-                const t0 = performance.now();
-                requestAnimationFrame(() => {
-                    const t1 = performance.now();
-                    requestAnimationFrame(() => {
-                        const t2 = performance.now();
-                        const dt1 = t1 - t0;
-                        const dt2 = t2 - t1;
-                        const y1 = window.scrollY || document.documentElement.scrollTop || 0;
-                        fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H5',location:'MASTER_UI:index.js:scroll-frame-scan',message:'first-scroll rAF frame deltas',data:{y0:y0,y1:y1,dt1:dt1,dt2:dt2},timestamp:Date.now()})}).catch(()=>{});
-                        __xdbg({ sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H5',location:'MASTER_UI:index.js:scroll-frame-scan-relay',message:'first-scroll rAF frame deltas',data:{y0:y0,y1:y1,dt1:dt1,dt2:dt2},timestamp:Date.now() });
-                    });
-                });
-            }, { passive: true });
-        } catch(e) {}
-        // #endregion
-        
-        // V83 Legacy Like/Save Interaction (Modified to handle reacts and saves)
-        async function interact(event, postId, type) {
-            try {
-                const res = await fetch('/interact', { 
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: postId, type: type }) 
-                });
-                if(res.status === 200) {
-                    const data = await res.json();
-                    if(type === 'save') {
-                        const targetBtn = event ? event.currentTarget : null;
-                        if(targetBtn) {
-                            targetBtn.classList.toggle('active-save');
-                            targetBtn.innerHTML = targetBtn.classList.contains('active-save') ? '<i class="fas fa-bookmark"></i> ARCHIVED' : '<i class="fas fa-bookmark"></i> SAVE';
-                        }
-                    } else {
-                        // Naya React System Update View
-                        window.location.reload(); 
-                    }
-                } else if(res.status === 401) {
-                    alert('MAKE AN ACC LIL BRO 💀'); window.location.href = '/login';
-                }
-            } catch(err) { window.location.reload(); }
         }
 
         // V83 Post Sharing Engine Frontend
@@ -1291,16 +1174,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                 if(res.status === 200) { window.location.reload(); }
                 else { alert('MAKE AN ACC LIL BRO 💀'); }
             } catch(e) { alert('Follow sync failed.'); }
-        }
-
-        // V83 Block Engine Frontend
-        async function blockUser(targetUser) {
-            if(confirm("Block this user? You won't see their posts anymore.")) {
-                try {
-                    const res = await fetch('/api/block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetUsername: targetUser }) });
-                    if(res.status === 200) { window.location.href='/dashboard'; }
-                } catch(e) { alert('Block sync failed.'); }
-            }
         }
 
         function toggleReplyForm(commentId) {
@@ -1394,10 +1267,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             if (!sensitiveFilterBtn) return;
             let showSensitive = sensitiveFilterBtn.dataset.filterOn !== 'false';
             const statusText = sensitiveFilterBtn.querySelector('.toggle-status-text');
-            const applySensitiveBlur = (reason = 'sync') => {
-                const tStart = performance.now();
-                const all = document.querySelectorAll('.sensitive-post-content');
-                const beforeBlurCount = Array.from(all).filter(el => el.classList.contains('sensitive-blurred') || el.classList.contains('blur-md')).length;
+            const applySensitiveBlur = () => {
                 document.querySelectorAll('.sensitive-post-content').forEach(el => {
                     if (!showSensitive) {
                         el.classList.add('blur-md', 'select-none', 'sensitive-blurred');
@@ -1405,19 +1275,12 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                         el.classList.remove('blur-md', 'select-none', 'sensitive-blurred');
                     }
                 });
-                const afterBlurCount = Array.from(all).filter(el => el.classList.contains('sensitive-blurred') || el.classList.contains('blur-md')).length;
-                try {
-                    fetch('http://127.0.0.1:7397/ingest/71f025df-52b2-41ec-84fd-56220bf477fd',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f694f3'},body:JSON.stringify({sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H2',location:'MASTER_UI:index.js:sensitive-filter',message:'sensitive filter toggle cost + blur application',data:{reason:reason,showSensitive:showSensitive,elementCount:all.length,beforeBlurCount:beforeBlurCount,afterBlurCount:afterBlurCount,durationMs:(performance.now()-tStart)},timestamp:Date.now()})}).catch(()=>{});
-                } catch(e) {}
-                try {
-                    typeof __xdbg === 'function' && __xdbg({ sessionId:'f694f3',runId:'pre-debug',hypothesisId:'H2',location:'MASTER_UI:index.js:sensitive-filter-relay',message:'sensitive filter toggle cost + blur application',data:{reason:reason,showSensitive:showSensitive,elementCount:all.length,beforeBlurCount:beforeBlurCount,afterBlurCount:afterBlurCount,durationMs:(performance.now()-tStart)},timestamp:Date.now() });
-                } catch(e) {}
             };
             const syncSensitiveBtnUI = () => {
                 sensitiveFilterBtn.classList.toggle('is-active', showSensitive);
                 sensitiveFilterBtn.dataset.filterOn = showSensitive ? 'true' : 'false';
                 if (statusText) statusText.textContent = showSensitive ? 'ON' : 'OFF';
-                applySensitiveBlur('sync');
+                applySensitiveBlur();
             };
             sensitiveFilterBtn.addEventListener('click', () => {
                 showSensitive = !showSensitive;
@@ -1484,14 +1347,6 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
 
             syncPostSensitiveUI();
         })();
-
-        function searchVoid(query) {
-            let cards = document.querySelectorAll('.feed .post-card, .feed .card.p-node');
-            cards.forEach(card => {
-                let text = card.innerText.toLowerCase();
-                card.style.display = text.includes(query.toLowerCase()) ? 'block' : 'none';
-            });
-        }
 
         // Feature 47: Dark/Light Mode Toggle
         function toggleTheme() {
@@ -1660,6 +1515,14 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             fetch('/api/pin-post', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ postId }) })
                 .then(r => r.ok ? (alert('Post pinned to your profile! 📌'), window.location.reload()) : alert('Pin failed.'));
         }
+
+        ${COSMIC_CLIENT_JS}
+
+        (function bootDmDeepLink() {
+            const params = new URLSearchParams(location.search);
+            const peer = params.get('with');
+            if (peer && typeof openDmComposer === 'function') openDmComposer(peer);
+        })();
     </script>
 </body></html>`;
 };
@@ -1715,18 +1578,6 @@ app.get('/leaderboard', async (req, res) => {
 
 // --- [DASHBOARD RENDER ENGINE - V83 SOCIAL FEED] ---
 app.get('/dashboard', async (req, res) => {
-    // #region agent log H0-dashboard-route-hit
-    appendDebugLog({
-        sessionId: 'f694f3',
-        runId: 'pre-debug-v2',
-        hypothesisId: 'H0',
-        location: 'server:index.js:/dashboard',
-        message: 'dashboard route hit',
-        data: { hasSessionUser: !!(req.session && req.session.user), url: req.originalUrl || '/dashboard' },
-        timestamp: Date.now()
-    });
-    // #endregion
-
     const activeSector = req.query.sector || 'Global';
     const currentTime = new Date();
     const user = req.session.user ? await User.findOne({ username: req.session.user.username }) : null;
@@ -1744,46 +1595,10 @@ app.get('/dashboard', async (req, res) => {
     }
 
     const posts = await Post.find(buildFeedQuery(feedFilter, currentTime)).sort({ date: -1 });
-    // #region agent log H1-feed-query-shape
-    appendDebugLog({
-        sessionId: 'f694f3',
-        runId: 'pre-debug-v2',
-        hypothesisId: 'H1',
-        location: 'server:index.js:/dashboard',
-        message: 'feed query and post count',
-        data: {
-            activeSector,
-            hasUser: !!user,
-            blockedCount: user && user.blockedUsers ? user.blockedUsers.length : 0,
-            followingCount: user && user.following ? user.following.length : 0,
-            postsCount: posts.length,
-            feedFilter
-        },
-        timestamp: Date.now()
-    });
-    // #endregion
     const sectors = await Sector.find();
     const allUsers = await User.find({}, 'username avatarUrl aura nameChanged coverPic bio');
 
-    const marketItems = await MarketItem.find().sort({ costInAura: 1 });
     const ghostPolls = await GhostPoll.find().sort({ date: -1 }).limit(6);
-    const unlockedSet = user && user.unlockedAssets ? user.unlockedAssets : [];
-
-    const glitchMarketHtml = user ? `<div class="card glitch-market-card">
-        <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:8px;"><i class="fas fa-store" style="color:#ffea00;"></i> GLITCH MARKET</h4>
-        <div class="aura-balance-pill"><i class="fas fa-bolt"></i> ${user.aura} AURA AVAILABLE</div>
-        <div class="glitch-market-grid">
-            ${marketItems.map(item => {
-                const owned = unlockedSet.includes(item.itemName);
-                return `<div class="market-item-bento ${owned ? 'owned' : ''}">
-                    <span class="market-item-icon"><i class="fas ${item.iconClass}"></i></span>
-                    <div class="market-item-name">${item.itemName.toUpperCase()}</div>
-                    <div class="market-item-cost">${item.costInAura} AURA</div>
-                    <button type="button" class="market-buy-btn" ${owned ? 'disabled' : ''} onclick="buyMarketItem('${item.itemName}', ${item.costInAura})">${owned ? 'OWNED ✓' : 'BUY ASSET'}</button>
-                </div>`;
-            }).join('')}
-        </div>
-    </div>` : '';
 
     const ghostPollCreateForm = user ? `<form onsubmit="event.preventDefault(); createGhostPoll(this);" style="margin-bottom:20px; padding:18px; background:rgba(112,0,255,0.06); border-radius:20px; border:1px dashed rgba(112,0,255,0.3);">
         <p style="font-size:10px; font-weight:900; color:var(--v); margin-bottom:10px; letter-spacing:1px;">DEPLOY NEW GHOST POLL</p>
@@ -1973,7 +1788,7 @@ app.get('/dashboard', async (req, res) => {
 
         const sensitiveBodyClass = p.isSensitive ? 'sensitive-post-content is-sensitive' : 'sensitive-post-content';
 
-        return `<div class="card post-card glass-surface p-node ${p.isAnonymous ? 'ghost-card' : ''}" data-post-id="${p._id.toString()}" style="position:relative;">
+        return `<div class="card post-card glass-surface p-node ${p.isAnonymous ? 'ghost-card' : ''}" data-post-id="${p._id.toString()}" data-author="${p.isAnonymous ? 'GHOST_SIGNAL' : p.author}" style="position:relative;">
             ${p.isTimeCapsule && p.unlockAt ? `<div class="pinned-indicator" style="color:var(--cyan);"><i class="fas fa-meteor"></i> TIME CAPSULE UNSEALED</div>` : ''}
             ${p.isShared ? `<div class="shared-indicator"><i class="fas fa-retweet"></i> Transmitted from @${p.originalAuthor}'s Matrix</div>` : ''}
             ${user && user.pinnedPost === p._id.toString() ? `<div class="pinned-indicator"><i class="fas fa-thumbtack"></i> PINNED TRANSMISSION</div>` : ''}
@@ -1999,11 +1814,9 @@ app.get('/dashboard', async (req, res) => {
             ${linkPreviewHtml}
             </div>
             
-            <div class="interaction-bar">
-                <button type="button" onclick="interact(event, '${p._id.toString()}', 'crown')" class="action-btn react-btn ${uReact === 'crown' ? 'active' : ''}">👑 ${rCount.crown}</button>
-                <button type="button" onclick="interact(event, '${p._id.toString()}', 'skull')" class="action-btn react-btn ${uReact === 'skull' ? 'active' : ''}">💀 ${rCount.skull}</button>
-                <button type="button" onclick="interact(event, '${p._id.toString()}', 'fire')" class="action-btn react-btn ${uReact === 'fire' ? 'active' : ''}">🔥 ${rCount.fire}</button>
-                <button type="button" onclick="interact(event, '${p._id.toString()}', 'heart')" class="action-btn react-btn ${uReact === 'heart' ? 'active' : ''}">❤️ ${rCount.heart}</button>
+            <div class="interaction-bar wl-interaction-bar">
+                <button type="button" onclick="interact(event, '${p._id.toString()}', 'crown')" class="action-btn react-btn wl-w-btn wl-btn ${uReact === 'crown' ? 'active' : ''}">W ${rCount.crown}</button>
+                <button type="button" onclick="interact(event, '${p._id.toString()}', 'skull')" class="action-btn react-btn wl-l-btn wl-btn ${uReact === 'skull' ? 'active' : ''}">L ${rCount.skull}</button>
                 <button type="button" onclick="interact(event, '${p._id.toString()}', 'save')" class="action-btn save-btn ${isSaved ? 'active-save' : ''}"><i class="fas fa-bookmark"></i></button>
                 ${!p.isAnonymous && user ? `<button type="button" onclick="sharePost('${p._id.toString()}')" class="action-btn share-btn"><i class="fas fa-retweet"></i> Re-shout</button>` : ''}
                 ${showEdit ? `<button type="button" onclick="editPost('${p._id.toString()}', ${JSON.stringify(p.content)})" class="action-btn" style="color:#aaa;"><i class="fas fa-pen"></i></button>` : ''}
@@ -2020,22 +1833,44 @@ app.get('/dashboard', async (req, res) => {
         </div>`
     }).join('');
 
-    // #region agent log H2-feed-html-mount
-    appendDebugLog({
-        sessionId: 'f694f3',
-        runId: 'pre-debug-v2',
-        hypothesisId: 'H2',
-        location: 'server:index.js:/dashboard',
-        message: 'feed html mount payload',
-        data: {
-            postsMappedCount: posts.length,
-            htmlLength: html.length,
-            contentLength: (postForm + ghostPollsHtml + auraDuelPanelHtml + glitchMarketHtml + html).length
-        },
-        timestamp: Date.now()
+    const postsFeedMount = `<div id="postsFeedMount" class="posts-feed-mount">${html || `<div class="card post-feed-empty"><p style="text-align:center;opacity:0.45;font-size:13px;padding:24px;">No transmissions in this sector yet. Be the first to transmit.</p></div>`}</div>`;
+    res.send(MASTER_UI(postForm + ghostPollsHtml + auraDuelPanelHtml + postsFeedMount, user, sectors, activeSector, allUsers, notifCount));
+});
+
+app.get('/glitch-market', async (req, res) => {
+    const user = req.session.user ? await User.findOne({ username: req.session.user.username }) : null;
+    const sectors = await Sector.find();
+    const notifCount = user ? await Notification.countDocuments({ recipient: user.username, isRead: false }) : 0;
+    const marketItems = await MarketItem.find().sort({ costInAura: 1 });
+    const unlockedSet = user && user.unlockedAssets ? user.unlockedAssets : [];
+    const content = buildGlitchMarketHtml(user, marketItems, unlockedSet);
+    res.send(MASTER_UI(content, user, sectors, 'Glitch Market', [], notifCount));
+});
+
+app.get('/cosmic-admin', async (req, res) => {
+    if (!req.session.user) return res.redirect('/login');
+    const user = await User.findOne({ username: req.session.user.username });
+    const sectors = await Sector.find();
+    const totalAgents = await User.countDocuments();
+    const allPosts = await Post.find({}, 'reactions');
+    let totalW = 0, totalL = 0;
+    allPosts.forEach(p => {
+        totalW += (p.reactions?.crown?.length || 0);
+        totalL += (p.reactions?.skull?.length || 0);
     });
-    // #endregion
-    res.send(MASTER_UI(postForm + ghostPollsHtml + auraDuelPanelHtml + glitchMarketHtml + html, user, sectors, activeSector, allUsers, notifCount));
+    const wlRatio = totalL > 0 ? (totalW / totalL).toFixed(2) : String(totalW);
+    const simRevenue = (totalAgents * 4.2 + totalW * 0.08).toFixed(0);
+    const content = `<div class="cosmic-admin-terminal card">
+        <h2 style="font-size:22px;font-weight:900;margin-bottom:6px;color:var(--cyan);"><i class="fas fa-chart-line"></i> COSMIC ADMIN TELEMETRY</h2>
+        <p style="opacity:0.45;font-size:11px;margin-bottom:24px;">Simulated matrix metrics — live overview</p>
+        <div class="admin-metrics-grid">
+            <div class="admin-metric-card"><span class="admin-metric-label">TOTAL MATRIX AGENTS</span><span class="admin-metric-value">${totalAgents.toLocaleString()}</span><div class="admin-micro-chart admin-chart-green" style="--h:72%"></div></div>
+            <div class="admin-metric-card"><span class="admin-metric-label">GLOBAL W/L RATIO</span><span class="admin-metric-value">${wlRatio}</span><div class="admin-micro-chart admin-chart-purple" style="--h:58%"></div></div>
+            <div class="admin-metric-card"><span class="admin-metric-label">ACTIVE BANDWIDTH PINGS</span><span class="admin-metric-value">${(4129 + totalAgents % 500).toLocaleString()}</span><div class="admin-micro-chart admin-chart-cyan" style="--h:84%"></div></div>
+            <div class="admin-metric-card"><span class="admin-metric-label">SIM REVENUE (AURA)</span><span class="admin-metric-value">${simRevenue}</span><div class="admin-micro-chart admin-chart-pink" style="--h:65%"></div></div>
+        </div>
+    </div>`;
+    res.send(MASTER_UI(content, user, sectors, 'Admin', [], 0));
 });
 
 // --- [🌐 V83 PORTFOLIO & SOCIAL FABRIC ROUTES] ---
@@ -2112,8 +1947,9 @@ app.get('/portfolio', async (req, res) => {
                     <span><i class="fas fa-user-plus"></i> ${dbUser.following.length} Following</span>
                 </div>
                 ${!isOwner && sessionUser ? `
-                <div style="display:flex; justify-content:center; gap:10px; margin-top:15px;">
+                <div style="display:flex; justify-content:center; gap:10px; margin-top:15px; flex-wrap:wrap;">
                     <button class="create-btn" style="width:auto; padding:8px 25px; border-radius:50px; font-size:10px;" onclick="followUser('${dbUser.username}')">${isFollowing ? 'UNFOLLOW' : 'FOLLOW'}</button>
+                    ${!isBlocked ? `<button class="create-btn" style="width:auto; padding:8px 25px; border-radius:50px; font-size:10px; background:linear-gradient(90deg, var(--cyan), var(--v));" onclick="openDmComposer('${dbUser.username}')"><i class="fas fa-envelope"></i> MESSAGE</button>` : ''}
                     ${!isBlocked ? `<button class="create-btn" style="width:auto; padding:8px 25px; border-radius:50px; font-size:10px; background:linear-gradient(90deg, #ff0000, #550000);" onclick="blockUser('${dbUser.username}')"><i class="fas fa-ban"></i> BLOCK</button>` : `<button class="create-btn" style="width:auto; padding:8px 25px; border-radius:50px; font-size:10px; background:#444;" disabled>BLOCKED</button>`}
                 </div>` : ''}
             </div>
@@ -2142,10 +1978,10 @@ app.get('/portfolio', async (req, res) => {
 app.post('/addpost', upload.single('media'), async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     try {
-        const isAnon = req.body.isAnonymous === 'on' || req.body.isAnonymous === 'true' || !!user.isGhost;
-        const isSensitive = req.body.isSensitive === 'on';
         const user = await User.findOne({ username: req.session.user.username });
         if (!user) return res.redirect('/login');
+        const isAnon = req.body.isAnonymous === 'on' || req.body.isAnonymous === 'true' || !!user.isGhost;
+        const isSensitive = req.body.isSensitive === 'on';
 
         // Feature 46: Anti-spam cooldown (30 seconds between posts)
         const now = new Date();
@@ -2306,15 +2142,60 @@ app.post('/api/follow', async (req, res) => {
 app.post('/api/block', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const currentUsername = req.session.user.username;
-    const { targetUsername } = req.body;
+    const targetUsername = (req.body.targetUsername || '').toLowerCase().trim();
+    if (!targetUsername) return res.status(400).json({ error: 'Invalid target' });
     try {
         const currentUser = await User.findOne({ username: currentUsername });
         if (!currentUser.blockedUsers.includes(targetUsername)) {
             currentUser.blockedUsers.push(targetUsername);
+            currentUser.following = currentUser.following.filter(u => u !== targetUsername);
             await currentUser.save();
         }
+        if (!req.session.user.blockedUsers) req.session.user.blockedUsers = [];
+        if (!req.session.user.blockedUsers.includes(targetUsername)) req.session.user.blockedUsers.push(targetUsername);
+        req.session.user.following = (req.session.user.following || []).filter(u => u !== targetUsername);
         return res.json({ status: 'blocked' });
     } catch (err) { return res.status(500).json({ error: 'Block execution failed' }); }
+});
+
+const isDmBlocked = async (userA, userB) => {
+    const a = await User.findOne({ username: userA });
+    const b = await User.findOne({ username: userB });
+    if (!a || !b) return true;
+    return (a.blockedUsers || []).includes(userB) || (b.blockedUsers || []).includes(userA);
+};
+
+app.get('/api/dm/thread/:peer', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
+    const me = req.session.user.username;
+    const peer = (req.params.peer || '').toLowerCase().trim();
+    if (!peer || peer === me) return res.status(400).json({ error: 'Invalid peer' });
+    if (await isDmBlocked(me, peer)) return res.status(403).json({ error: 'DM pipeline severed — block active' });
+    const messages = await Message.find({
+        $or: [{ sender: me, receiver: peer }, { sender: peer, receiver: me }]
+    }).sort({ date: 1 }).limit(120);
+    return res.json({
+        messages: messages.map(m => ({
+            sender: m.sender,
+            content: m.content,
+            mine: m.sender === me,
+            date: m.date
+        }))
+    });
+});
+
+app.post('/api/dm/send', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
+    const me = req.session.user.username;
+    const receiver = (req.body.receiver || '').toLowerCase().trim();
+    const content = (req.body.content || '').trim();
+    if (!receiver || !content) return res.status(400).json({ error: 'Receiver and content required' });
+    if (receiver === me) return res.status(400).json({ error: 'Cannot DM yourself' });
+    const peerExists = await User.findOne({ username: receiver });
+    if (!peerExists) return res.status(404).json({ error: 'User not found' });
+    if (await isDmBlocked(me, receiver)) return res.status(403).json({ error: 'DM blocked' });
+    await new Message({ sender: me, receiver, content }).save();
+    return res.json({ success: true });
 });
 
 app.post('/api/share', async (req, res) => {
@@ -2349,23 +2230,29 @@ app.post('/interact', async (req, res) => {
             await user.save();
             return res.json({ status: 'saved' });
         } else {
-            // V83 GenZ React System Integration
             const validReactions = ['crown', 'skull', 'ghost', 'fire', 'heart'];
             if (!validReactions.includes(type)) return res.status(400).json({ error: 'Invalid cosmic entity' });
             if (!post.reactions) post.reactions = { crown: [], skull: [], ghost: [], fire: [], heart: [] };
-            
-            // Remove user from all other reactions
-            validReactions.forEach(r => { if (post.reactions[r]) post.reactions[r] = post.reactions[r].filter(u => u !== username); });
-            // Add new reaction
-            post.reactions[type].push(username);
-            
-            // Trigger Notification for author
-            if (post.author !== username) {
-                await new Notification({ recipient: post.author, sender: username, type: 'reaction', referenceId: postId }).save();
+            const hadSame = post.reactions[type] && post.reactions[type].includes(username);
+            validReactions.forEach(r => {
+                if (post.reactions[r]) post.reactions[r] = post.reactions[r].filter(u => u !== username);
+            });
+            if (!hadSame) {
+                post.reactions[type].push(username);
+                if (post.author !== username && post.author !== 'GHOST_SIGNAL') {
+                    await new Notification({ recipient: post.author, sender: username, type: 'reaction', referenceId: postId }).save();
+                }
             }
-            
             await post.save();
-            return res.json({ status: 'reacted', reactions: post.reactions });
+            const counts = {
+                crown: post.reactions.crown?.length || 0,
+                skull: post.reactions.skull?.length || 0,
+                ghost: post.reactions.ghost?.length || 0,
+                fire: post.reactions.fire?.length || 0,
+                heart: post.reactions.heart?.length || 0
+            };
+            const userVote = validReactions.find(k => post.reactions[k]?.includes(username)) || null;
+            return res.json({ status: hadSame ? 'removed' : 'reacted', reactions: post.reactions, counts, userVote });
         }
     } catch (err) { return res.sendStatus(500); }
 });
@@ -2387,18 +2274,22 @@ app.get('/notifications', async (req, res) => {
 app.get('/dms', async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     const user = await User.findOne({ username: req.session.user.username });
-    // #region agent log H4-dms-route-state
-    appendDebugLog({
-        sessionId: 'f694f3',
-        runId: 'pre-debug-v2',
-        hypothesisId: 'H4',
-        location: 'server:index.js:/dms',
-        message: 'dms route rendered',
-        data: { hasUser: !!user, username: user ? user.username : null },
-        timestamp: Date.now()
+    const me = user.username;
+    const recent = await Message.find({ $or: [{ sender: me }, { receiver: me }] }).sort({ date: -1 }).limit(80);
+    const peerSet = new Set();
+    recent.forEach(m => {
+        const peer = m.sender === me ? m.receiver : m.sender;
+        if (peer && peer !== me) peerSet.add(peer);
     });
-    // #endregion
-    const content = `<div class="card" style="text-align:center; padding:50px;"><i class="fas fa-lock fa-3x" style="color:var(--cyan); margin-bottom:15px;"></i><h2>PRIVATE CHAT MATRIX SECURING...</h2><p style="opacity:0.5; font-size:12px; margin-top:10px;">Direct Messaging relays are currently synchronizing for end-to-end encryption in V84. Hang tight.</p></div>`;
+    const peers = [...peerSet];
+    const threadList = peers.length ? peers.map(p => `<button type="button" class="dm-thread-pill" onclick="openDmComposer('${p}')">@${p}</button>`).join('') : '<p style="opacity:0.35;font-size:12px;">No active threads. Open a profile and tap MESSAGE.</p>';
+    const withHint = req.query.with ? `<p style="font-size:11px;color:var(--cyan);margin-bottom:12px;">Opening uplink with @${req.query.with}...</p>` : '';
+    const content = `<div class="card dm-hub-card">
+        <h2 style="margin-bottom:8px;color:var(--cyan);"><i class="fas fa-envelope"></i> DIRECT MESSAGE MATRIX</h2>
+        <p style="opacity:0.45;font-size:11px;margin-bottom:16px;">Encrypted peer relays — use the composer below or open from any portfolio.</p>
+        ${withHint}
+        <div class="dm-thread-list">${threadList}</div>
+    </div>`;
     res.send(MASTER_UI(content, user, [], 'Direct Messages', [], 0));
 });
 
@@ -2542,26 +2433,25 @@ app.post('/change-username', async (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    // #region agent log H3-login-route-mount
-    appendDebugLog({
-        sessionId: 'f694f3',
-        runId: 'pre-debug-v2',
-        hypothesisId: 'H3',
-        location: 'server:index.js:/login',
-        message: 'login route rendered through MASTER_UI',
-        data: { hasSessionUser: !!(req.session && req.session.user) },
-        timestamp: Date.now()
-    });
-    // #endregion
-    res.send(MASTER_UI(`<div class="card" style="max-width:450px; margin: 60px auto; border-color: var(--cyan);"><div style="text-align:center; margin-bottom:25px;"><i class="fas fa-fingerprint fa-3x" style="color:var(--cyan); margin-bottom:15px;"></i><h2 style="color: #fff;">ENTER THE MATRIX</h2></div><a href="/auth/google" class="google-oauth-badge"><i class="fab fa-google"></i> LOGIN WITH GOOGLE</a><div class="auth-divider">or sync manually</div><form action="/login" method="POST"><input type="text" name="username" class="auth-input" placeholder="@username" required><input type="password" name="password" class="auth-input" placeholder="Password" required><button class="create-btn" style="margin-top:15px; background:var(--cyan); color:#000;">LET ME IN</button></form><p style="text-align:center; margin-top:25px; font-size:12px; opacity:0.6;">No account? <a href="/signup" style="color:var(--cyan); font-weight:bold;">Fix that</a></p></div>`, null, [], 'Login'));
+    if (req.session.user) return res.redirect('/dashboard');
+    const errMap = {
+        google_failed: 'Google authentication failed. Try again.',
+        google_callback: 'Google callback could not sync your session.'
+    };
+    const error = errMap[req.query.error] || '';
+    const loginFailed = req.query.failed === '1';
+    res.send(AUTH_UI({ error, loginFailed }));
 });
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     const user = await User.findOne({ username: username.toLowerCase().trim() });
-    if (!user || !user.password) return res.send("<script>alert('SYNC FAILED — try Google login'); window.history.back();</script>");
-    if (!(await bcrypt.compare(password, user.password))) return res.send("<script>alert('SYNC FAILED'); window.history.back();</script>");
+    if (!user || !user.password) return res.redirect('/login?failed=1');
+    if (!(await bcrypt.compare(password, user.password))) return res.redirect('/login?failed=1');
     req.session.user = { _id: user._id.toString(), username: user.username, aura: user.aura, avatarUrl: user.avatarUrl };
-    res.redirect('/dashboard');
+    req.session.save((err) => {
+        if (err) return res.redirect('/login?failed=1');
+        res.redirect('/dashboard');
+    });
 });
 // V87: Premium standalone signup page
 app.get('/signup', (req, res) => {
@@ -2710,26 +2600,14 @@ app.get('/auth/google/callback',
                     _id: userDoc._id.toString(),
                     username: userDoc.username,
                     aura: userDoc.aura,
-                    avatarUrl: userDoc.avatarUrl
+                    avatarUrl: userDoc.avatarUrl,
+                    isGhost: !!userDoc.isGhost
                 };
             }
-            // #region agent log H5-google-callback-session-sync
-            appendDebugLog({
-                sessionId: 'f694f3',
-                runId: 'pre-debug-v2',
-                hypothesisId: 'H5',
-                location: 'server:index.js:/auth/google/callback',
-                message: 'google callback session sync',
-                data: {
-                    hasReqUser: !!req.user,
-                    hasUserDoc: !!userDoc,
-                    hasSessionUserAfter: !!(req.session && req.session.user),
-                    sessionUsername: req.session && req.session.user ? req.session.user.username : null
-                },
-                timestamp: Date.now()
+            req.session.save((saveErr) => {
+                if (saveErr) return res.redirect('/login?error=google_callback');
+                res.redirect('/dashboard');
             });
-            // #endregion
-            res.redirect('/dashboard');
         } catch (err) {
             res.redirect('/login?error=google_callback');
         }
