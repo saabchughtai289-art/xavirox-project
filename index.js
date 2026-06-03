@@ -77,6 +77,15 @@
 const express = require('express');
 const path = require('path');
 const { AUTH_UI, buildGlitchMarketHtml, COSMIC_CLIENT_JS } = require('./cosmic-shell-v91');
+const {
+    THEME_TOGGLE_HTML,
+    THEME_RUNTIME_JS,
+    POST_COMPOSER_JS,
+    AURA_MATRIX_JS,
+    renderPostMedia,
+    wrapAuraAvatar,
+    topAlphaTickerHtml
+} = require('./cosmic-theme-v92');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
@@ -446,23 +455,37 @@ app.use(async (req, res, next) => {
     next();
 });
 
+app.use(async (req, res, next) => {
+    try {
+        res.locals.topAlphaAgent = await User.findOne({}).sort({ aura: -1 }).select('username aura');
+    } catch (e) {
+        res.locals.topAlphaAgent = null;
+    }
+    next();
+});
+
+const requireAuthPage = (req, res, next) => {
+    if (!isAuthenticated(req)) return res.redirect('/login');
+    next();
+};
+
 // --- [AI HELPER ENGINE] ---
 function fileToGenerativePart(buffer, mimeType) {
     return { inlineData: { data: buffer.toString("base64"), mimeType } };
 }
 
 // --- [MASTER UI ENGINE V83] ---
-const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', allUsers = [], notifCount = 0) => {
-    const isGuest = !user;
-    const auraColor = user ? (user.aura >= 500 ? 'var(--cyan)' : user.aura < 50 ? '#ff0000' : 'var(--p)') : 'var(--p)';
-    const guestAvatar = `<div class="user-avatar-fallback" style="background: linear-gradient(45deg, #333, #111);"><i class="fas fa-ghost"></i></div>`;
-    const userAvatarHtml = user && user.avatarUrl 
-        ? `<img src="${user.avatarUrl}" class="global-navbar-avatar-frame" alt="pfp">` 
-        : (user ? `<div class="user-avatar-fallback" style="background: linear-gradient(45deg, var(--p), var(--v));">${user.username.charAt(0).toUpperCase()}</div>` : guestAvatar);
+const MASTER_UI = (content, user, sectors = [], activeSector = 'Global', allUsers = [], notifCount = 0, topAlphaAgent = null) => {
+    if (!user) throw new Error('MASTER_UI requires authenticated session');
+    const auraColor = user.aura >= 500 ? 'var(--cyan)' : user.aura < 50 ? '#ff0000' : 'var(--p)';
+    const avatarInner = user.avatarUrl
+        ? `<img src="${user.avatarUrl}" class="global-navbar-avatar-frame" alt="pfp">`
+        : `<div class="user-avatar-fallback" style="background: linear-gradient(45deg, var(--p), var(--v));">${user.username.charAt(0).toUpperCase()}</div>`;
+    const userAvatarHtml = wrapAuraAvatar(avatarInner, user.aura);
 
     return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="cosmic-root">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XAVIROX | ${activeSector}</title>
@@ -495,7 +518,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         }
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
-        body { background: var(--bg); color: #fff; font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
+        body.cosmic-theme-body { background: #FFF0F5; color: #0F172A; font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out; will-change: transform, background-color, color, backdrop-filter; transform: translateZ(0); backface-visibility: hidden; }
+        html.dark body.cosmic-theme-body { background: #0F172A; color: #FFF0F5; }
 
         /* Animated cosmic background gradient mesh */
         body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3; background: radial-gradient(ellipse at 20% 50%, rgba(112,0,255,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(0,242,255,0.06) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(255,0,127,0.05) 0%, transparent 50%); pointer-events: none; }
@@ -950,14 +974,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         .report-btn:hover { color: #ff4444; background: rgba(255,0,0,0.08); }
         .cw-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.88); border-radius: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; z-index: 5; cursor: pointer; backdrop-filter: blur(12px); }
         .cw-label { font-size: 11px; font-weight: 900; color: #ffea00; letter-spacing: 2px; text-shadow: 0 0 10px #ffea00; }
-        body.light-mode { background: #f0f4f8; color: #111; }
-        body.light-mode .card { background: rgba(255,255,255,0.92); border-color: rgba(0,0,0,0.1); color: #111; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
-        body.light-mode .stars-container { background: #e2e8f0; }
-        body.light-mode .genz-search { background: rgba(0,0,0,0.06); color: #111; }
-        body.light-mode .dynamic-island { background: rgba(240,244,248,0.95); color: #111; }
-        body.light-mode .comment-node { background: rgba(0,0,0,0.04); }
-        body.light-mode .ghost-input, body.light-mode .auth-input, body.light-mode .comment-mini-input { background: rgba(0,0,0,0.05); color: #111; }
-        body.light-mode .cosmic-footer { background: rgba(220,228,240,0.95); }
+        html:not(.dark) .glass-surface, html:not(.dark) .card, html:not(.dark) .post-card, html:not(.dark) .dynamic-island, html:not(.dark) .feed-search-bar, html:not(.dark) .cosmic-controls-bar { backdrop-filter: blur(24px); background: rgba(255,255,255,0.4) !important; border: 1px solid rgba(15,23,42,0.1) !important; color: #0F172A !important; }
+        html.dark .glass-surface, html.dark .card, html.dark .post-card, html.dark .dynamic-island, html.dark .feed-search-bar, html.dark .cosmic-controls-bar { backdrop-filter: blur(24px); background: rgba(0,0,0,0.4) !important; border: 1px solid rgba(255,240,245,0.1) !important; color: #FFF0F5 !important; }
         .comment-like-btn { font-size: 10px; background: transparent; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 3px 8px; border-radius: 8px; font-weight: 700; margin-left: 8px; }
         .comment-like-btn:hover, .comment-like-btn.liked { color: var(--cyan); text-shadow: 0 0 8px var(--cyan); }
         .media-type-badge { font-size: 9px; background: rgba(112,0,255,0.2); border: 1px solid rgba(112,0,255,0.4); color: #bca0ff; padding: 2px 8px; border-radius: 50px; font-weight: 900; }
@@ -1052,19 +1070,20 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         }
     </style>
 </head>
-<body>
+<body class="cosmic-theme-body transition-colors duration-500">
+    ${THEME_TOGGLE_HTML}
+    ${topAlphaTickerHtml(topAlphaAgent)}
     <div class="stars-container" id="stars"></div>
     <div class="top-left-nav">
         <div class="nav-row">
             <div class="nav-item"><a href="/dashboard" class="nav-btn-circle"><i class="fas fa-rocket"></i></a><span class="icon-label">Orbit</span></div>
             <div class="nav-item"><a href="/leaderboard" class="nav-btn-circle" style="color: #ffea00;"><i class="fas fa-trophy"></i></a><span class="icon-label">Rankings</span></div>
             <div class="nav-item"><a href="/discover" class="nav-btn-circle" style="color: var(--p);"><i class="fas fa-compass"></i></a><span class="icon-label">Discover</span></div>
-            ${!isGuest ? `<div class="nav-item"><a href="/notifications" class="nav-btn-circle"><i class="fas fa-bell"></i>${notifCount > 0 ? `<div class="notif-badge">${notifCount}</div>` : ''}</a><span class="icon-label">Alerts</span></div>` : ''}
-            ${!isGuest ? `<div class="nav-item"><a href="/dms" class="nav-btn-circle"><i class="fas fa-envelope"></i></a><span class="icon-label">DMs</span></div>` : ''}
+            <div class="nav-item"><a href="/notifications" class="nav-btn-circle"><i class="fas fa-bell"></i>${notifCount > 0 ? `<div class="notif-badge">${notifCount}</div>` : ''}</a><span class="icon-label">Alerts</span></div>
+            <div class="nav-item"><a href="/dms" class="nav-btn-circle"><i class="fas fa-envelope"></i></a><span class="icon-label">DMs</span></div>
             <div class="nav-item"><a href="/portfolio" class="nav-btn-circle"><i class="fas fa-fingerprint"></i></a><span class="icon-label">Identity</span></div>
-            ${!isGuest ? `<div class="nav-item"><a href="/settings" class="nav-btn-circle" style="color:#aaa;"><i class="fas fa-gear"></i></a><span class="icon-label">Settings</span></div>` : ''}
-            ${!isGuest ? `<div class="nav-item"><a href="/logout" class="nav-btn-circle" style="color:var(--p)"><i class="fas fa-power-off"></i></a><span class="icon-label">Eject</span></div>` : ''}
-            ${isGuest ? `<div class="nav-item" style="margin-top:20px; padding-top:15px; border-top:1px solid var(--border);"><a href="/auth/google" class="google-oauth-badge google-oauth-sidebar"><i class="fab fa-google"></i> GOOGLE SYNC</a></div>` : ''}
+            <div class="nav-item"><a href="/settings" class="nav-btn-circle" style="color:#aaa;"><i class="fas fa-gear"></i></a><span class="icon-label">Settings</span></div>
+            <div class="nav-item"><a href="/logout" class="nav-btn-circle" style="color:var(--p)"><i class="fas fa-power-off"></i></a><span class="icon-label">Eject</span></div>
         </div>
     </div>
     <!-- V86: Search top-left | Dynamic Island top-center -->
@@ -1075,11 +1094,11 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
     <div class="dynamic-island glass-surface fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-full">
         ${userAvatarHtml}
         <div style="flex: 1;">
-            <div class="island-main">${isGuest ? "⚡ AURA: MAKE AN ACC LIL BRO 💀" : "⚡ AURA LEVEL: " + user.aura}</div>
-            <div class="island-detail">${isGuest ? "ACCESS REJECTED" : "MATRIX SECURE 🟢"}</div>
+            <div class="island-main" data-self-aura="${user.aura}">⚡ AURA LEVEL: ${user.aura}</div>
+            <div class="island-detail">MATRIX SECURE 🟢</div>
         </div>
     </div>
-    ${!isGuest ? `<div class="cosmic-controls-bar glass-surface">
+    <div class="cosmic-controls-bar glass-surface">
         <button type="button" id="sensitiveFilterBtn" class="cosmic-toggle-btn glass-btn is-active" data-filter-on="true" title="Blur sensitive posts in feed">
             <span class="indicator-dot"></span>
             <span>FEED FILTER</span>
@@ -1089,7 +1108,7 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             <span class="indicator-dot"></span>
             <span>MATRIX</span>
         </button>
-    </div>` : ''}
+    </div>
     <div class="main-container">
         <div class="feed" id="feedContainer">${content}</div>
         <div class="sidebar">
@@ -1100,23 +1119,23 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
                 </div>
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:20px;">SECTORS / COMMUNITIES</h4>
                 <a href="/dashboard?sector=Global" style="display:block; color:var(--cyan); margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-earth-americas"></i> GLOBAL</a>
-                ${!isGuest ? `<a href="/dashboard?sector=Following" style="display:block; color:#00ff88; margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-user-group"></i> FOLLOWING FEED</a>` : ''}
+                <a href="/dashboard?sector=Following" style="display:block; color:#00ff88; margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-user-group"></i> FOLLOWING FEED</a>
                 <a href="/discover" style="display:block; color:var(--p); margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-compass"></i> DISCOVER</a>
                 <a href="/dashboard?sector=confessions" style="display:block; color:#ffea00; margin-bottom:15px; text-decoration:none; font-weight:900;"><i class="fas fa-ghost"></i> #CONFESSIONS</a>
                 <a href="/glitch-market" class="glitch-market-nav-link"><i class="fas fa-satellite-dish"></i> 📡 GLITCH MARKET</a>
                 ${sectors.map(s => `<a href="/dashboard?sector=${s.name}" style="display:block; color:#ccc; font-size:12px; font-weight:700; text-decoration:none; margin-top:12px; opacity:0.8;"># ${s.name.toUpperCase()}</a>`).join('')}
-                ${!isGuest ? `<button type="button" class="create-btn" style="margin-top:25px; font-size:10px;" onclick="let n=prompt('Name the new community / sector?'); if(n) location.href='/create-sector?name='+n">+ BUILD COMMUNITY</button>` : ''}
+                <button type="button" class="create-btn" style="margin-top:25px; font-size:10px;" onclick="let n=prompt('Name the new community / sector?'); if(n) location.href='/create-sector?name='+n">+ BUILD COMMUNITY</button>
             </div>
             <div class="card" style="border-color: rgba(255,234,0,0.2);">
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:15px;"><i class="fas fa-fire" style="color:var(--p);"></i> TRENDING SECTORS</h4>
                 ${sectors.slice(0,4).map(s => `<a href="/dashboard?sector=${s.name}" class="trending-sector-pill"># ${s.name.toUpperCase()}</a>`).join('')}
                 <a href="/dashboard?sector=confessions" class="trending-sector-pill">#CONFESSIONS</a>
             </div>
-            ${!isGuest ? `<div class="card" style="border-color: rgba(0,242,255,0.15);">
+            <div class="card" style="border-color: rgba(0,242,255,0.15);">
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:12px;"><i class="fas fa-bolt" style="color:var(--cyan);"></i> QUICK ACTIONS</h4>
                 <button type="button" onclick="toggleTheme()" class="create-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); margin-bottom:10px; font-size:10px;"><i class="fas fa-circle-half-stroke"></i> TOGGLE THEME</button>
                 <a href="/settings" class="create-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); font-size:10px;"><i class="fas fa-gear"></i> SETTINGS</a>
-            </div>` : ''}
+            </div>
             <div class="card">
                 <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px;">FEEDBACK</h4>
                 <textarea id="fbTxt" style="width:100%; background:rgba(0,0,0,0.5); border:1px solid #333; border-radius:15px; color:#fff; padding:15px; margin-top:12px; outline:none; font-size:12px;" rows="2" placeholder="Drop thoughts..."></textarea>
@@ -1348,16 +1367,19 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
             syncPostSensitiveUI();
         })();
 
-        // Feature 47: Dark/Light Mode Toggle
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-            const isLight = document.body.classList.contains('light-mode');
-            localStorage.setItem('xavirox_theme', isLight ? 'light' : 'dark');
-            fetch('/api/theme', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ theme: isLight ? 'light' : 'dark' }) });
-        }
-        (function() {
-            const savedTheme = localStorage.getItem('xavirox_theme');
-            if (savedTheme === 'light') document.body.classList.add('light-mode');
+        ${THEME_RUNTIME_JS}
+        (function applyServerThemePreference() {
+            const serverTheme = ${JSON.stringify(user.theme === 'dark' ? 'dark' : 'light')};
+            const root = document.documentElement;
+            const isDark = serverTheme === 'dark';
+            root.classList.toggle('dark', isDark);
+            document.body.classList.toggle('dark', isDark);
+            localStorage.setItem('xavirox_theme', serverTheme);
+            const btn = document.getElementById('cosmicThemeToggle');
+            if (btn) {
+                btn.classList.toggle('is-dark', isDark);
+                btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+            }
         })();
 
         // Feature 28: Draft Auto-save
@@ -1517,6 +1539,8 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
         }
 
         ${COSMIC_CLIENT_JS}
+        ${AURA_MATRIX_JS}
+        ${POST_COMPOSER_JS}
 
         (function bootDmDeepLink() {
             const params = new URLSearchParams(location.search);
@@ -1528,14 +1552,17 @@ const MASTER_UI = (content, user = null, sectors = [], activeSector = 'Global', 
 };
 
 // --- [CORE ROUTES & FEEDS] ---
-app.get('/', (req, res) => { res.redirect('/dashboard'); });
+app.get('/', (req, res) => {
+    if (!isAuthenticated(req)) return res.redirect('/login');
+    res.redirect('/dashboard');
+});
 
 // 👑 LEADERBOARD ROUTE
-app.get('/leaderboard', async (req, res) => {
+app.get('/leaderboard', requireAuthPage, async (req, res) => {
     try {
         const topUsers = await User.find({}).sort({ aura: -1 }).limit(10);
         const sectors = await Sector.find();
-        const user = req.session.user ? await User.findOne({ username: req.session.user.username }) : null;
+        const user = await User.findOne({ username: req.session.user.username });
         const notifCount = user ? await Notification.countDocuments({ recipient: user.username, isRead: false }) : 0;
 
         const rank1User = topUsers[0] || { username: 'void_ghost', aura: 0, avatarUrl: null, bio: 'No vibe...' };
@@ -1572,15 +1599,16 @@ app.get('/leaderboard', async (req, res) => {
 
         const leaderboardContent = `<div class="card" style="border-color: var(--cyan); background: rgba(0, 242, 255, 0.01);"><div style="text-align: center; margin-bottom: 30px;"><span style="font-size: 10px; font-weight: 900; letter-spacing: 3px; color: var(--cyan); text-transform: uppercase;">AURA MATRIX PROTOCOL</span><h1 style="font-size: 28px; font-weight: 900; letter-spacing: 1px; margin-top: 5px;">NETWORK LEADERBOARD</h1></div><div class="podium-container"><div class="podium-card rank-2">${makePodiumAvatar(rank2User, 'var(--p)')}<span style="font-weight: 800; font-size: 14px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank2User.username} ${rank2User.aura >= 500 ? '<i class="fas fa-circle-check verified-badge"></i>' : ''}</span><span style="font-size:9px; opacity:0.5; margin-top:3px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${rank2User.bio}"</span><span style="font-size: 12px; font-weight: 900; color: var(--p); margin-top: auto;">${rank2User.aura} AURA</span><div class="podium-rank-badge">2</div></div><div class="podium-card rank-1"><div class="podium-crown" style="color: #ffea00;"><i class="fas fa-crown"></i></div>${makePodiumAvatar(rank1User, '#ffea00')}<span style="font-weight: 900; font-size: 16px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank1User.username} ${rank1User.aura >= 500 ? '<i class="fas fa-circle-check verified-badge"></i>' : ''}</span><span style="font-size:10px; color:var(--cyan); opacity:0.8; margin-top:3px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${rank1User.bio}"</span><span style="font-size: 13px; font-weight: 900; color: var(--cyan); margin-top: auto;">${rank1User.aura} AURA</span><div class="podium-rank-badge">1</div></div><div class="podium-card rank-3">${makePodiumAvatar(rank3User, 'var(--v)')}<span style="font-weight: 800; font-size: 13px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank3User.username} ${rank3User.aura >= 500 ? '<i class="fas fa-circle-check verified-badge"></i>' : ''}</span><span style="font-size:9px; opacity:0.5; margin-top:3px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${rank3User.bio}"</span><span style="font-size: 11px; font-weight: 900; color: var(--v); margin-top: auto;">${rank3User.aura} AURA</span><div class="podium-rank-badge">3</div></div></div><div style="margin-top: 20px;"><h4 style="font-size: 10px; opacity: 0.4; letter-spacing: 2px; margin-bottom: 15px; text-transform: uppercase;">Matrix Contenders</h4>${remainingUsersHtml || '<p style="text-align:center; font-size:12px; opacity:0.3; padding: 20px;">No further structural matrix records found.</p>'}</div></div>`;
 
-        res.send(MASTER_UI(leaderboardContent, user, sectors, 'Leaderboard', [], notifCount));
+        res.send(MASTER_UI(leaderboardContent, user, sectors, 'Leaderboard', [], notifCount, res.locals.topAlphaAgent));
     } catch (err) { res.redirect('/dashboard'); }
 });
 
 // --- [DASHBOARD RENDER ENGINE - V83 SOCIAL FEED] ---
-app.get('/dashboard', async (req, res) => {
+app.get('/dashboard', requireAuthPage, async (req, res) => {
     const activeSector = req.query.sector || 'Global';
     const currentTime = new Date();
-    const user = req.session.user ? await User.findOne({ username: req.session.user.username }) : null;
+    const user = await User.findOne({ username: req.session.user.username });
+    if (!user) return res.redirect('/login');
     const notifCount = user ? await Notification.countDocuments({ recipient: user.username, isRead: false }) : 0;
 
     let feedFilter = {};
@@ -1654,9 +1682,9 @@ app.get('/dashboard', async (req, res) => {
     </div>` : '';
 
     const postForm = `<div class="card transmit-card" style="border-color: rgba(255,255,255,0.2);">
-        ${!user ? `<button type="button" class="create-btn" onclick="location.href='/login'">SYNC TO TRANSMIT ⚡</button>` : `
-            <form action="/addpost" method="POST" enctype="multipart/form-data" id="mainPostForm">
-                <textarea id="txBarEngine" name="content" style="width:100%; background:transparent; border:none; color:#fff; outline:none; font-size:18px; min-height:80px; font-weight:500;" placeholder="Transmit a signal... You can @mention and #tag users too!" required></textarea>
+            <form action="/addpost" method="POST" enctype="multipart/form-data" id="mainPostForm" data-ajax="1">
+                <textarea id="txBarEngine" name="content" class="transmit-textarea" placeholder="Transmit a signal... You can @mention and #tag users too!" required></textarea>
+                <div id="mediaPreviewMount" class="media-preview-mount" hidden></div>
                 <input type="hidden" name="sector" value="${activeSector === 'Following' ? 'Global' : activeSector}">
                 <input type="hidden" name="isAnonymous" id="ghostModeHidden" value="${(user.isGhost || activeSector==='confessions') ? 'true' : 'false'}">
                 <input type="checkbox" name="isSensitive" id="postSensitiveToggle" class="time-capsule-picker-hidden" tabindex="-1" aria-hidden="true">
@@ -1679,7 +1707,7 @@ app.get('/dashboard', async (req, res) => {
                 <div class="transmit-tools-row">
                     <label class="transmit-pill-btn" style="cursor:pointer; margin:0;">
                         <i class="fas fa-image"></i> MEDIA
-                        <input type="file" name="media" hidden accept="image/*,video/*,image/gif">
+                        <input type="file" name="media" id="postMediaInput" hidden accept="image/*,video/*,image/gif">
                     </label>
                     <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
                         <button type="button" onclick="togglePollForm()" class="transmit-pill-btn">
@@ -1703,7 +1731,7 @@ app.get('/dashboard', async (req, res) => {
                     sec.style.display = visible ? 'none' : 'block';
                     isPollInput.value = visible ? '0' : '1';
                 }
-            </script>`}
+            </script>
     </div>`;
 
     const allComments = await Comment.find({ postId: { $in: posts.map(p => p._id) } }).sort({ date: 1 });
@@ -1743,7 +1771,10 @@ app.get('/dashboard', async (req, res) => {
         const currentAvatar = (postAuthor && postAuthor.avatarUrl) ? postAuthor.avatarUrl : p.authorAvatar;
         const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.author}&backgroundColor=000000`;
         const ghostAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=ghost&backgroundColor=111111`;
-        const postAvatarSnippet = currentAvatar ? `<a href="/portfolio?user=${p.author}"><img src="${currentAvatar}" class="post-pfp"></a>` : `<a href="/portfolio?user=${p.author}"><img src="${defAvatar}" class="post-pfp"></a>`;
+        const postAvatarInner = currentAvatar
+            ? `<a href="/portfolio?user=${p.author}"><img src="${currentAvatar}" class="post-pfp" alt="@${p.author}"></a>`
+            : `<a href="/portfolio?user=${p.author}"><img src="${defAvatar}" class="post-pfp" alt="@${p.author}"></a>`;
+        const postAvatarSnippet = wrapAuraAvatar(postAvatarInner, currentAura);
 
         // 🧬 V83 REACT SYSTEM LOGIC
         const rCount = { crown: p.reactions?.crown?.length || 0, skull: p.reactions?.skull?.length || 0, ghost: p.reactions?.ghost?.length || 0, fire: p.reactions?.fire?.length || 0, heart: p.reactions?.heart?.length || 0 };
@@ -1782,9 +1813,7 @@ app.get('/dashboard', async (req, res) => {
             }).join('') + `<p style="font-size:10px; opacity:0.4; margin-top:8px;">${totalVotes} votes</p></div>`;
         }
 
-        // Feature 21: Is media a video?
-        const isVideo = p.mediaUrl && (p.mediaUrl.startsWith('data:video') || p.mediaUrl.includes('video'));
-        const mediaHtml = p.mediaUrl ? (isVideo ? `<video src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border);" controls></video><span class="media-type-badge">VIDEO</span>` : `<img src="${p.mediaUrl}" style="width:100%; border-radius:20px; margin-top:15px; border:1px solid var(--border); box-shadow: 0 5px 15px rgba(0,0,0,0.5);">`) : '';
+        const mediaHtml = p.mediaUrl ? `<div class="post-media-wrap mt-3">${renderPostMedia(p.mediaUrl)}</div>` : '';
 
         const sensitiveBodyClass = p.isSensitive ? 'sensitive-post-content is-sensitive' : 'sensitive-post-content';
 
@@ -1797,7 +1826,7 @@ app.get('/dashboard', async (req, res) => {
                 <div style="display:flex; flex-direction:column; flex:1;">
                     <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:14px; letter-spacing:0.5px;">
                         ${p.isAnonymous ? 'GHOST_SIGNAL' : '<a href="/portfolio?user=' + p.author + '" style="color:inherit; text-decoration:none;">@'+p.author+'</a>' + isVer + trendingBadgeHtml + wordBadge + streakBadge}
-                        ${!p.isAnonymous ? `<span class="aura-badge">${currentAura}</span>` : ''}
+                        ${!p.isAnonymous ? `<span class="aura-badge aura-badge-live">${currentAura}</span>` : ''}
                     </b>
                     ${!p.isAnonymous ? `<span class="bio-post-snippet">${(postAuthor && postAuthor.bio) ? postAuthor.bio : p.authorBio}</span>` : ''}
                     <div style="font-size:10px; opacity:0.4; margin-top:2px;">${new Date(p.date).toLocaleString()} • ${p.sector.toUpperCase()}${p.isEdited ? ' • <i class="fas fa-pen" style="font-size:8px;"></i> edited' : ''}</div>
@@ -1834,17 +1863,17 @@ app.get('/dashboard', async (req, res) => {
     }).join('');
 
     const postsFeedMount = `<div id="postsFeedMount" class="posts-feed-mount">${html || `<div class="card post-feed-empty"><p style="text-align:center;opacity:0.45;font-size:13px;padding:24px;">No transmissions in this sector yet. Be the first to transmit.</p></div>`}</div>`;
-    res.send(MASTER_UI(postForm + ghostPollsHtml + auraDuelPanelHtml + postsFeedMount, user, sectors, activeSector, allUsers, notifCount));
+    res.send(MASTER_UI(postForm + ghostPollsHtml + auraDuelPanelHtml + postsFeedMount, user, sectors, activeSector, allUsers, notifCount, res.locals.topAlphaAgent));
 });
 
-app.get('/glitch-market', async (req, res) => {
-    const user = req.session.user ? await User.findOne({ username: req.session.user.username }) : null;
+app.get('/glitch-market', requireAuthPage, async (req, res) => {
+    const user = await User.findOne({ username: req.session.user.username });
     const sectors = await Sector.find();
-    const notifCount = user ? await Notification.countDocuments({ recipient: user.username, isRead: false }) : 0;
+    const notifCount = await Notification.countDocuments({ recipient: user.username, isRead: false });
     const marketItems = await MarketItem.find().sort({ costInAura: 1 });
-    const unlockedSet = user && user.unlockedAssets ? user.unlockedAssets : [];
+    const unlockedSet = user.unlockedAssets ? user.unlockedAssets : [];
     const content = buildGlitchMarketHtml(user, marketItems, unlockedSet);
-    res.send(MASTER_UI(content, user, sectors, 'Glitch Market', [], notifCount));
+    res.send(MASTER_UI(content, user, sectors, 'Glitch Market', [], notifCount, res.locals.topAlphaAgent));
 });
 
 app.get('/cosmic-admin', async (req, res) => {
@@ -1870,11 +1899,11 @@ app.get('/cosmic-admin', async (req, res) => {
             <div class="admin-metric-card"><span class="admin-metric-label">SIM REVENUE (AURA)</span><span class="admin-metric-value">${simRevenue}</span><div class="admin-micro-chart admin-chart-pink" style="--h:65%"></div></div>
         </div>
     </div>`;
-    res.send(MASTER_UI(content, user, sectors, 'Admin', [], 0));
+    res.send(MASTER_UI(content, user, sectors, 'Admin', [], 0, res.locals.topAlphaAgent));
 });
 
 // --- [🌐 V83 PORTFOLIO & SOCIAL FABRIC ROUTES] ---
-app.get('/portfolio', async (req, res) => {
+app.get('/portfolio', requireAuthPage, async (req, res) => {
     const sessionUser = req.session.user;
     const queryTargetName = req.query.user ? req.query.user.toLowerCase().trim() : (sessionUser ? sessionUser.username : null);
     if(!queryTargetName) return res.redirect('/login');
@@ -1924,7 +1953,8 @@ app.get('/portfolio', async (req, res) => {
 
     const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${dbUser.username}&backgroundColor=000000`;
     const defaultBanner = `https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1000&auto=format&fit=crop`;
-    const portfolioAvatarRender = dbUser.avatarUrl ? `<img src="${dbUser.avatarUrl}" class="profile-pfp-lg">` : `<img src="${defaultAvatar}" class="profile-pfp-lg">`;
+    const portfolioAvatarInner = dbUser.avatarUrl ? `<img src="${dbUser.avatarUrl}" class="profile-pfp-lg" alt="@${dbUser.username}">` : `<img src="${defaultAvatar}" class="profile-pfp-lg" alt="@${dbUser.username}">`;
+    const portfolioAvatarRender = wrapAuraAvatar(portfolioAvatarInner, dbUser.aura);
 
     const content = `
         <div class="card" style="padding-top:0; overflow:hidden;">
@@ -1932,7 +1962,7 @@ app.get('/portfolio', async (req, res) => {
                 ${isOwner ? `<form action="/update-banner" method="POST" enctype="multipart/form-data" id="bannerForm" style="display:none;"><input type="file" name="media" id="bannerInput" onchange="document.getElementById('bannerForm').submit()" accept="image/*"></form><label for="bannerInput" class="edit-banner-btn"><i class="fas fa-camera"></i> EDIT DRIP</label>` : ''}
             </div>
 
-            <div class="profile-pfp-container">
+            <div class="profile-pfp-container aura-profile-frame">
                 ${portfolioAvatarRender}
                 ${isOwner ? `<form action="/upload-avatar" method="POST" enctype="multipart/form-data" id="avatarUploadFormEngine" style="display:none;"><input type="file" name="avatar" id="avatarFileInputNode" accept="image/*" onchange="document.getElementById('avatarUploadFormEngine').submit();"></form><label for="avatarFileInputNode" class="edit-pfp-btn" title="Change PFP"><i class="fas fa-pen"></i></label>` : ''}
             </div>
@@ -1971,7 +2001,7 @@ app.get('/portfolio', async (req, res) => {
         ${isOwner ? `<div class="card" style="border-color:rgba(0, 242, 255, 0.3);"><h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--cyan); font-weight:900;"><i class="fas fa-vault"></i> SAVED VAULT</h4>${savedFeedHtml || '<p style="opacity:0.2; font-size:12px; text-align:center;">NO ARCHIVED FILES FOUND</p>'}</div><div class="card ghost-card"><h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--v); font-weight:900;"><i class="fas fa-user-secret"></i> INCOGNITO GHOST VOID</h4>${ghostInbox || '<p style="opacity:0.3; font-size:12px; text-align:center; padding:10px;">GHOST VOID IS EMPTY</p>'}</div>` : ''}
         <div class="card" style="border-color: rgba(255,0,127,0.3);"><h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--p); font-weight:900;">💥 DROP AN ANONYMOUS BOMB TO ${dbUser.username.toUpperCase()}</h4><form action="/send-ghost-msg" method="POST"><input type="hidden" name="targetUser" value="${dbUser.username}"><textarea name="message" class="ghost-input" style="min-height:80px; resize:none;" placeholder="Write a confidential truth bomb..." required></textarea><button class="create-btn" style="background: linear-gradient(90deg, var(--v), #000);">LAUNCH ANONYMOUS SIGNAL 🚀</button></form></div>`;
     
-    res.send(MASTER_UI(content, activeSessionDbUser, sectors, 'Portfolio', [], notifCount));
+    res.send(MASTER_UI(content, activeSessionDbUser, sectors, 'Portfolio', [], notifCount, res.locals.topAlphaAgent));
 });
 
 // --- [V83 API ROUTES FOR MENTIONS, SHARES, REACTS, FOLLOWS & DMs] ---
@@ -2215,6 +2245,20 @@ app.post('/api/share', async (req, res) => {
     } catch(err) { return res.status(500).json({ error: 'Failed to share' }); }
 });
 
+app.post('/api/theme', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+        const user = await User.findOne({ username: req.session.user.username });
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        const theme = req.body.theme === 'dark' ? 'dark' : 'light';
+        user.theme = theme;
+        await user.save();
+        return res.json({ ok: true, theme });
+    } catch (e) {
+        return res.status(500).json({ error: 'Theme sync failed' });
+    }
+});
+
 app.post('/interact', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const { postId, type } = req.body;
@@ -2237,13 +2281,26 @@ app.post('/interact', async (req, res) => {
             validReactions.forEach(r => {
                 if (post.reactions[r]) post.reactions[r] = post.reactions[r].filter(u => u !== username);
             });
+            let authorAura = null;
             if (!hadSame) {
                 post.reactions[type].push(username);
                 if (post.author !== username && post.author !== 'GHOST_SIGNAL') {
                     await new Notification({ recipient: post.author, sender: username, type: 'reaction', referenceId: postId }).save();
+                    const authorDoc = await User.findOne({ username: post.author });
+                    if (authorDoc) {
+                        if (type === 'crown') authorDoc.aura = (authorDoc.aura || 0) + 100;
+                        if (type === 'skull') authorDoc.aura = (authorDoc.aura || 0) - 50;
+                        await authorDoc.save();
+                        authorAura = authorDoc.aura;
+                        post.authorAura = authorDoc.aura;
+                    }
                 }
+                if (type === 'crown') user.aura = (user.aura || 0) + 5;
+                if (type === 'skull' && username !== post.author) user.aura = Math.max(0, (user.aura || 0) - 2);
             }
             await post.save();
+            await user.save();
+            if (req.session.user) req.session.user.aura = user.aura;
             const counts = {
                 crown: post.reactions.crown?.length || 0,
                 skull: post.reactions.skull?.length || 0,
@@ -2252,14 +2309,21 @@ app.post('/interact', async (req, res) => {
                 heart: post.reactions.heart?.length || 0
             };
             const userVote = validReactions.find(k => post.reactions[k]?.includes(username)) || null;
-            return res.json({ status: hadSame ? 'removed' : 'reacted', reactions: post.reactions, counts, userVote });
+            return res.json({
+                status: hadSame ? 'removed' : 'reacted',
+                reactions: post.reactions,
+                counts,
+                userVote,
+                authorAura,
+                voterAura: user.aura,
+                auraDelta: !hadSame && type === 'crown' ? 100 : (!hadSame && type === 'skull' ? -50 : 0)
+            });
         }
     } catch (err) { return res.sendStatus(500); }
 });
 
 // V83 DMs & Notifications Static Handlers (To prevent 404s before full Websocket architecture)
-app.get('/notifications', async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
+app.get('/notifications', requireAuthPage, async (req, res) => {
     const user = await User.findOne({ username: req.session.user.username });
     const notifs = await Notification.find({ recipient: user.username }).sort({ date: -1 }).limit(30);
     // Mark as read
@@ -2268,11 +2332,10 @@ app.get('/notifications', async (req, res) => {
     const notifHtml = notifs.map(n => `<div class="card" style="padding:15px; margin-bottom:10px;"><b style="color:var(--cyan);">@${n.sender}</b> ${n.type === 'mention' ? 'mentioned you in a transmission.' : n.type === 'follow' ? 'started following your matrix.' : 'reacted to your post.'}</div>`).join('');
     
     const content = `<div class="card"><h2 style="margin-bottom:20px; color:var(--cyan);"><i class="fas fa-bell"></i> SYSTEM ALERTS</h2>${notifHtml || '<p>No structural alerts found.</p>'}</div>`;
-    res.send(MASTER_UI(content, user, [], 'Alerts', [], 0));
+    res.send(MASTER_UI(content, user, [], 'Alerts', [], 0, res.locals.topAlphaAgent));
 });
 
-app.get('/dms', async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
+app.get('/dms', requireAuthPage, async (req, res) => {
     const user = await User.findOne({ username: req.session.user.username });
     const me = user.username;
     const recent = await Message.find({ $or: [{ sender: me }, { receiver: me }] }).sort({ date: -1 }).limit(80);
@@ -2290,7 +2353,7 @@ app.get('/dms', async (req, res) => {
         ${withHint}
         <div class="dm-thread-list">${threadList}</div>
     </div>`;
-    res.send(MASTER_UI(content, user, [], 'Direct Messages', [], 0));
+    res.send(MASTER_UI(content, user, [], 'Direct Messages', [], 0, res.locals.topAlphaAgent));
 });
 
 // --- [REMAINING ROUTES] ---
@@ -2578,7 +2641,7 @@ app.post('/register', async (req, res) => {
     }
     return handleAuthSignup(req, res);
 });
-app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/dashboard'); });
+app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login'); });
 
 // ============================================================
 // 🧬 V86 GOOGLE OAUTH ROUTING MATRIX
