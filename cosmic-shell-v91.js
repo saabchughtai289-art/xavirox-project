@@ -1,9 +1,13 @@
-/* V91 — Isolated auth shell + shared client runtime for Xavirox Cosmic OS */
+/* V91/V92 — Isolated auth shell + shared client runtime for Xavirox Cosmic OS */
+
+const { THEME_TOGGLE_HTML, THEME_RUNTIME_JS } = require('./cosmic-theme-v92');
 
 const AUTH_UI = (opts = {}) => {
     const errorMsg = opts.error || '';
     const loginFailed = opts.loginFailed || false;
-    const failedBanner = loginFailed ? '<div class="auth-error-banner">Invalid credentials — matrix sync denied.</div>' : '';
+    const failedBanner = loginFailed
+        ? '<div class="auth-error-banner">Invalid credentials — matrix sync denied.</div>'
+        : '';
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,10 +17,12 @@ const AUTH_UI = (opts = {}) => {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/style.css">
 </head>
-<body class="auth-workspace">
+<body class="auth-workspace cosmic-theme-body transition-colors duration-500">
+    ${THEME_TOGGLE_HTML}
+    <div class="auth-ambient-halo" aria-hidden="true"></div>
     <div class="stars-container" id="stars"></div>
-    <main class="auth-workspace-inner">
-        <div class="auth-glass-card ${loginFailed ? 'auth-glitch-flash' : ''}" id="authGlassCard">
+    <main class="auth-workspace-inner w-screen h-screen flex items-center justify-center overflow-hidden relative">
+        <div class="auth-glass-card ${loginFailed ? 'auth-glitch-flash auth-shake' : ''}" id="authGlassCard">
             <button type="button" class="audio-matrix-toggle" id="audioMatrixToggle" title="Toggle matrix ambience" aria-label="Toggle audio">
                 <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
             </button>
@@ -33,8 +39,8 @@ const AUTH_UI = (opts = {}) => {
             </a>
             <div class="auth-divider"><span>or sync manually</span></div>
             <form action="/login" method="POST" class="auth-form-stack" id="authLoginForm">
-                <input type="text" name="username" class="auth-glass-input" placeholder="@username" required autocomplete="username">
-                <input type="password" name="password" class="auth-glass-input" placeholder="Password" required autocomplete="current-password">
+                <input type="text" name="username" class="auth-cyber-input" placeholder="@username" required autocomplete="username">
+                <input type="password" name="password" class="auth-cyber-input" placeholder="Password" required autocomplete="current-password">
                 <button type="submit" class="auth-submit-btn">LET ME IN</button>
             </form>
             <p class="auth-footer-link">No account? <a href="/signup">Forge identity</a></p>
@@ -42,6 +48,7 @@ const AUTH_UI = (opts = {}) => {
         <p class="auth-brand-signature">getxavirox.xyz</p>
     </main>
     <script>
+        ${THEME_RUNTIME_JS}
         (function(){
             const c = document.getElementById('stars');
             if (c) for (let i = 0; i < 60; i++) {
@@ -73,10 +80,26 @@ const AUTH_UI = (opts = {}) => {
                     try { if (audioOsc) { audioOsc.stop(); audioOsc = null; } } catch (e) {}
                 }
             });
+            const form = document.getElementById('authLoginForm');
+            if (form) form.addEventListener('submit', (e) => {
+                const u = form.querySelector('[name="username"]');
+                const p = form.querySelector('[name="password"]');
+                if (!u || !p || !u.value.trim() || !p.value) {
+                    e.preventDefault();
+                    const card = document.getElementById('authGlassCard');
+                    if (card) {
+                        card.classList.add('auth-glitch-flash', 'auth-shake');
+                        setTimeout(() => card.classList.remove('auth-shake'), 600);
+                    }
+                }
+            });
             const params = new URLSearchParams(location.search);
             if (params.get('error') || params.get('failed')) {
                 const card = document.getElementById('authGlassCard');
-                if (card) { card.classList.add('auth-glitch-flash'); setTimeout(() => card.classList.remove('auth-glitch-flash'), 1200); }
+                if (card) {
+                    card.classList.add('auth-glitch-flash', 'auth-shake');
+                    setTimeout(() => card.classList.remove('auth-glitch-flash', 'auth-shake'), 1200);
+                }
             }
         })();
     </script>
@@ -85,7 +108,7 @@ const AUTH_UI = (opts = {}) => {
 };
 
 const buildGlitchMarketHtml = (user, marketItems, unlockedSet) => {
-    if (!user) return `<div class="card"><p>Sync identity to access Glitch Market.</p><a href="/login" class="create-btn">LOGIN</a></div>`;
+    if (!user) return '';
     return `<div class="glitch-market-terminal">
         <h2 style="font-size:22px;font-weight:900;margin-bottom:8px;"><i class="fas fa-satellite-dish"></i> GLITCH MARKET TERMINAL</h2>
         <p style="opacity:0.55;font-size:12px;margin-bottom:20px;">Neon cosmetics &amp; matrix upgrades — spend Aura to unlock PRO-tier assets.</p>
@@ -122,29 +145,6 @@ const COSMIC_CLIENT_JS = `
                 if (!q) { card.style.display = ''; return; }
                 card.style.display = (card.innerText || '').toLowerCase().includes(q) ? '' : 'none';
             });
-        }
-
-        async function interact(event, postId, type) {
-            try {
-                const res = await fetch('/interact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ postId, type }) });
-                if (res.status === 200) {
-                    const data = await res.json();
-                    if (type === 'save') {
-                        const btn = event && event.currentTarget;
-                        if (btn) { btn.classList.toggle('active-save'); }
-                        return;
-                    }
-                    if (data.reactions && data.counts) {
-                        const card = document.querySelector('.post-card[data-post-id="' + postId + '"]');
-                        if (card) {
-                            const wBtn = card.querySelector('.wl-w-btn');
-                            const lBtn = card.querySelector('.wl-l-btn');
-                            if (wBtn) { wBtn.innerHTML = 'W ' + (data.counts.crown || 0); wBtn.classList.toggle('active', data.userVote === 'crown'); }
-                            if (lBtn) { lBtn.innerHTML = 'L ' + (data.counts.skull || 0); lBtn.classList.toggle('active', data.userVote === 'skull'); }
-                        }
-                    }
-                } else if (res.status === 401) { window.location.href = '/login'; }
-            } catch (e) {}
         }
 
         async function blockUser(targetUser) {
