@@ -1501,33 +1501,35 @@ const MASTER_UI = (content, user, sectors = [], activeSector = 'Global', allUser
             }
         }
 
-        // V86 Aura Duel challenge
-        async function submitAuraDuel(event) {
-            event.preventDefault();
-            const opponentInput = document.getElementById('duelOpponent');
-            const wagerInput = document.getElementById('duelWager');
-            if (!opponentInput || !wagerInput) return;
-            try {
-                const res = await fetch('/api/aura/challenge', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        targetUsername: opponentInput.value.trim(),
-                        wager: parseInt(wagerInput.value, 10)
-                    })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    alert('Success: ' + (data.message || 'Operation successful!'));
-                } else {
-                    alert('Error: ' + (data.error || 'Something went wrong'));
-                }
-            } catch (error) {
-                console.error("Request failed:", error);
-                alert("Server error, please try again.");
+     // V86 Aura Duel challenge
+    async function submitAuraDuel(event) {
+        event.preventDefault();
+        const opponentInput = document.getElementById('duelOpponent');
+        const wagerInput = document.getElementById('duelWager');
+        if (!opponentInput || !wagerInput) return;
+        
+        try {
+            const res = await fetch('/api/aura/challenge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    targetUsername: opponentInput.value.trim(),
+                    wager: parseInt(wagerInput.value, 10)
+                })
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                alert('Success: ' + (data.message || 'Operation successful!'));
+            } else {
+                alert('Error: ' + (data.error || 'Something went wrong'));
             }
+        } catch (error) {
+            console.error("Request failed:", error);
+            alert("Server error, please try again.");
         }
     }
+    
     init();
-}
+}); // Yeh event listener ya wrapper yahan close ho raha hai
 
