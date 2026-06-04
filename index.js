@@ -316,7 +316,7 @@ passport.deserializeUser(async (username, done) => {
 });
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-passport.use(new GoogleStrategy({
+    passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: GOOGLE_CALLBACK_URL,
@@ -1509,19 +1509,16 @@ const MASTER_UI = (content, user, sectors = [], activeSector = 'Global', allUser
             if (!opponentInput || !wagerInput) return;
             try {
                 const res = await fetch('/api/aura/challenge', {
-method: 'POST',
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         targetUsername: opponentInput.value.trim(),
                         wager: parseInt(wagerInput.value, 10)
                     })
                 });
-
                 const data = await res.json();
-                
                 if (res.ok) {
                     alert('Success: ' + (data.message || 'Operation successful!'));
-                    // Jo bhi agla success logic hai (jaise modal close karna ya redirect)
                 } else {
                     alert('Error: ' + (data.error || 'Something went wrong'));
                 }
@@ -1531,6 +1528,5 @@ method: 'POST',
             }
         }
     }
-
     init();
 }
