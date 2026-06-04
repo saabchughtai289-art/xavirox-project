@@ -602,7 +602,8 @@ const MASTER_UI = (content, user, sectors = [], activeSector = 'Global', allUser
         .feed .glitch-market-card {
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
-            background: rgba(9, 9, 11, 0.86) !important;
+
+            background: rgba(9, 9, 11, 0.94) !important;
             box-shadow: 0 10px 34px rgba(0,0,0,0.55), var(--crystal-inset) !important;
             will-change: transform, opacity;
             contain: layout paint style;
@@ -1516,1391 +1517,1392 @@ const MASTER_UI = (content, user, sectors = [], activeSector = 'Global', allUser
                     })
                 });
                 const data = await res.json();
-                alert(data.message || data.error || 'Duel resolved.');
-                if (res.ok) window.location.reload();
-            } catch (e) {
-                alert('Duel matrix sync failed.');
-            }
-        }
-
-        // Feature 50: Edit post
-        function editPost(postId, currentContent) {
-            const newContent = prompt('Edit your transmission:', currentContent);
-            if(!newContent || newContent === currentContent) return;
-            fetch('/api/edit-post', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ postId, content: newContent }) })
-                .then(r => r.ok ? window.location.reload() : alert('Edit failed.'))
-                .catch(() => alert('Edit sync failed.'));
-        }
-
-        // Feature 25: Pin post
-        function pinPost(postId) {
-            fetch('/api/pin-post', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ postId }) })
-                .then(r => r.ok ? (alert('Post pinned to your profile! 📌'), window.location.reload()) : alert('Pin failed.'));
-        }
-
-        ${COSMIC_CLIENT_JS}
-        ${AURA_MATRIX_JS}
-        ${POST_COMPOSER_JS}
-
-        (function bootDmDeepLink() {
-            const params = new URLSearchParams(location.search);
-            const peer = params.get('with');
-            if (peer && typeof openDmComposer === 'function') openDmComposer(peer);
-        })();
-    </script>
-</body></html>`;
-};
-
-// --- [CORE ROUTES & FEEDS] ---
-app.get('/', (req, res) => {
-    if (!isAuthenticated(req)) return res.redirect('/login');
-    res.redirect('/dashboard');
-});
-
-// 👑 LEADERBOARD ROUTE
-app.get('/leaderboard', requireAuthPage, async (req, res) => {
-    try {
-        const topUsers = await User.find({}).sort({ aura: -1 }).limit(10);
-        const sectors = await Sector.find();
-        const user = await User.findOne({ username: req.session.user.username });
-        const notifCount = user ? await Notification.countDocuments({ recipient: user.username, isRead: false }) : 0;
-
-        const rank1User = topUsers[0] || { username: 'void_ghost', aura: 0, avatarUrl: null, bio: 'No vibe...' };
-        const rank2User = topUsers[1] || { username: 'void_ghost', aura: 0, avatarUrl: null, bio: 'No vibe...' };
-        const rank3User = topUsers[2] || { username: 'void_ghost', aura: 0, avatarUrl: null, bio: 'No vibe...' };
-
-        const makePodiumAvatar = (u, fallbackColor) => {
-            const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}&backgroundColor=000000`;
-            return u.avatarUrl 
-                ? `<a href="/portfolio?user=${u.username}"><img src="${u.avatarUrl}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:2px solid ${fallbackColor};"></a>`
-                : `<a href="/portfolio?user=${u.username}"><img src="${defAvatar}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:2px solid ${fallbackColor};"></a>`;
-        };
-
-        const remainingUsersHtml = topUsers.slice(3).map((u, index) => {
-            const currentRank = index + 4;
-            const postAuraColor = u.aura >= 500 ? 'var(--cyan)' : u.aura < 50 ? '#ff0000' : 'var(--p)';
-            const isVer = u.aura >= 500 ? '<i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : '';
-            const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}&backgroundColor=000000`;
-            const rowAvatar = u.avatarUrl 
-                ? `<a href="/portfolio?user=${u.username}"><img src="${u.avatarUrl}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.15);"></a>`
-                : `<a href="/portfolio?user=${u.username}"><img src="${defAvatar}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.15);"></a>`;
-
-            return `
-            <div class="leaderboard-row">
-                <span class="row-rank">#${currentRank}</span>
-                ${rowAvatar}
-                <div style="display:flex; flex-direction:column; gap:2px;">
-                    <span style="font-weight: 800; font-size: 14px; color: #fff;"><a href="/portfolio?user=${u.username}" style="color:inherit; text-decoration:none;">@${u.username}</a> ${isVer}</span>
-                    <span style="font-size:10px; opacity:0.4; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${u.bio}</span>
-                </div>
-                <span style="margin-left: auto; font-weight: 900; font-size: 13px; color: ${postAuraColor}; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 50px; border: 1px solid var(--border);">${u.aura} AURA</span>
-            </div>`;
-        }).join('');
-
-        const leaderboardContent = `<div class="card" style="border-color: var(--cyan); background: rgba(0, 242, 255, 0.01);"><div style="text-align: center; margin-bottom: 30px;"><span style="font-size: 10px; font-weight: 900; letter-spacing: 3px; color: var(--cyan); text-transform: uppercase;">AURA MATRIX PROTOCOL</span><h1 style="font-size: 28px; font-weight: 900; letter-spacing: 1px; margin-top: 5px;">NETWORK LEADERBOARD</h1></div><div class="podium-container"><div class="podium-card rank-2">${makePodiumAvatar(rank2User, 'var(--p)')}<span style="font-weight: 800; font-size: 14px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank2User.username} ${rank2User.aura >= 500 ? '<i class="fas fa-circle-check verified-badge"></i>' : ''}</span><span style="font-size:9px; opacity:0.5; margin-top:3px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${rank2User.bio}"</span><span style="font-size: 12px; font-weight: 900; color: var(--p); margin-top: auto;">${rank2User.aura} AURA</span><div class="podium-rank-badge">2</div></div><div class="podium-card rank-1"><div class="podium-crown" style="color: #ffea00;"><i class="fas fa-crown"></i></div>${makePodiumAvatar(rank1User, '#ffea00')}<span style="font-weight: 900; font-size: 16px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank1User.username} ${rank1User.aura >= 500 ? '<i class="fas fa-circle-check verified-badge"></i>' : ''}</span><span style="font-size:10px; color:var(--cyan); opacity:0.8; margin-top:3px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${rank1User.bio}"</span><span style="font-size: 13px; font-weight: 900; color: var(--cyan); margin-top: auto;">${rank1User.aura} AURA</span><div class="podium-rank-badge">1</div></div><div class="podium-card rank-3">${makePodiumAvatar(rank3User, 'var(--v)')}<span style="font-weight: 800; font-size: 13px; color: #fff; text-overflow: ellipsis; overflow: hidden; width: 100%;">@${rank3User.username} ${rank3User.aura >= 500 ? '<i class="fas fa-circle-check verified-badge"></i>' : ''}</span><span style="font-size:9px; opacity:0.5; margin-top:3px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${rank3User.bio}"</span><span style="font-size: 11px; font-weight: 900; color: var(--v); margin-top: auto;">${rank3User.aura} AURA</span><div class="podium-rank-badge">3</div></div></div><div style="margin-top: 20px;"><h4 style="font-size: 10px; opacity: 0.4; letter-spacing: 2px; margin-bottom: 15px; text-transform: uppercase;">Matrix Contenders</h4>${remainingUsersHtml || '<p style="text-align:center; font-size:12px; opacity:0.3; padding: 20px;">No further structural matrix records found.</p>'}</div></div>`;
-
-        res.send(MASTER_UI(leaderboardContent, user, sectors, 'Leaderboard', [], notifCount, res.locals.topAlphaAgent));
-    } catch (err) { res.redirect('/dashboard'); }
-});
-
-// --- [DASHBOARD RENDER ENGINE - V83 SOCIAL FEED] ---
-app.get('/dashboard', requireAuthPage, async (req, res) => {
-    const activeSector = req.query.sector || 'Global';
-    const currentTime = new Date();
-    const user = await User.findOne({ username: req.session.user.username });
-    if (!user) return res.redirect('/login');
-    const notifCount = user ? await Notification.countDocuments({ recipient: user.username, isRead: false }) : 0;
-
-    let feedFilter = {};
-    if (activeSector === 'Following' && user) {
-        // V83 Following Feed Filter Logic & Block Filter
-        feedFilter = { author: { $in: user.following, $nin: user.blockedUsers }, isAnonymous: false };
-    } else if (activeSector !== 'Global') {
-        feedFilter = { sector: activeSector };
-        if(user) feedFilter.author = { $nin: user.blockedUsers };
-    } else if (user) {
-        feedFilter.author = { $nin: user.blockedUsers };
-    }
-
-    const posts = await Post.find(buildFeedQuery(feedFilter, currentTime)).sort({ date: -1 });
-    const sectors = await Sector.find();
-    const allUsers = await User.find({}, 'username avatarUrl aura nameChanged coverPic bio');
-
-    const ghostPolls = await GhostPoll.find().sort({ date: -1 }).limit(6);
-
-    const ghostPollCreateForm = user ? `<form onsubmit="event.preventDefault(); createGhostPoll(this);" style="margin-bottom:20px; padding:18px; background:rgba(112,0,255,0.06); border-radius:20px; border:1px dashed rgba(112,0,255,0.3);">
-        <p style="font-size:10px; font-weight:900; color:var(--v); margin-bottom:10px; letter-spacing:1px;">DEPLOY NEW GHOST POLL</p>
-        <input type="text" name="question" class="comment-mini-input" style="margin-bottom:8px;" placeholder="Poll question..." required>
-        <input type="text" name="optionA" class="comment-mini-input" style="margin-bottom:8px;" placeholder="Option A" required>
-        <input type="text" name="optionB" class="comment-mini-input" style="margin-bottom:10px;" placeholder="Option B" required>
-        <button type="submit" class="create-btn" style="font-size:10px; background:linear-gradient(90deg, var(--v), var(--p));">LAUNCH GHOST POLL 👻</button>
-    </form>` : '';
-
-    const ghostPollsHtml = `<div class="ghost-poll-bento-wrap">
-        <h4 style="font-size:10px; opacity:0.5; letter-spacing:4px; margin-bottom:12px;"><i class="fas fa-mask" style="color:var(--v);"></i> GHOST POLLS — ANONYMOUS VOTE MATRIX</h4>
-        ${ghostPollCreateForm}
-        <div class="bento-grid">
-            ${ghostPolls.length > 0 ? ghostPolls.map((gp) => {
-                const fillClasses = ['gpo-fill-cyan', 'gpo-fill-purple', 'gpo-fill-pink', 'gpo-fill-yellow'];
-                const totalVotes = gp.totalVotes || gp.options.reduce((s, o) => s + (o.voteCount || 0), 0);
-                const userVoted = user && gp.votedUsers && gp.votedUsers.some(vid => String(vid) === String(user._id));
-                const optionsHtml = gp.options.map((opt, idx) => {
-                    const pct = totalVotes > 0 ? Math.round(((opt.voteCount || 0) / totalVotes) * 100) : 0;
-                    const fillClass = fillClasses[idx % fillClasses.length];
-                    const canVote = user && !userVoted;
-                    return `<div class="ghost-poll-option ${userVoted ? 'gpo-voted' : ''}" ${canVote ? `onclick="voteGhostPoll('${gp._id}', ${idx})"` : ''}>
-                        <div class="gpo-fill ${fillClass}" style="width:${userVoted ? pct : 0}%;"></div>
-                        <span class="gpo-option-text">${opt.text}</span>
-                        ${userVoted ? `<span class="gpo-vote-count">${opt.voteCount || 0}</span><span class="gpo-pct-bar-label">${pct}%</span>` : ''}
-                    </div>`;
-                }).join('');
-                return `<div class="ghost-poll-card">
-                    <div class="ghost-poll-header">
-                        <div class="ghost-poll-icon"><i class="fas fa-ghost"></i></div>
-                        <div>
-                            <div class="ghost-poll-question">${gp.question}</div>
-                            <div class="ghost-poll-meta">${gp.isAnonymous ? '👻 ANONYMOUS SIGNAL' : 'MATRIX POLL'} • ${totalVotes} VOTES</div>
-                        </div>
-                    </div>
-                    ${optionsHtml}
-                    <div class="ghost-poll-footer">
-                        <span class="gpo-total-votes">${totalVotes} total transmissions</span>
-                    </div>
-                </div>`;
-            }).join('') : '<p style="opacity:0.3; font-size:12px; text-align:center; padding:20px;">No ghost polls in orbit. Deploy one above.</p>'}
-        </div>
-    </div>`;
-
-    const auraDuelPanelHtml = user ? `<div class="card aura-duel-panel duel-card">
-        <h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--p); font-weight:900;"><i class="fas fa-bolt"></i> AURA DUELS — PvP WAGER MATRIX</h4>
-        <p style="font-size:11px; opacity:0.5; margin-bottom:15px;">Challenge another user. Winner takes the wager instantly via secure void algorithm.</p>
-        <form class="duel-challenge-form" onsubmit="submitAuraDuel(event)">
-            <input type="text" id="duelOpponent" placeholder="@opponent username" required>
-            <input type="number" id="duelWager" placeholder="Aura wager amount" min="1" max="${user.aura}" required>
-            <button type="submit" class="duel-challenge-btn">INITIATE DUEL ⚔️</button>
-        </form>
-    </div>` : '';
-
-    const postForm = `<div class="card transmit-card" style="border-color: rgba(255,255,255,0.2);">
-            <form action="/addpost" method="POST" enctype="multipart/form-data" id="mainPostForm" data-ajax="1">
-                <textarea id="txBarEngine" name="content" class="transmit-textarea" placeholder="Transmit a signal... You can @mention and #tag users too!" required></textarea>
-                <div id="mediaPreviewMount" class="media-preview-mount" hidden></div>
-                <input type="hidden" name="sector" value="${activeSector === 'Following' ? 'Global' : activeSector}">
-                <input type="hidden" name="isAnonymous" id="ghostModeHidden" value="${(user.isGhost || activeSector==='confessions') ? 'true' : 'false'}">
-                <input type="checkbox" name="isSensitive" id="postSensitiveToggle" class="time-capsule-picker-hidden" tabindex="-1" aria-hidden="true">
-
-                <div class="transmit-pill-row flex flex-wrap items-center gap-3 mt-4 pb-2">
-                    <button type="button" id="ghostModeBtn" class="transmit-pill-btn ${(user.isGhost || activeSector==='confessions') ? 'is-active' : ''}" data-is-ghost="${(user.isGhost || activeSector==='confessions') ? 'true' : 'false'}">
-                        ${(user.isGhost || activeSector==='confessions') ? '👻 GHOST: ON' : '👻 GHOST: OFF'}
-                    </button>
-                    <button type="button" id="postSensitiveBtn" class="transmit-pill-btn">
-                        ⚠️ SENSITIVE: OFF
-                    </button>
-                    <button type="button" id="timeCapsuleBtn" class="transmit-pill-btn">
-                        ⏳ TIME CAPSULE: OFF
-                    </button>
-                    <input type="datetime-local" id="timeCapsuleUnlockInput" name="unlockAt" class="time-capsule-picker-hidden" aria-label="Time capsule unlock schedule">
-                </div>
-
-                <input type="text" name="tags" id="tagsInput" style="width:100%; background:transparent; border:none; border-top:1px solid var(--border); color:rgba(0,242,255,0.8); outline:none; font-size:12px; padding:10px 0; font-weight:700;" placeholder="#add #tags #here (optional)">
-
-                <div class="transmit-tools-row">
-                    <label class="transmit-pill-btn" style="cursor:pointer; margin:0;">
-                        <i class="fas fa-image"></i> MEDIA
-                        <input type="file" name="media" id="postMediaInput" hidden accept="image/*,video/*,image/gif">
-                    </label>
-                    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-                        <button type="button" onclick="togglePollForm()" class="transmit-pill-btn">
-                            <i class="fas fa-chart-bar"></i> POLL
-                        </button>
-                        <button type="submit" class="create-btn glass-btn" style="width:auto; padding:12px 28px; border-radius:12px; font-size:12px;">TRANSMIT 🚀</button>
-                    </div>
-                </div>
-                <div id="pollFormSection" style="display:none; margin-top:15px; border-top:1px solid var(--border); padding-top:15px;">
-                    <p style="font-size:10px; font-weight:900; color:var(--cyan); margin-bottom:10px; letter-spacing:1px;"><i class="fas fa-chart-bar"></i> POLL MODE ACTIVATED</p>
-                    <input type="hidden" name="isPoll" id="isPollInput" value="0">
-                    <input type="text" name="pollA" class="comment-mini-input" style="margin-bottom:8px;" placeholder="Option A: ...">
-                    <input type="text" name="pollB" class="comment-mini-input" placeholder="Option B: ...">
-                </div>
-            </form>
-            <script>
-                function togglePollForm() {
-                    const sec = document.getElementById('pollFormSection');
-                    const isPollInput = document.getElementById('isPollInput');
-                    const visible = sec.style.display !== 'none';
-                    sec.style.display = visible ? 'none' : 'block';
-                    isPollInput.value = visible ? '0' : '1';
-                }
-            </script>
-    </div>`;
-
-    const allComments = await Comment.find({ postId: { $in: posts.map(p => p._id) } }).sort({ date: 1 });
-
-    function renderCommentTree(commentsList, parentId = null, isNested = false) {
-        const targetNodes = commentsList.filter(c => parentId === null ? (c.parentCommentId === null || c.parentCommentId === undefined) : String(c.parentCommentId) === String(parentId));
-        if (targetNodes.length === 0) return '';
-        return targetNodes.map(c => {
-            const cUser = allUsers.find(u => u.username === c.author);
-            const isVer = cUser && cUser.aura >= 500 ? '<i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : '';
-            const cAvatar = c.authorAvatar || (cUser ? cUser.avatarUrl : null);
-            const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.author}&backgroundColor=000000`;
-            const nodeAvatarSnippet = cAvatar ? `<a href="/portfolio?user=${c.author}"><img src="${cAvatar}" class="comment-header-avatar"></a>` : `<a href="/portfolio?user=${c.author}"><img src="${defAvatar}" class="comment-header-avatar"></a>`;
-            const commentLikes = c.likes ? c.likes.length : 0;
-            const userLikedComment = user && c.likes && c.likes.includes(user.username);
-
-            return `<div class="comment-node ${isNested ? 'nested' : ''}"><div style="display:flex; align-items:center; gap:8px; font-size:11px; opacity:0.9; font-weight:bold; color:var(--cyan)">${c.isAnonymous ? '<div class="comment-avatar-fallback" style="background:#222;"><i class="fas fa-mask"></i></div> <span>GHOST</span>' : nodeAvatarSnippet + '<span><a href="/portfolio?user=' + c.author + '" style="color:inherit; text-decoration:none;">@' + c.author + '</a>' + isVer + '</span>'} <span style="opacity:0.4; font-weight:normal; margin-left:5px;">${new Date(c.date).toLocaleTimeString()}</span>${user ? `<button type="button" class="comment-like-btn ${userLikedComment ? 'liked' : ''}" onclick="likeComment('${c._id}', this)">👑 ${commentLikes}</button>` : `<span style="font-size:10px; opacity:0.4; margin-left:5px;">👑 ${commentLikes}</span>`}</div><p style="font-size:13px; margin-top:5px; color:#ddd; padding-left:32px; font-weight:500;">${c.content}</p>${user ? `<button type="button" class="reply-trigger-btn" style="margin-left:32px;" onclick="toggleReplyForm('${c._id}')"><i class="fas fa-reply"></i> Reply</button><div class="reply-form-wrapper" id="form-${c._id}" style="padding-left:32px;"><form onsubmit="submitCommentAjax(event, this, 'tree-container-${c._id}')"><input type="hidden" name="postId" value="${c.postId}"><input type="hidden" name="parentCommentId" value="${c._id}"><input type="text" name="content" class="comment-mini-input" placeholder="Type reply execution..." required></form></div>` : ''}<div id="tree-container-${c._id}">${renderCommentTree(commentsList, c._id, true)}</div></div>`;
-        }).join('');
-    }
-
-    const html = posts.map(p => {
-        const isSaved = user && user.savedPosts && user.savedPosts.includes(p._id.toString());
-        const postAuthor = p.author === 'GHOST_SIGNAL' ? null : allUsers.find(u => u.username === p.author);
-        const currentAura = postAuthor ? postAuthor.aura : p.authorAura;
-        const postAuraColor = currentAura >= 500 ? 'var(--cyan)' : currentAura < 50 ? '#ff0000' : 'var(--p)';
-        const showDelete = user && (
-            user.username === p.author ||
-            user.username === p.ghostOwner ||
-            (p.authorId && user._id && String(p.authorId) === String(user._id)) ||
-            user.username === 'xavirox'
-        );
-        const showEdit = user && (user.username === p.author || user.username === p.ghostOwner) && !p.isAnonymous;
-        const showPin = user && user.username === p.author && !p.isAnonymous;
-        const postComments = allComments.filter(c => String(c.postId) === String(p._id));
-        const commentsRenderedTree = renderCommentTree(postComments, null, false);
-        const isVer = postAuthor && postAuthor.aura >= 500 ? '<i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : '';
-        const currentAvatar = (postAuthor && postAuthor.avatarUrl) ? postAuthor.avatarUrl : p.authorAvatar;
-        const defAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.author}&backgroundColor=000000`;
-        const ghostAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=ghost&backgroundColor=111111`;
-        const postAvatarInner = currentAvatar
-            ? `<a href="/portfolio?user=${p.author}"><img src="${currentAvatar}" class="post-pfp" alt="@${p.author}"></a>`
-            : `<a href="/portfolio?user=${p.author}"><img src="${defAvatar}" class="post-pfp" alt="@${p.author}"></a>`;
-        const postAvatarSnippet = wrapAuraAvatar(postAvatarInner, currentAura);
-
-        // 🧬 V83 REACT SYSTEM LOGIC
-        const rCount = { crown: p.reactions?.crown?.length || 0, skull: p.reactions?.skull?.length || 0, ghost: p.reactions?.ghost?.length || 0, fire: p.reactions?.fire?.length || 0, heart: p.reactions?.heart?.length || 0 };
-        const uReact = user ? Object.keys(p.reactions || {}).find(k => p.reactions[k].includes(user.username)) : null;
-
-        // Feature 26: Trending badge (5+ total reactions)
-        const totalReacts = rCount.crown + rCount.skull + rCount.fire + rCount.heart;
-        const trendingBadgeHtml = totalReacts >= 5 ? `<span class="trending-badge">🔥 TRENDING</span>` : '';
-
-        // Feature 29: Word count badge
-        const wordCount = p.content ? p.content.split(/\s+/).length : 0;
-        const wordBadge = wordCount > 100 ? `<span class="word-count-badge">📡 Long Signal</span>` : '';
-
-        // Feature 27: Hashtag rendering
-        const tagsHtml = (p.tags && p.tags.length > 0) ? `<div style="margin-top:8px;">${p.tags.map(t => `<a href="/search?tag=${t}" class="post-tag">#${t}</a>`).join('')}</div>` : '';
-
-        // Feature 38: Streak badge on posts
-        const streakBadge = postAuthor && postAuthor.loginStreak >= 3 ? `<span class="streak-badge">🔥 ${postAuthor.loginStreak}d streak</span>` : '';
-
-        // Feature 24: Link preview
-        const linkPreviewHtml = p.linkPreview && p.linkPreview.title ? `<div class="link-preview-card"><a href="${p.linkPreview.url}" target="_blank" rel="noopener">${p.linkPreview.image ? `<img src="${p.linkPreview.image}" class="link-preview-img" onerror="this.style.display='none'">` : ''}<div class="link-preview-body"><div class="link-preview-title">${p.linkPreview.title}</div><div class="link-preview-desc">${p.linkPreview.description || ''}</div><div class="link-preview-url">${p.linkPreview.url}</div></div></a></div>` : '';
-
-        // Feature 45: Content warning overlay
-        const cwOverlay = p.isSensitive ? `<div class="cw-overlay"><span class="cw-label">⚠️ SENSITIVE CONTENT</span><p style="font-size:11px; opacity:0.6; text-align:center; padding:0 20px;">This post has been flagged as sensitive.</p><button onclick="revealContent(this)" style="background:var(--p); border:none; color:#fff; padding:8px 20px; border-radius:50px; cursor:pointer; font-weight:900; font-size:11px;">REVEAL ANYWAY</button></div>` : '';
-
-        // Feature 21: Poll rendering
-        let pollHtml = '';
-        if(p.isPoll && p.pollOptions && p.pollOptions.length > 0) {
-            const totalVotes = p.pollOptions.reduce((sum, o) => sum + (o.votes ? o.votes.length : 0), 0);
-            const userVoted = user ? p.pollOptions.findIndex(o => o.votes && o.votes.includes(user.username)) : -1;
-            pollHtml = `<div style="margin-top:15px;">` + p.pollOptions.map((opt, idx) => {
-                const votes = opt.votes ? opt.votes.length : 0;
-                const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
-                const isVoted = idx === userVoted;
-                return `<div class="poll-option ${isVoted ? 'voted' : ''}" onclick="${userVoted === -1 && user ? `votePoll('${p._id}', ${idx})` : ''}"><div class="poll-bar" style="width:${userVoted >= 0 ? pct : 0}%"></div><span class="poll-text">${opt.text}</span>${userVoted >= 0 ? `<span class="poll-pct">${pct}%</span>` : ''}</div>`;
-            }).join('') + `<p style="font-size:10px; opacity:0.4; margin-top:8px;">${totalVotes} votes</p></div>`;
-        }
-
-        const mediaHtml = p.mediaUrl ? `<div class="post-media-wrap mt-3">${renderPostMedia(p.mediaUrl)}</div>` : '';
-
-        const sensitiveBodyClass = p.isSensitive ? 'sensitive-post-content is-sensitive' : 'sensitive-post-content';
-
-        return `<div class="card post-card glass-surface p-node ${p.isAnonymous ? 'ghost-card' : ''}" data-post-id="${p._id.toString()}" data-author="${p.isAnonymous ? 'GHOST_SIGNAL' : p.author}" style="position:relative;">
-            ${p.isTimeCapsule && p.unlockAt ? `<div class="pinned-indicator" style="color:var(--cyan);"><i class="fas fa-meteor"></i> TIME CAPSULE UNSEALED</div>` : ''}
-            ${p.isShared ? `<div class="shared-indicator"><i class="fas fa-retweet"></i> Transmitted from @${p.originalAuthor}'s Matrix</div>` : ''}
-            ${user && user.pinnedPost === p._id.toString() ? `<div class="pinned-indicator"><i class="fas fa-thumbtack"></i> PINNED TRANSMISSION</div>` : ''}
-            <div class="post-header">
-                ${p.isAnonymous ? `<img src="${ghostAvatar}" class="post-pfp" style="border-color:#7000ff;">` : postAvatarSnippet}
-                <div style="display:flex; flex-direction:column; flex:1;">
-                    <b style="color:${p.isAnonymous ? '#7000ff' : postAuraColor}; font-size:14px; letter-spacing:0.5px;">
-                        ${p.isAnonymous ? 'GHOST_SIGNAL' : '<a href="/portfolio?user=' + p.author + '" style="color:inherit; text-decoration:none;">@'+p.author+'</a>' + isVer + trendingBadgeHtml + wordBadge + streakBadge}
-                        ${!p.isAnonymous ? `<span class="aura-badge aura-badge-live">${currentAura}</span>` : ''}
-                    </b>
-                    ${!p.isAnonymous ? `<span class="bio-post-snippet">${(postAuthor && postAuthor.bio) ? postAuthor.bio : p.authorBio}</span>` : ''}
-                    <div style="font-size:10px; opacity:0.4; margin-top:2px;">${new Date(p.date).toLocaleString()} • ${p.sector.toUpperCase()}${p.isEdited ? ' • <i class="fas fa-pen" style="font-size:8px;"></i> edited' : ''}</div>
-                </div>
-                ${showDelete ? `<div class="del-engine-container"><button type="button" class="delete-btn glass-btn" data-post-id="${p._id.toString()}" title="Delete post"><i class="fas fa-trash-can"></i></button></div>` : ''}
-            </div>
-            
-            <div class="${sensitiveBodyClass}">
-            ${p.isSensitive ? cwOverlay : ''}
-            ${p.isShared && p.originalContent ? `<div class="shared-post-wrapper"><p style="font-size:14px; font-weight:500; line-height:1.5;">${p.originalContent}</p></div>` : `<p style="margin-top:5px; font-size:16px; font-weight:500; line-height:1.5;">${p.content}</p>`}
-            ${tagsHtml}
-            ${pollHtml}
-            ${mediaHtml}
-            ${linkPreviewHtml}
-            </div>
-            
-            <div class="interaction-bar wl-interaction-bar">
-                <button type="button" onclick="interact(event, '${p._id.toString()}', 'crown')" class="action-btn react-btn wl-w-btn wl-btn ${uReact === 'crown' ? 'active' : ''}">W ${rCount.crown}</button>
-                <button type="button" onclick="interact(event, '${p._id.toString()}', 'skull')" class="action-btn react-btn wl-l-btn wl-btn ${uReact === 'skull' ? 'active' : ''}">L ${rCount.skull}</button>
-                <button type="button" onclick="interact(event, '${p._id.toString()}', 'save')" class="action-btn save-btn ${isSaved ? 'active-save' : ''}"><i class="fas fa-bookmark"></i></button>
-                ${!p.isAnonymous && user ? `<button type="button" onclick="sharePost('${p._id.toString()}')" class="action-btn share-btn"><i class="fas fa-retweet"></i> Re-shout</button>` : ''}
-                ${showEdit ? `<button type="button" onclick="editPost('${p._id.toString()}', ${JSON.stringify(p.content)})" class="action-btn" style="color:#aaa;"><i class="fas fa-pen"></i></button>` : ''}
-                ${showPin ? `<button type="button" onclick="pinPost('${p._id.toString()}')" class="action-btn" style="color:#ffea00;" title="Pin to profile"><i class="fas fa-thumbtack"></i></button>` : ''}
-                ${user && !showDelete ? `<button type="button" onclick="reportPost('${p._id.toString()}')" class="report-btn"><i class="fas fa-flag"></i></button>` : ''}
-                ${!p.isAnonymous && user && user.username !== p.author ? `<button type="button" onclick="giftAura('${p.author}')" class="action-btn" style="color:#ffea00; font-size:11px;" title="Gift Aura"><i class="fas fa-gift"></i></button>` : ''}
-            </div>
-            
-            <div class="comments-section-container">
-                <h5 style="font-size:10px; opacity:0.4; letter-spacing:2px; margin-bottom:10px;">TRANSMITTED THREADS</h5>
-                <div id="root-comment-box-${p._id}">${commentsRenderedTree || '<p style="font-size:11px; opacity:0.2; padding-left:5px;" class="no-threads-prompt">No structural threads running.</p>'}</div>
-                ${user ? `<form onsubmit="submitCommentAjax(event, this, 'root-comment-box-${p._id}')" style="margin-top:15px; display: flex; gap: 10px;"><input type="hidden" name="postId" value="${p._id}"><input type="text" name="content" class="comment-mini-input" placeholder="Inject thoughts into thread..." required><button class="create-btn" style="width: auto; padding: 0 20px; border-radius: 12px; font-size: 10px;">COOK 🍳</button></form>` : `<p style="font-size:11px; opacity:0.4; margin-top:10px;">⚠️ <a href="/login" style="color:var(--cyan); text-decoration:none;">Sync identity</a> to comment on this thread.</p>`}
-            </div>
-        </div>`
-    }).join('');
-
-    const postsFeedMount = `<div id="postsFeedMount" class="posts-feed-mount">${html || `<div class="card post-feed-empty"><p style="text-align:center;opacity:0.45;font-size:13px;padding:24px;">No transmissions in this sector yet. Be the first to transmit.</p></div>`}</div>`;
-    res.send(MASTER_UI(postForm + ghostPollsHtml + auraDuelPanelHtml + postsFeedMount, user, sectors, activeSector, allUsers, notifCount, res.locals.topAlphaAgent));
-});
-
-app.get('/glitch-market', requireAuthPage, async (req, res) => {
-    const user = await User.findOne({ username: req.session.user.username });
-    const sectors = await Sector.find();
-    const notifCount = await Notification.countDocuments({ recipient: user.username, isRead: false });
-    const marketItems = await MarketItem.find().sort({ costInAura: 1 });
-    const unlockedSet = user.unlockedAssets ? user.unlockedAssets : [];
-    const content = buildGlitchMarketHtml(user, marketItems, unlockedSet);
-    res.send(MASTER_UI(content, user, sectors, 'Glitch Market', [], notifCount, res.locals.topAlphaAgent));
-});
-
-app.get('/cosmic-admin', async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    const user = await User.findOne({ username: req.session.user.username });
-    const sectors = await Sector.find();
-    const totalAgents = await User.countDocuments();
-    const allPosts = await Post.find({}, 'reactions');
-    let totalW = 0, totalL = 0;
-    allPosts.forEach(p => {
-        totalW += (p.reactions?.crown?.length || 0);
-        totalL += (p.reactions?.skull?.length || 0);
-    });
-    const wlRatio = totalL > 0 ? (totalW / totalL).toFixed(2) : String(totalW);
-    const simRevenue = (totalAgents * 4.2 + totalW * 0.08).toFixed(0);
-    const content = `<div class="cosmic-admin-terminal card">
-        <h2 style="font-size:22px;font-weight:900;margin-bottom:6px;color:var(--cyan);"><i class="fas fa-chart-line"></i> COSMIC ADMIN TELEMETRY</h2>
-        <p style="opacity:0.45;font-size:11px;margin-bottom:24px;">Simulated matrix metrics — live overview</p>
-        <div class="admin-metrics-grid">
-            <div class="admin-metric-card"><span class="admin-metric-label">TOTAL MATRIX AGENTS</span><span class="admin-metric-value">${totalAgents.toLocaleString()}</span><div class="admin-micro-chart admin-chart-green" style="--h:72%"></div></div>
-            <div class="admin-metric-card"><span class="admin-metric-label">GLOBAL W/L RATIO</span><span class="admin-metric-value">${wlRatio}</span><div class="admin-micro-chart admin-chart-purple" style="--h:58%"></div></div>
-            <div class="admin-metric-card"><span class="admin-metric-label">ACTIVE BANDWIDTH PINGS</span><span class="admin-metric-value">${(4129 + totalAgents % 500).toLocaleString()}</span><div class="admin-micro-chart admin-chart-cyan" style="--h:84%"></div></div>
-            <div class="admin-metric-card"><span class="admin-metric-label">SIM REVENUE (AURA)</span><span class="admin-metric-value">${simRevenue}</span><div class="admin-micro-chart admin-chart-pink" style="--h:65%"></div></div>
-        </div>
-    </div>`;
-    res.send(MASTER_UI(content, user, sectors, 'Admin', [], 0, res.locals.topAlphaAgent));
-});
-
-// --- [🌐 V83 PORTFOLIO & SOCIAL FABRIC ROUTES] ---
-app.get('/portfolio', requireAuthPage, async (req, res) => {
-    const sessionUser = req.session.user;
-    const queryTargetName = req.query.user ? req.query.user.toLowerCase().trim() : (sessionUser ? sessionUser.username : null);
-    if(!queryTargetName) return res.redirect('/login');
-    
-    const dbUser = await User.findOne({ username: queryTargetName });
-    if (!dbUser) return res.send("<script>alert('Profile does not exist inside the void.'); window.location.href='/dashboard';</script>");
-    
-    const isOwner = sessionUser && (sessionUser.username === dbUser.username);
-    if (!isOwner) { dbUser.viewsCount += 1; await dbUser.save(); }
-
-    const activeSessionDbUser = sessionUser ? await User.findOne({ username: sessionUser.username }) : null;
-    const isFollowing = activeSessionDbUser && activeSessionDbUser.following.includes(dbUser.username);
-    const isBlocked = activeSessionDbUser && activeSessionDbUser.blockedUsers.includes(dbUser.username);
-    const notifCount = activeSessionDbUser ? await Notification.countDocuments({ recipient: activeSessionDbUser.username, isRead: false }) : 0;
-
-    const sectors = await Sector.find();
-    const authorPostHistory = await Post.find({ author: dbUser.username, isAnonymous: false }).sort({ date: -1 });
-    const savedPostObjects = isOwner ? await Post.find({ _id: { $in: dbUser.savedPosts } }) : [];
-
-    let auraTitle = "Chaos Agent 🌌";
-    if (dbUser.aura >= 500) auraTitle = "Ghost Lord 👑";
-    else if (dbUser.aura >= 200) auraTitle = "Sigma 🔥";
-    else if (dbUser.aura < 50) auraTitle = "Lacking Bro 💀";
-
-    let totalReceivedLikes = 0;
-    authorPostHistory.forEach(p => { 
-        totalReceivedLikes += (p.reactions?.crown?.length || 0) + (p.reactions?.fire?.length || 0) + (p.reactions?.heart?.length || 0); 
-    });
-
-    let badgesHtml = '';
-    if (authorPostHistory.length >= 1) badgesHtml += `<div class="badge-pill-shield"><i class="fas fa-paper-plane"></i> First Post 🚀</div>`;
-    if (totalReceivedLikes >= 100) badgesHtml += `<div class="badge-pill-shield gold"><i class="fas fa-crown"></i> 100 W's 👑</div>`;
-    if (dbUser.ghostSentCount && dbUser.ghostSentCount >= 1) badgesHtml += `<div class="badge-pill-shield purple"><i class="fas fa-user-secret"></i> Ghost Master 👻</div>`;
-    if (badgesHtml === '') badgesHtml = `<p style="font-size:11px; opacity:0.3; font-style:italic;">No achievement blocks unlocked yet.</p>`;
-
-    const basePeak = Math.max(dbUser.aura, 120);
-    const auraGraphSegments = [{ label: 'Origin', val: 100 }, { label: 'Phase 1', val: Math.min(basePeak, Math.round(dbUser.aura * 0.6)) }, { label: 'Phase 2', val: Math.min(basePeak, Math.round(dbUser.aura * 0.85)) }, { label: 'Peak', val: dbUser.aura }];
-    const verticalGraphBarsHtml = auraGraphSegments.map(seg => {
-        const heightPercentage = Math.min(100, Math.max(15, Math.round((seg.val / basePeak) * 100)));
-        return `<div style="display: flex; flex-direction: column; align-items: center; flex: 1;"><div class="aura-graph-bar" style="height: ${heightPercentage}%;"><div class="aura-graph-pop">${seg.val} Aura</div></div><span class="aura-graph-label">${seg.label}</span></div>`;
-    }).join('');
-
-    const ghostInbox = isOwner ? dbUser.ghostMessages.map(m => `<div class="ghost-msg-node"><span style="font-size:10px; color:var(--v); font-weight:900;"><i class="fas fa-mask"></i> ANONYMOUS INCOMING...</span><p style="font-size:14px; margin-top:6px; color:#fff; font-weight:500;">${m.content}</p><small style="opacity:0.2; font-size:9px; display:block; margin-top:5px;">${new Date(m.date).toLocaleString()}</small></div>`).join('') : '';
-    const savedFeedHtml = isOwner ? savedPostObjects.map(sp => `<div style="background:rgba(0,242,255,0.03); padding:18px; border-radius:20px; border:1px solid rgba(0,242,255,0.15); margin-bottom:12px;"><span style="font-size:11px; color:var(--cyan); font-weight:bold;">📍 @${sp.isAnonymous ? 'ANONYMOUS' : sp.author}</span><p style="font-size:14px; margin-top:6px; color:#fff;">${sp.content}</p></div>`).join('') : '';
-
-    const historyPostsHtml = authorPostHistory.map(ph => `<div style="background:rgba(255,255,255,0.02); padding:20px; border-radius:20px; border:1px solid var(--border); margin-bottom:15px;"><div style="font-size:10px; opacity:0.4; margin-bottom:8px;"><i class="fas fa-clock"></i> ${new Date(ph.date).toLocaleString()} • ${ph.sector.toUpperCase()}</div><p style="font-size:15px; color:#eee; line-height:1.4;">${ph.content}</p>${ph.mediaUrl ? `<img src="${ph.mediaUrl}" style="width:100%; max-height:250px; object-fit:cover; border-radius:14px; margin-top:12px; border:1px solid rgba(255,255,255,0.05);">` : ''}</div>`).join('');
-
-    const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${dbUser.username}&backgroundColor=000000`;
-    const defaultBanner = `https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1000&auto=format&fit=crop`;
-    const portfolioAvatarInner = dbUser.avatarUrl ? `<img src="${dbUser.avatarUrl}" class="profile-pfp-lg" alt="@${dbUser.username}">` : `<img src="${defaultAvatar}" class="profile-pfp-lg" alt="@${dbUser.username}">`;
-    const portfolioAvatarRender = wrapAuraAvatar(portfolioAvatarInner, dbUser.aura);
-
-    const content = `
-        <div class="card" style="padding-top:0; overflow:hidden;">
-            <div class="profile-banner" style="background-image: url('${dbUser.coverPic || defaultBanner}');">
-                ${isOwner ? `<form action="/update-banner" method="POST" enctype="multipart/form-data" id="bannerForm" style="display:none;"><input type="file" name="media" id="bannerInput" onchange="document.getElementById('bannerForm').submit()" accept="image/*"></form><label for="bannerInput" class="edit-banner-btn"><i class="fas fa-camera"></i> EDIT DRIP</label>` : ''}
-            </div>
-
-            <div class="profile-pfp-container aura-profile-frame">
-                ${portfolioAvatarRender}
-                ${isOwner ? `<form action="/upload-avatar" method="POST" enctype="multipart/form-data" id="avatarUploadFormEngine" style="display:none;"><input type="file" name="avatar" id="avatarFileInputNode" accept="image/*" onchange="document.getElementById('avatarUploadFormEngine').submit();"></form><label for="avatarFileInputNode" class="edit-pfp-btn" title="Change PFP"><i class="fas fa-pen"></i></label>` : ''}
-            </div>
-            
-            <div style="text-align:center; margin-top:10px;">
-                <h1 style="font-size:26px; font-weight:900;">@${dbUser.username} ${dbUser.aura >= 500 ? '<i class="fas fa-circle-check verified-badge" title="Certified W"></i>' : ''}</h1>
-                <p style="font-size:11px; color:#ffea00; font-weight:900; letter-spacing:1.5px; text-transform:uppercase; margin-top:4px;"><i class="fas fa-shield"></i> TITLE: ${auraTitle}</p>
-                <p style="font-size:12px; color:var(--cyan); font-weight:bold; margin-top:6px; letter-spacing:1px;">AURA LEVEL: ${dbUser.aura}</p>
-                
-                <div style="display:flex; justify-content:center; gap:20px; font-size:12px; font-weight:bold; margin-top:15px; opacity:0.8;">
-                    <span><i class="fas fa-users"></i> ${dbUser.followers.length} Followers</span>
-                    <span><i class="fas fa-user-plus"></i> ${dbUser.following.length} Following</span>
-                </div>
-                ${!isOwner && sessionUser ? `
-                <div style="display:flex; justify-content:center; gap:10px; margin-top:15px; flex-wrap:wrap;">
-                    <button class="create-btn" style="width:auto; padding:8px 25px; border-radius:50px; font-size:10px;" onclick="followUser('${dbUser.username}')">${isFollowing ? 'UNFOLLOW' : 'FOLLOW'}</button>
-                    ${!isBlocked ? `<button class="create-btn" style="width:auto; padding:8px 25px; border-radius:50px; font-size:10px; background:linear-gradient(90deg, var(--cyan), var(--v));" onclick="openDmComposer('${dbUser.username}')"><i class="fas fa-envelope"></i> MESSAGE</button>` : ''}
-                    ${!isBlocked ? `<button class="create-btn" style="width:auto; padding:8px 25px; border-radius:50px; font-size:10px; background:linear-gradient(90deg, #ff0000, #550000);" onclick="blockUser('${dbUser.username}')"><i class="fas fa-ban"></i> BLOCK</button>` : `<button class="create-btn" style="width:auto; padding:8px 25px; border-radius:50px; font-size:10px; background:#444;" disabled>BLOCKED</button>`}
-                </div>` : ''}
-            </div>
-            
-            ${isOwner ? `<form action="/update-bio" method="POST" style="margin-top:10px;"><input type="text" name="bio" class="bio-input-shield" value="${dbUser.bio.replace(/"/g, '&quot;')}" placeholder="Drop your one-line vibe status..." maxlength="75" onchange="this.form.submit();"><small style="font-size:9px; opacity:0.3; display:block; text-align:center; margin-top:4px;">Press enter to change vibe code mapping</small></form>` : `<p style="text-align:center; font-size:13px; font-style:italic; opacity:0.7; margin-top:12px; font-weight:600;">"${dbUser.bio}"</p>`}
-
-            <div style="margin-top:25px; text-align:center; border-top:1px solid var(--border); padding-top:20px;"><span style="font-size:9px; opacity:0.4; font-weight:900; letter-spacing:2px; text-transform:uppercase;">Matrix Achievement Seals</span><div class="badge-matrix-flex">${badgesHtml}</div></div>
-            <div class="aura-graph-wrapper"><span style="font-size:9px; opacity:0.5; font-weight:900; letter-spacing:2px; text-transform:uppercase;"><i class="fas fa-chart-bar"></i> Aura History Tracker</span><div class="aura-graph-canvas">${verticalGraphBarsHtml}</div></div>
-
-            ${isOwner && !dbUser.nameChanged ? `<div style="margin-top:25px; background:rgba(255,255,255,0.03); padding:15px; border-radius:16px; border:1px solid var(--border);"><p style="font-size:10px; color:#ffea00; font-weight:bold; margin-bottom:10px;"><i class="fas fa-triangle-exclamation"></i> ONE-TIME NAME CHANGE AVAILABLE</p><form action="/change-username" method="POST" style="display:flex; gap:10px;"><input type="text" name="newUsername" class="auth-input" style="margin:0; padding:10px; font-size:12px;" placeholder="New @username" required><button class="create-btn" style="width:auto; padding:0 20px; font-size:10px; border-radius:12px;" onclick="return confirm('You can only do this ONCE. Sure bro?');">CHANGE</button></form></div>` : ''}
-
-            <div class="bento-grid">
-                <div class="bento-item"><i class="fas fa-eye" style="color:var(--cyan); font-size:20px; margin-bottom:10px; display:block;"></i><p style="font-size:12px; font-weight:900;">${dbUser.viewsCount} PROFILE VIEWS</p></div>
-                <div class="bento-item"><i class="fas fa-signs-post" style="color:var(--p); font-size:20px; margin-bottom:10px; display:block;"></i><p style="font-size:12px; font-weight:900;">${authorPostHistory.length} TRANSMISSIONS</p></div>
-            </div>
-        </div>
-
-        <div class="card" style="border-color: rgba(255, 255, 255, 0.15);"><h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:#fff; font-weight:900;"><i class="fas fa-history"></i> TRANSMISSION LOGS (${dbUser.username.toUpperCase()})</h4>${historyPostsHtml || '<p style="opacity:0.2; font-size:12px; text-align:center;">NO PUBLIC MATRIX TRANSMISSIONS DETECTED.</p>'}</div>
-        ${isOwner ? `<div class="card" style="border-color:rgba(0, 242, 255, 0.3);"><h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--cyan); font-weight:900;"><i class="fas fa-vault"></i> SAVED VAULT</h4>${savedFeedHtml || '<p style="opacity:0.2; font-size:12px; text-align:center;">NO ARCHIVED FILES FOUND</p>'}</div><div class="card ghost-card"><h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--v); font-weight:900;"><i class="fas fa-user-secret"></i> INCOGNITO GHOST VOID</h4>${ghostInbox || '<p style="opacity:0.3; font-size:12px; text-align:center; padding:10px;">GHOST VOID IS EMPTY</p>'}</div>` : ''}
-        <div class="card" style="border-color: rgba(255,0,127,0.3);"><h4 style="font-size:10px; letter-spacing:3px; margin-bottom:15px; color:var(--p); font-weight:900;">💥 DROP AN ANONYMOUS BOMB TO ${dbUser.username.toUpperCase()}</h4><form action="/send-ghost-msg" method="POST"><input type="hidden" name="targetUser" value="${dbUser.username}"><textarea name="message" class="ghost-input" style="min-height:80px; resize:none;" placeholder="Write a confidential truth bomb..." required></textarea><button class="create-btn" style="background: linear-gradient(90deg, var(--v), #000);">LAUNCH ANONYMOUS SIGNAL 🚀</button></form></div>`;
-    
-    res.send(MASTER_UI(content, activeSessionDbUser, sectors, 'Portfolio', [], notifCount, res.locals.topAlphaAgent));
-});
-
-// --- [V83 API ROUTES FOR MENTIONS, SHARES, REACTS, FOLLOWS & DMs] ---
-app.post('/addpost', upload.single('media'), async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    try {
-        const user = await User.findOne({ username: req.session.user.username });
-        if (!user) return res.redirect('/login');
-        const isAnon = req.body.isAnonymous === 'on' || req.body.isAnonymous === 'true' || !!user.isGhost;
-        const isSensitive = req.body.isSensitive === 'on';
-
-        // Feature 46: Anti-spam cooldown (30 seconds between posts)
-        const now = new Date();
-        if (user.lastPostDate) {
-            const lastPost = new Date(user.lastPostDate);
-            const diffSeconds = (now - lastPost) / 1000;
-            if (diffSeconds < 30) {
-                return res.send(`<script>alert('Slow down! Wait ${Math.ceil(30 - diffSeconds)} more seconds before transmitting again. ⏳'); window.history.back();</script>`);
-            }
-        }
-        
-        const textContent = req.body.content;
-        let aiContents = [];
-        if (req.file) aiContents.push(fileToGenerativePart(req.file.buffer, req.file.mimetype));
-        if (textContent) aiContents.push(textContent);
-        aiContents.push("Analyze this content. Respond with ONLY 'SAFE' or 'TOXIC'.");
-
-        const aiResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: aiContents });
-        if (aiResponse.text.trim().toUpperCase() === 'TOXIC') {
-            user.aura = Math.max(0, user.aura - 50); await user.save();
-            return res.send("<script>alert('CONTENT TOXIC. -50 Aura penalized. 💀'); window.history.back();</script>");
-        }
-
-        let mediaUrl = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
-        let finalScheduledDate = null;
-        if (req.body.scheduledTime) {
-            const parsedTime = new Date(req.body.scheduledTime);
-            if (parsedTime > new Date()) finalScheduledDate = parsedTime;
-        }
-
-        let unlockAt = null;
-        let isTimeCapsule = false;
-        if (req.body.unlockAt) {
-            const parsedUnlock = new Date(req.body.unlockAt);
-            if (!isNaN(parsedUnlock.getTime()) && parsedUnlock > new Date()) {
-                unlockAt = parsedUnlock;
-                isTimeCapsule = true;
-            }
-        }
-
-        // Feature 27: Parse hashtags from content and tags field
-        const tagsFromContent = (textContent.match(/#([a-zA-Z0-9_]+)/g) || []).map(t => t.replace('#','').toLowerCase());
-        const tagsFromField = req.body.tags ? req.body.tags.replace(/#/g,'').split(/[\s,]+/).filter(Boolean).map(t => t.toLowerCase()) : [];
-        const allTags = [...new Set([...tagsFromContent, ...tagsFromField])].slice(0, 10);
-
-        // Feature 21: Poll setup
-        const isPoll = req.body.isPoll === '1' && req.body.pollA && req.body.pollB;
-        const pollOptions = isPoll ? [{ text: req.body.pollA, votes: [] }, { text: req.body.pollB, votes: [] }] : [];
-
-        // Feature 24: Simple link preview extraction from content
-        const urlMatch = textContent ? textContent.match(/https?:\/\/[^\s]+/) : null;
-        let linkPreview = {};
-        if (urlMatch) { linkPreview = { url: urlMatch[0], title: '', description: '', image: '' }; }
-
-        const displayAuthor = isAnon ? 'GHOST_SIGNAL' : user.username;
-        const newPost = await new Post({ 
-            author: displayAuthor,
-            authorId: user._id,
-            ghostOwner: isAnon ? user.username : null,
-            authorAura: user.aura,
-            authorAvatar: isAnon ? null : user.avatarUrl,
-            authorBio: isAnon ? 'Anonymous void transmission...' : user.bio, 
-            content: textContent,
-            sector: req.body.sector || 'Global',
-            mediaUrl,
-            isAnonymous: isAnon,
-            scheduledFor: finalScheduledDate,
-            isTimeCapsule,
-            unlockAt,
-            tags: allTags,
-            isPoll,
-            pollOptions,
-            isSensitive,
-            linkPreview: Object.keys(linkPreview).length ? linkPreview : undefined
-        }).save();
-        
-        // 🧬 V83 @Mention Extraction & Notification Engine
-        if(!isAnon && textContent) {
-            const mentionRegex = /@([a-zA-Z0-9_]+)/g; let match;
-            while ((match = mentionRegex.exec(textContent)) !== null) {
-                const mentionedUser = match[1].toLowerCase();
-                const uExists = await User.findOne({ username: mentionedUser });
-                if (uExists && mentionedUser !== user.username) {
-                    await new Notification({ recipient: mentionedUser, sender: user.username, type: 'mention', referenceId: newPost._id }).save();
-                }
-            }
-        }
-
-        // Feature 38: Daily login streak bonus
-        const todayStr = now.toDateString();
-        if (user.lastLoginDate !== todayStr) {
-            const yesterdayStr = new Date(now - 86400000).toDateString();
-            if (user.lastLoginDate === yesterdayStr) {
-                user.loginStreak = (user.loginStreak || 0) + 1;
-            } else {
-                user.loginStreak = 1;
-            }
-            user.lastLoginDate = todayStr;
-            // Streak bonus aura
-            if (user.loginStreak >= 7) { user.aura += 10; }
-            else if (user.loginStreak >= 3) { user.aura += 5; }
-        }
-
-        // Feature 42: Aura milestones
-        if(!isAnon) {
-            const oldAura = user.aura;
-            user.aura += 15;
-            if (oldAura < 500 && user.aura >= 500) {
-                await new Notification({ recipient: user.username, sender: 'SYSTEM', type: 'milestone', referenceId: '500' }).save();
-            }
-            if (oldAura < 1000 && user.aura >= 1000) {
-                await new Notification({ recipient: user.username, sender: 'SYSTEM', type: 'milestone', referenceId: '1000' }).save();
-            }
-        }
-
-        // Feature 43: Weekly challenge tracking
-        const weekStr = `${now.getFullYear()}-W${Math.ceil(now.getDate()/7)}`;
-        if (user.weeklyPostReset !== weekStr) { user.weeklyPostCount = 0; user.weeklyPostReset = weekStr; }
-        user.weeklyPostCount = (user.weeklyPostCount || 0) + 1;
-        if (user.weeklyPostCount === 3 && !isAnon) {
-            user.aura += 100;
-            await new Notification({ recipient: user.username, sender: 'SYSTEM', type: 'challenge', referenceId: 'weekly3' }).save();
-        }
-
-        user.lastPostDate = now.toISOString();
-        await user.save();
-        req.session.user.aura = user.aura;
-        res.redirect('back');
-    } catch (e) { console.error(e); res.redirect('back'); }
-});
-
-app.post('/api/follow', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-    const currentUsername = req.session.user.username;
-    const { targetUsername } = req.body;
-    if (currentUsername === targetUsername) return res.status(400).json({ error: 'Cannot follow yourself' });
-
-    try {
-        const currentUser = await User.findOne({ username: currentUsername });
-        const targetUser = await User.findOne({ username: targetUsername });
-        if (!targetUser || !currentUser) return res.status(404).json({ error: 'User not found' });
-
-        if (currentUser.following.includes(targetUsername)) {
-            currentUser.following = currentUser.following.filter(u => u !== targetUsername);
-            targetUser.followers = targetUser.followers.filter(u => u !== currentUsername);
-            await currentUser.save(); await targetUser.save();
-            return res.json({ status: 'unfollowed' });
-        } else {
-            currentUser.following.push(targetUsername);
-            targetUser.followers.push(currentUsername);
-            await currentUser.save(); await targetUser.save();
-            await new Notification({ recipient: targetUsername, sender: currentUsername, type: 'follow' }).save();
-            return res.json({ status: 'followed' });
-        }
-    } catch (err) { return res.status(500).json({ error: 'Failed to update connection node' }); }
-});
-
-app.post('/api/block', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-    const currentUsername = req.session.user.username;
-    const targetUsername = (req.body.targetUsername || '').toLowerCase().trim();
-    if (!targetUsername) return res.status(400).json({ error: 'Invalid target' });
-    try {
-        const currentUser = await User.findOne({ username: currentUsername });
-        if (!currentUser.blockedUsers.includes(targetUsername)) {
-            currentUser.blockedUsers.push(targetUsername);
-            currentUser.following = currentUser.following.filter(u => u !== targetUsername);
-            await currentUser.save();
-        }
-        if (!req.session.user.blockedUsers) req.session.user.blockedUsers = [];
-        if (!req.session.user.blockedUsers.includes(targetUsername)) req.session.user.blockedUsers.push(targetUsername);
-        req.session.user.following = (req.session.user.following || []).filter(u => u !== targetUsername);
-        return res.json({ status: 'blocked' });
-    } catch (err) { return res.status(500).json({ error: 'Block execution failed' }); }
-});
-
-const isDmBlocked = async (userA, userB) => {
-    const a = await User.findOne({ username: userA });
-    const b = await User.findOne({ username: userB });
-    if (!a || !b) return true;
-    return (a.blockedUsers || []).includes(userB) || (b.blockedUsers || []).includes(userA);
-};
-
-app.get('/api/dm/thread/:peer', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-    const me = req.session.user.username;
-    const peer = (req.params.peer || '').toLowerCase().trim();
-    if (!peer || peer === me) return res.status(400).json({ error: 'Invalid peer' });
-    if (await isDmBlocked(me, peer)) return res.status(403).json({ error: 'DM pipeline severed — block active' });
-    const messages = await Message.find({
-        $or: [{ sender: me, receiver: peer }, { sender: peer, receiver: me }]
-    }).sort({ date: 1 }).limit(120);
-    return res.json({
-        messages: messages.map(m => ({
-            sender: m.sender,
-            content: m.content,
-            mine: m.sender === me,
-            date: m.date
-        }))
-    });
-});
-
-app.post('/api/dm/send', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-    const me = req.session.user.username;
-    const receiver = (req.body.receiver || '').toLowerCase().trim();
-    const content = (req.body.content || '').trim();
-    if (!receiver || !content) return res.status(400).json({ error: 'Receiver and content required' });
-    if (receiver === me) return res.status(400).json({ error: 'Cannot DM yourself' });
-    const peerExists = await User.findOne({ username: receiver });
-    if (!peerExists) return res.status(404).json({ error: 'User not found' });
-    if (await isDmBlocked(me, receiver)) return res.status(403).json({ error: 'DM blocked' });
-    await new Message({ sender: me, receiver, content }).save();
-    return res.json({ success: true });
-});
-
-app.post('/api/share', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-    const { postId } = req.body;
-    try {
-        const originalPost = await Post.findById(postId);
-        if(!originalPost) return res.status(404).json({ error: 'Not found' });
-        const user = await User.findOne({ username: req.session.user.username });
-        
-        await new Post({
-            author: user.username, authorAura: user.aura, authorAvatar: user.avatarUrl, authorBio: user.bio,
-            content: "Reshouted this transmission 📡", sector: originalPost.sector,
-            isShared: true, originalAuthor: originalPost.author, originalContent: originalPost.content
-        }).save();
-        return res.json({ status: 'success' });
-    } catch(err) { return res.status(500).json({ error: 'Failed to share' }); }
-});
-
-app.post('/api/theme', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-    try {
-        const user = await User.findOne({ username: req.session.user.username });
-        if (!user) return res.status(404).json({ error: 'User not found' });
-        const theme = req.body.theme === 'dark' ? 'dark' : 'light';
-        user.theme = theme;
-        await user.save();
-        return res.json({ ok: true, theme });
-    } catch (e) {
-        return res.status(500).json({ error: 'Theme sync failed' });
-    }
-});
-
-app.post('/interact', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-    const { postId, type } = req.body;
-    const username = req.session.user.username;
-    try {
-        const post = await Post.findById(postId);
-        const user = await User.findOne({ username });
-        if (!post || !user) return res.sendStatus(404);
-
-        if (type === 'save') {
-            if (user.savedPosts.includes(postId)) user.savedPosts = user.savedPosts.filter(id => id !== postId);
-            else user.savedPosts.push(postId);
-            await user.save();
-            return res.json({ status: 'saved' });
-        } else {
-            const validReactions = ['crown', 'skull', 'ghost', 'fire', 'heart'];
-            if (!validReactions.includes(type)) return res.status(400).json({ error: 'Invalid cosmic entity' });
-            if (!post.reactions) post.reactions = { crown: [], skull: [], ghost: [], fire: [], heart: [] };
-            const hadSame = post.reactions[type] && post.reactions[type].includes(username);
-            validReactions.forEach(r => {
-                if (post.reactions[r]) post.reactions[r] = post.reactions[r].filter(u => u !== username);
-            });
-            let authorAura = null;
-            if (!hadSame) {
-                post.reactions[type].push(username);
-                if (post.author !== username && post.author !== 'GHOST_SIGNAL') {
-                    await new Notification({ recipient: post.author, sender: username, type: 'reaction', referenceId: postId }).save();
-                    const authorDoc = await User.findOne({ username: post.author });
-                    if (authorDoc) {
-                        if (type === 'crown') authorDoc.aura = (authorDoc.aura || 0) + 100;
-                        if (type === 'skull') authorDoc.aura = (authorDoc.aura || 0) - 50;
-                        await authorDoc.save();
-                        authorAura = authorDoc.aura;
-                        post.authorAura = authorDoc.aura;
-                    }
-                }
-                if (type === 'crown') user.aura = (user.aura || 0) + 5;
-                if (type === 'skull' && username !== post.author) user.aura = Math.max(0, (user.aura || 0) - 2);
-            }
-            await post.save();
-            await user.save();
-            if (req.session.user) req.session.user.aura = user.aura;
-            const counts = {
-                crown: post.reactions.crown?.length || 0,
-                skull: post.reactions.skull?.length || 0,
-                ghost: post.reactions.ghost?.length || 0,
-                fire: post.reactions.fire?.length || 0,
-                heart: post.reactions.heart?.length || 0
-            };
-            const userVote = validReactions.find(k => post.reactions[k]?.includes(username)) || null;
-            return res.json({
-                status: hadSame ? 'removed' : 'reacted',
-                reactions: post.reactions,
-                counts,
-                userVote,
-                authorAura,
-                voterAura: user.aura,
-                auraDelta: !hadSame && type === 'crown' ? 100 : (!hadSame && type === 'skull' ? -50 : 0)
-            });
-        }
-    } catch (err) { return res.sendStatus(500); }
-});
-
-// V83 DMs & Notifications Static Handlers (To prevent 404s before full Websocket architecture)
-app.get('/notifications', requireAuthPage, async (req, res) => {
-    const user = await User.findOne({ username: req.session.user.username });
-    const notifs = await Notification.find({ recipient: user.username }).sort({ date: -1 }).limit(30);
-    // Mark as read
-    await Notification.updateMany({ recipient: user.username }, { $set: { isRead: true } });
-    
-    const notifHtml = notifs.map(n => `<div class="card" style="padding:15px; margin-bottom:10px;"><b style="color:var(--cyan);">@${n.sender}</b> ${n.type === 'mention' ? 'mentioned you in a transmission.' : n.type === 'follow' ? 'started following your matrix.' : 'reacted to your post.'}</div>`).join('');
-    
-    const content = `<div class="card"><h2 style="margin-bottom:20px; color:var(--cyan);"><i class="fas fa-bell"></i> SYSTEM ALERTS</h2>${notifHtml || '<p>No structural alerts found.</p>'}</div>`;
-    res.send(MASTER_UI(content, user, [], 'Alerts', [], 0, res.locals.topAlphaAgent));
-});
-
-app.get('/dms', requireAuthPage, async (req, res) => {
-    const user = await User.findOne({ username: req.session.user.username });
-    const me = user.username;
-    const recent = await Message.find({ $or: [{ sender: me }, { receiver: me }] }).sort({ date: -1 }).limit(80);
-    const peerSet = new Set();
-    recent.forEach(m => {
-        const peer = m.sender === me ? m.receiver : m.sender;
-        if (peer && peer !== me) peerSet.add(peer);
-    });
-    const peers = [...peerSet];
-    const threadList = peers.length ? peers.map(p => `<button type="button" class="dm-thread-pill" onclick="openDmComposer('${p}')">@${p}</button>`).join('') : '<p style="opacity:0.35;font-size:12px;">No active threads. Open a profile and tap MESSAGE.</p>';
-    const withHint = req.query.with ? `<p style="font-size:11px;color:var(--cyan);margin-bottom:12px;">Opening uplink with @${req.query.with}...</p>` : '';
-    const content = `<div class="card dm-hub-card">
-        <h2 style="margin-bottom:8px;color:var(--cyan);"><i class="fas fa-envelope"></i> DIRECT MESSAGE MATRIX</h2>
-        <p style="opacity:0.45;font-size:11px;margin-bottom:16px;">Encrypted peer relays — use the composer below or open from any portfolio.</p>
-        ${withHint}
-        <div class="dm-thread-list">${threadList}</div>
-    </div>`;
-    res.send(MASTER_UI(content, user, [], 'Direct Messages', [], 0, res.locals.topAlphaAgent));
-});
-
-// --- [REMAINING ROUTES] ---
-
-// V87: Time Capsule creation API
-app.post('/create-time-capsule', async (req, res) => {
-    if (!isAuthenticated(req)) return res.status(401).json({ error: 'Unauthorized' });
-    try {
-        const userDoc = req.user || await resolveRequestUser(req);
-        if (!userDoc) return res.status(401).json({ error: 'Unauthorized' });
-        req.user = userDoc;
-
-        const { content, unlockDateTime } = req.body;
-        if (!content || !String(content).trim() || !unlockDateTime) {
-            return res.status(400).json({ error: 'Content and unlockDateTime are required.' });
-        }
-
-        const unlockAt = new Date(unlockDateTime);
-        if (isNaN(unlockAt.getTime()) || unlockAt <= new Date()) {
-            return res.status(400).json({ error: 'Unlock time must be in the future.' });
-        }
-
-        const isAnon = !!userDoc.isGhost;
-        const capsulePost = await new Post({
-            author: isAnon ? 'GHOST_SIGNAL' : userDoc.username,
-            authorId: userDoc._id,
-            ghostOwner: isAnon ? userDoc.username : null,
-            authorAura: userDoc.aura,
-            authorAvatar: isAnon ? null : userDoc.avatarUrl,
-            authorBio: isAnon ? 'Anonymous void transmission...' : userDoc.bio,
-            content: String(content).trim(),
-            sector: req.body.sector || 'Global',
-            isTimeCapsule: true,
-            unlockAt,
-            isAnonymous: isAnon
-        }).save();
-
-        return res.json({ success: true, postId: capsulePost._id, unlockAt });
-    } catch (err) {
-        console.error('create-time-capsule error:', err);
-        return res.status(500).json({ error: 'Failed to create time capsule.' });
-    }
-});
-
-// V87: Global Ghost Mode toggle
-app.post('/toggle-ghost-mode', async (req, res) => {
-    if (!isAuthenticated(req)) return res.status(401).json({ error: 'Unauthorized' });
-    try {
-        const userDoc = req.user || await resolveRequestUser(req);
-        if (!userDoc) return res.status(401).json({ error: 'Unauthorized' });
-        req.user = userDoc;
-
-        userDoc.isGhost = !userDoc.isGhost;
-        await userDoc.save();
-
-        if (req.session && req.session.user) {
-            req.session.user.isGhost = userDoc.isGhost;
-        }
-
-        return res.json({ success: true, isGhost: userDoc.isGhost });
-    } catch (err) {
-        console.error('toggle-ghost-mode error:', err);
-        return res.status(500).json({ error: 'Failed to toggle ghost mode.' });
-    }
-});
-
-app.post('/delete-post', async (req, res) => {
-    if (!isAuthenticated(req)) return res.status(401).json({ error: 'Unauthorized' });
-    try {
-        const userDoc = req.user || await resolveRequestUser(req);
-        if (!userDoc) return res.status(401).json({ error: 'Unauthorized' });
-        req.user = userDoc;
-
-        const post = await Post.findById(req.body.postId);
-        if (!post) return res.status(404).json({ error: 'Not found' });
-
-        let authorized = false;
-        if (post.authorId && userDoc._id && post.authorId.toString() === userDoc._id.toString()) {
-            authorized = true;
-        }
-        if (post.author && userDoc.username && post.author === userDoc.username) {
-            authorized = true;
-        }
-        if (post.ghostOwner && post.ghostOwner === userDoc.username) {
-            authorized = true;
-        }
-        if (userDoc.username === 'xavirox') {
-            authorized = true;
-        }
-
-        if (!authorized) {
-            return res.status(403).json({ error: 'Forbidden' });
-        }
-
-        await Post.findByIdAndDelete(req.body.postId);
-        return res.sendStatus(200);
-    } catch (err) {
-        console.error('delete-post error:', err);
-        return res.status(500).json({ error: 'Error' });
-    }
-});
-
-app.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
-    if (!req.session.user) return res.status(401).send("Unauthorized Matrix Action");
-    try {
-        if (!req.file) return res.redirect('/portfolio');
-        const base64Avatar = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-        await User.findOneAndUpdate({ username: req.session.user.username }, { $set: { avatarUrl: base64Avatar } });
-        res.redirect('/portfolio');
-    } catch (err) { res.redirect('/portfolio'); }
-});
-
-app.post('/update-banner', upload.single('media'), async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    try {
-        if (!req.file) return res.redirect('/portfolio');
-        await User.findOneAndUpdate({ username: req.session.user.username }, { $set: { coverPic: `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` } });
-        res.redirect('/portfolio');
-    } catch (err) { res.redirect('/portfolio'); }
-});
-
-app.post('/update-bio', async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    const pureBio = (req.body.bio || "").trim().substring(0, 75); 
-    await User.findOneAndUpdate({ username: req.session.user.username }, { $set: { bio: pureBio } });
-    res.redirect('/portfolio');
-});
-
-app.post('/change-username', async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    const newName = req.body.newUsername.toLowerCase().trim();
-    const user = await User.findOne({ username: req.session.user.username });
-    if (user.nameChanged) return res.send("<script>alert('Bro you already used your 1-time name change 💀'); window.history.back();</script>");
-    const exists = await User.findOne({ username: newName });
-    if (exists) return res.send("<script>alert('Username already taken by another sigma 😭'); window.history.back();</script>");
-    const oldName = user.username; user.username = newName; user.nameChanged = true; await user.save();
-    await Post.updateMany({ author: oldName }, { author: newName });
-    req.session.user.username = newName;
-    res.redirect('/portfolio');
-});
-
-app.get('/login', (req, res) => {
-    if (req.session.user) return res.redirect('/dashboard');
-    const errMap = {
-        google_failed: 'Google authentication failed. Try again.',
-        google_callback: 'Google callback could not sync your session.'
-    };
-    const error = errMap[req.query.error] || '';
-    const loginFailed = req.query.failed === '1';
-    res.send(AUTH_UI({ error, loginFailed }));
-});
-app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username: username.toLowerCase().trim() });
-    if (!user || !user.password) return res.redirect('/login?failed=1');
-    if (!(await bcrypt.compare(password, user.password))) return res.redirect('/login?failed=1');
-    req.session.user = { _id: user._id.toString(), username: user.username, aura: user.aura, avatarUrl: user.avatarUrl };
-    req.session.save((err) => {
-        if (err) return res.redirect('/login?failed=1');
-        res.redirect('/dashboard');
-    });
-});
-// V87: Premium standalone signup page
-app.get('/signup', (req, res) => {
-    res.sendFile(path.join(__dirname, 'signup.html'));
-});
-
-// Legacy /register redirects to new signup experience
-app.get('/register', (req, res) => {
-    res.redirect('/signup');
-});
-
-// V87: Manual registration handler — username, email, password, default aura 100
-const handleAuthSignup = async (req, res) => {
-    try {
-        await connectDB();
-
-        const rawUsername = (req.body.username || '').trim().replace(/^@/, '');
-        const username = rawUsername.toLowerCase();
-        const email = (req.body.email || '').toLowerCase().trim();
-        const password = req.body.password || '';
-
-        if (!username || username.length < 3 || username.length > 20) {
-            return res.status(400).json({
-                success: false,
-                error: 'Username must be between 3 and 20 characters.'
-            });
-        }
-
-        if (!/^[a-z0-9_]+$/.test(username)) {
-            return res.status(400).json({
-                success: false,
-                error: 'Username may only contain letters, numbers, and underscores.'
-            });
-        }
-
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            return res.status(400).json({
-                success: false,
-                error: 'Please enter a valid email address.'
-            });
-        }
-
-        if (!password || password.length < 6) {
-            return res.status(400).json({
-                success: false,
-                error: 'Password must be at least 6 characters long.'
-            });
-        }
-
-        const existingByUsername = await User.findOne({ username });
-        if (existingByUsername) {
-            return res.status(409).json({
-                success: false,
-                error: 'This username is already claimed in the matrix. Try another handle.'
-            });
-        }
-
-        const existingByEmail = await User.findOne({ email });
-        if (existingByEmail) {
-            return res.status(409).json({
-                success: false,
-                error: 'This email is already synced to another identity.'
-            });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await new User({
-            username,
-            email,
-            password: hashedPassword,
-            aura: 100,
-            bio: 'New signal detected in the void...'
-        }).save();
-
-        req.session.user = {
-            _id: newUser._id.toString(),
-            username: newUser.username,
-            aura: newUser.aura,
-            avatarUrl: newUser.avatarUrl,
-            isGhost: false
-        };
-
-        return res.json({
-            success: true,
-            message: 'Identity forged successfully. Welcome to the void.',
-            redirect: '/dashboard',
-            user: {
-                username: newUser.username,
-                aura: newUser.aura
-            }
-        });
-    } catch (err) {
-        console.error('auth/signup error:', err);
-        if (err.code === 11000) {
-            const field = err.keyPattern?.username ? 'username' : 'email';
-            return res.status(409).json({
-                success: false,
-                error: field === 'username'
-                    ? 'This username is already taken.'
-                    : 'This email is already registered.'
-            });
-        }
-        return res.status(500).json({
-            success: false,
-            error: 'Matrix registration failed. Please try again shortly.'
-        });
-    }
-};
-
-app.post('/auth/signup', handleAuthSignup);
-
-// Legacy POST /register — same handler (HTML form fallback)
-app.post('/register', async (req, res) => {
-    if (!req.body.email && req.body.username) {
-        req.body.email = `${String(req.body.username).trim().toLowerCase()}@legacy.xavirox.local`;
-    }
-    const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
-    const originalJson = res.json.bind(res);
-    if (!wantsJson) {
-        res.json = (payload) => {
-            if (payload.success) return res.redirect(payload.redirect || '/dashboard');
-            return res.send(`<script>alert(${JSON.stringify(payload.error)}); window.history.back();</script>`);
-        };
-    }
-    return handleAuthSignup(req, res);
-});
-app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login'); });
-
-// ============================================================
-// 🧬 V86 GOOGLE OAUTH ROUTING MATRIX
-// ============================================================
-app.get('/auth/google', (req, res, next) => {
-    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-        return res.send("<script>alert('Google OAuth not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.'); window.location.href='/login';</script>");
-    }
-    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
-});
-
-app.get('/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/login?error=google_failed' }),
-    async (req, res) => {
-        try {
-            const userDoc = req.user || await User.findOne({ username: req.session.passport?.user });
-            if (userDoc) {
-                req.session.user = {
-                    _id: userDoc._id.toString(),
-                    username: userDoc.username,
-                    aura: userDoc.aura,
-                    avatarUrl: userDoc.avatarUrl,
-                    isGhost: !!userDoc.isGhost
-                };
-            }
-            req.session.save((saveErr) => {
-                if (saveErr) return res.redirect('/login?error=google_callback');
-                res.redirect('/dashboard');
-            });
-        } catch (err) {
-            res.redirect('/login?error=google_callback');
-        }
-    }
-);
-
-app.get('/auth/logout', (req, res) => {
-    req.logout(() => {});
-    req.session.destroy(() => {
-        res.redirect('/dashboard');
-    });
-});
-
-// ============================================================
-// 🧬 V86 GHOST POLL VOTE — /api/poll/:pollId/vote
-// ============================================================
-app.post('/api/poll/:pollId/vote', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Login required to vote in the void.' });
-    try {
-        const voter = await User.findOne({ username: req.session.user.username });
-        if (!voter) return res.status(401).json({ error: 'Identity not found.' });
-        const poll = await GhostPoll.findById(req.params.pollId);
-        if (!poll) return res.status(404).json({ error: 'Poll signal lost in the void.' });
-        const optionIndex = parseInt(req.body.optionIndex, 10);
-        if (isNaN(optionIndex) || optionIndex < 0 || optionIndex >= poll.options.length) {
-            return res.status(400).json({ error: 'Invalid option index.' });
-        }
-        const alreadyVoted = poll.votedUsers.some(vid => String(vid) === String(voter._id));
-        if (alreadyVoted) return res.status(400).json({ error: 'You already voted in this ghost poll.' });
-        poll.options[optionIndex].voteCount = (poll.options[optionIndex].voteCount || 0) + 1;
-        poll.votedUsers.push(voter._id);
-        poll.totalVotes = (poll.totalVotes || 0) + 1;
-        await poll.save();
-        return res.json({ status: 'success', totalVotes: poll.totalVotes, options: poll.options });
-    } catch (err) {
-        return res.status(500).json({ error: 'Ghost poll vote execution failed.' });
-    }
-});
-
-// ============================================================
-// 🧬 V86 AURA DUELS — POST /api/aura/challenge
-// ============================================================
-app.post('/api/aura/challenge', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized matrix access.' });
-    try {
-        const wager = parseInt(req.body.wager, 10);
-        const targetUsername = (req.body.targetUsername || '').toLowerCase().trim().replace('@', '');
-        if (!targetUsername || !wager || wager < 1) {
-            return res.status(400).json({ error: 'Invalid duel parameters.' });
-        }
-        const challenger = await User.findOne({ username: req.session.user.username });
-        const opponent = await User.findOne({ username: targetUsername });
-        if (!challenger || !opponent) return res.status(404).json({ error: 'Combatant not found in the matrix.' });
-        if (challenger.username === opponent.username) {
-            return res.status(400).json({ error: 'You cannot duel yourself.' });
-        }
-        if (challenger.aura < wager) {
-            return res.status(400).json({ error: 'Insufficient aura to wager.' });
-        }
-        if (opponent.aura < wager) {
-            return res.status(400).json({ error: 'Opponent lacks sufficient aura for this wager.' });
-        }
-
-        const challengerPower = challenger.aura + (challenger.loginStreak || 0) * 8 + (challenger.duelWins || 0) * 12 + Math.floor(Math.random() * 100);
-        const opponentPower = opponent.aura + (opponent.loginStreak || 0) * 8 + (opponent.duelWins || 0) * 12 + Math.floor(Math.random() * 100);
-        const challengerWins = challengerPower >= opponentPower;
-        const winner = challengerWins ? challenger : opponent;
-        const loser = challengerWins ? opponent : challenger;
-        const winMethod = challengerWins
-            ? `Challenger power ${challengerPower} vs ${opponentPower}`
-            : `Opponent power ${opponentPower} vs ${challengerPower}`;
-
-        winner.aura += wager;
-        loser.aura = Math.max(0, loser.aura - wager);
-        if (challengerWins) {
-            challenger.duelWins = (challenger.duelWins || 0) + 1;
-            opponent.duelLosses = (opponent.duelLosses || 0) + 1;
-        } else {
-            opponent.duelWins = (opponent.duelWins || 0) + 1;
-            challenger.duelLosses = (challenger.duelLosses || 0) + 1;
-        }
-
-        const duelRecord = await new AuraDuel({
-            challenger: challenger.username,
-            opponent: opponent.username,
-            wager,
-            status: 'completed',
-            winner: winner.username,
-            loser: loser.username,
-            winMethod,
-            challengerStreak: challenger.loginStreak || 0,
-            opponentStreak: opponent.loginStreak || 0,
-            challengerAura: challenger.aura,
-            opponentAura: opponent.aura,
-            resolvedAt: new Date()
-        }).save();
-
-        const winnerHistory = {
-            type: 'duel_win',
-            amount: wager,
-            description: `Won duel vs @${loser.username}`,
-            opponent: loser.username,
-            date: new Date()
-        };
-        const loserHistory = {
-            type: 'duel_loss',
-            amount: -wager,
-            description: `Lost duel vs @${winner.username}`,
-            opponent: winner.username,
-            date: new Date()
-        };
-        if (!winner.auraHistory) winner.auraHistory = [];
-        if (!loser.auraHistory) loser.auraHistory = [];
-        winner.auraHistory.push(winnerHistory);
-        loser.auraHistory.push(loserHistory);
-        winner.duelHistory = winner.duelHistory || [];
-        loser.duelHistory = loser.duelHistory || [];
-        winner.duelHistory.push(duelRecord._id);
-        loser.duelHistory.push(duelRecord._id);
-
-        await winner.save();
-        await loser.save();
-
-        if (req.session.user.username === winner.username) {
-            req.session.user.aura = winner.aura;
-        } else {
-            req.session.user.aura = loser.aura;
-        }
-
-        await new Notification({
-            recipient: winner.username,
-            sender: 'SYSTEM',
-            type: 'duel_win',
-            referenceId: String(duelRecord._id)
-        }).save();
-        await new Notification({
-            recipient: loser.username,
-            sender: 'SYSTEM',
-            type: 'duel_loss',
-            referenceId: String(duelRecord._id)
-        }).save();
-
-        return res.json({
-            status: 'completed',
-            message: challengerWins
-                ? `Victory! You won ${wager} Aura from @${opponent.username}.`
-                : `Defeat. @${opponent.username} claimed ${wager} of your Aura.`,
-            winner: winner.username,
-            wager
-        });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ error: 'Aura duel execution failed.' });
-    }
-});
-
-// ============================================================
-// 🧬 V86 GLITCH MARKET — POST /api/market/buy
-// ============================================================
-app.post('/api/market/buy', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Login required to access Glitch Market.' });
-    try {
-        const itemName = (req.body.itemName || '').trim();
-        const buyer = await User.findOne({ username: req.session.user.username });
-        const item = await MarketItem.findOne({ itemName });
-        if (!buyer || !item) return res.status(404).json({ error: 'Item or identity not found.' });
-        if (!buyer.unlockedAssets) buyer.unlockedAssets = [];
-        if (buyer.unlockedAssets.includes(item.itemName)) {
-            return res.status(400).json({ message: 'You already own this asset.' });
-        }
-        if (buyer.aura < item.costInAura) {
-            return res.status(400).json({ message: 'Insufficient Aura for this purchase.' });
-        }
-        buyer.aura -= item.costInAura;
-        buyer.unlockedAssets.push(item.itemName);
-        if (!buyer.auraHistory) buyer.auraHistory = [];
-        buyer.auraHistory.push({
-            type: 'market_purchase',
-            amount: -item.costInAura,
-            description: `Purchased ${item.itemName} from Glitch Market`,
-            date: new Date()
-        });
-        await buyer.save();
-        req.session.user.aura = buyer.aura;
-        return res.json({
-            status: 'success',
-            message: `${item.itemName} unlocked! -${item.costInAura} Aura`,
-            aura: buyer.aura,
-            unlockedAssets: buyer.unlockedAssets
-        });
-    } catch (err) {
-        return res.status(500).json({ error: 'Market transaction failed.' });
-    }
-});
-
-// ============================================================
-// 🧬 V86 GHOST POLL CREATION — seed interactive polls in feed
-// ============================================================
-app.post('/api/ghost-poll/create', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-    try {
-        const { question, optionA, optionB, isAnonymous } = req.body;
-        if (!question || !optionA || !optionB) {
-            return res.status(400).json({ error: 'Question and two options required.' });
-        }
-        const poll = await new GhostPoll({
-            question: question.substring(0, 280),
-            options: [
-                { text: optionA.substring(0, 100), voteCount: 0 },
-                { text: optionB.substring(0, 100), voteCount: 0 }
-            ],
-            createdBy: isAnonymous ? 'GHOST' : req.session.user.username,
-            isAnonymous: isAnonymous === true || isAnonymous === 'true',
-            votedUsers: [],
-            totalVotes: 0
-        }).save();
-        return res.json({ status: 'success', pollId: poll._id });
-    } catch (err) {
-        return res.status(500).json({ error: 'Failed to create ghost poll.' });
-    }
-});
-
-app.get('/create-sector', async (req, res) => {
-    if (!req.session.user) return res.sendStatus(401);
-    if (req.query.name) { try { await new Sector({ name: req.query.name.toLowerCase().trim() }).save(); } catch (e) {} }
-    res.redirect('/dashboard');
-});
-
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => { console.log("🚀 COSMIC ENGINE V86 LIVE ON PORT " + PORT); });
-}
-module.exports = app;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                alert
