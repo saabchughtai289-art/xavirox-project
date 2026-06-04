@@ -57,10 +57,47 @@ const MASTER_UI = (content, user, isOwner) => `
     <title>XAVIROX | Universe Control</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --p: #ff007f; --b: #007AFF; --glass: rgba(255,255,255,0.08); --border: rgba(255,255,255,0.15); }
-        
+        :root {
+            --p: #ff007f;
+            --b: #007AFF;
+            --glass: rgba(255,255,255,0.08);
+            --border: rgba(255,255,255,0.15);
+
+            /* Light Pink / Deep Navy theme system */
+            --light-bg: #FFF0F5;
+            --light-text: #0F172A;
+            --dark-bg: #0F172A;
+            --dark-text: #FFF0F5;
+        }
+
         * { box-sizing: border-box; scroll-behavior: smooth; }
-        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; overflow-x: hidden; }
+        body {
+            margin: 0;
+            font-family: -apple-system, sans-serif;
+            overflow-x: hidden;
+
+            background: var(--light-bg);
+            color: var(--light-text);
+        }
+
+        /* Dark mode inversion (class-based for compatibility with existing theme runtime) */
+        html.dark body {
+            background: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        .glass-surface {
+            backdrop-filter: blur(40px) saturate(220%);
+            -webkit-backdrop-filter: blur(40px) saturate(220%);
+            background: rgba(255,255,255,0.40);
+            border: 1px solid rgba(15, 23, 42, 0.10);
+            color: inherit;
+        }
+        html.dark .glass-surface {
+            background: rgba(0,0,0,0.40);
+            border: 1px solid rgba(255, 240, 245, 0.10);
+        }
+
 
         /* Animated Universe Background */
         .universe-bg { position: fixed; top: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 0%, #1a0136 0%, #000 80%); z-index: -2; }
@@ -123,12 +160,25 @@ const MASTER_UI = (content, user, isOwner) => `
     <div class="main-wrapper">
         <div class="feed-container">
             <div class="card">
-                <form action="/addpost" method="POST">
-                    <textarea name="content" placeholder="Drop your neural vibe..." required></textarea>
+                <form id="mainPostForm" action="/addpost" method="POST" enctype="multipart/form-data" data-ajax="1">
+                    <textarea id="txBarEngine" name="content" placeholder="Drop your neural vibe..." required></textarea>
+
+                    <!-- Premium media composer (local preview via createObjectURL) -->
+                    <div style="margin-top:12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                        <label style="display:inline-flex; align-items:center; gap:10px; cursor:pointer;">
+                            <i class="fas fa-camera" style="color:var(--p);"></i>
+                            <span style="font-weight:900; font-size:12px; opacity:0.85;">Add Image/Video</span>
+                            <input id="postMediaInput" type="file" name="media" accept="image/*,video/*" style="display:none;" />
+                        </label>
+                    </div>
+
+                    <div id="mediaPreviewMount" class="media-preview-mount" hidden></div>
+
                     <button type="submit" class="primary-btn" style="float:right;">TRANSMIT</button>
                     <div style="clear:both;"></div>
                 </form>
             </div>
+
             <div id="feed-flow">${content}</div>
         </div>
 
@@ -178,10 +228,104 @@ const MASTER_UI = (content, user, isOwner) => `
             const data = await res.json();
             if(data.success) document.getElementById('v-'+id).innerText = data.newVotes;
         }
+
+        (function initPostComposerFix() {
+            const form = document.getElementById('mainPostForm');
+            const fileInput = document.getElementById('postMediaInput');
+            const previewMount = document.getElementById('mediaPreviewMount');
+            if (!form || !fileInput || !previewMount) return;
+
+            let objectUrl = null;
+
+            const clearPreview = () => {
+                if (objectUrl) {
+                    try { URL.revokeObjectURL(objectUrl); } catch (_) {}
+                    objectUrl = null;
+                }
+                previewMount.innerHTML = '';
+                previewMount.hidden = true;
+                fileInput.value = '';
+            };
+
+            fileInput.addEventListener('change', () => {
+                const file = fileInput.files && fileInput.files[0];
+                if (!file) {
+                    clearPreview();
+                    return;
+                }
+
+                if (objectUrl) {
+                    try { URL.revokeObjectURL(objectUrl); } catch (_) {}
+                    objectUrl = null;
+                }
+
+                objectUrl = URL.createObjectURL(file);
+                const isVideo = (file.type || '').startsWith('video/');
+
+                previewMount.hidden = false;
+                previewMount.innerHTML = isVideo
+                    ? '<div class="post-media-wrap">' +
+                      '<video src="' + objectUrl + '" controls playsinline class="post-media-node"></video>' +
+                      '<button type="button" class="media-preview-clear" aria-label="Remove media">✕</button>' +
+                      '</div>'
+                    : '<div class="post-media-wrap">' +
+                      '<img src="' + objectUrl + '" alt="Preview" class="post-media-node" />' +
+                      '<button type="button" class="media-preview-clear" aria-label="Remove media">✕</button>' +
+                      '</div>';
+
+                const clearBtn = previewMount.querySelector('.media-preview-clear');
+                if (clearBtn) clearBtn.addEventListener('click', clearPreview);
+            });
+
+            // POST submission: ensure local preview is cleared and UI updates cleanly.
+            form.addEventListener('submit', async (event) => {
+                if (form.dataset.ajax !== '1') return;
+                event.preventDefault();
+
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) submitBtn.disabled = true;
+
+                try {
+                    const fd = new FormData(form);
+                    const res = await fetch('/addpost', {
+                        method: 'POST',
+                        body: fd,
+                        credentials: 'same-origin'
+                    });
+
+                    if (res.ok) {
+                        const tx = document.getElementById('txBarEngine');
+                        if (tx) tx.value = '';
+
+                        clearPreview();
+
+                        // Server currently redirects; if we got redirected, follow it.
+                        if (res.redirected) {
+                            window.location.href = res.url;
+                        } else {
+                            window.location.href = '/dashboard';
+                        }
+                        return;
+                    }
+                    alert('Transmission failed — matrix uplink rejected.');
+                } catch (e) {
+                    alert('Transmission uplink failed.');
+                } finally {
+                    if (submitBtn) submitBtn.disabled = false;
+                }
+            });
+        })();
+
+        async function vote(id, type) {
+            const res = await fetch('/api/vote/' + id, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type}) });
+            const data = await res.json();
+            if(data.success) document.getElementById('v-' + id).innerText = data.newVotes;
+        }
     </script>
 </body>
 </html>
 `;
+
 
 // --- 5. LOGIC ROUTES (Merged & Bari) ---
 
@@ -227,10 +371,35 @@ app.post('/send-feedback', isAuth, async (req, res) => {
     res.send("<script>alert('Signal Transmitted to Xavi!'); window.location='/dashboard';</script>");
 });
 
-app.post('/addpost', isAuth, async (req, res) => {
-    await new Post({ author: req.session.user.username, content: req.body.content }).save();
+// MEDIA upload (in-memory for fast preview; persisted via public/uploads)
+const multer = require('multer');
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, path.join(__dirname, 'public', 'uploads'));
+    },
+    filename: function (req, file, cb) {
+        const safeExt = (path.extname(file.originalname || '') || '').toLowerCase() || '';
+        const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + safeExt;
+        cb(null, name);
+    }
+});
+const upload = multer({ storage });
+
+app.post('/addpost', isAuth, upload.single('media'), async (req, res) => {
+    const author = req.session.user.username;
+    const content = (req.body.content || '').trim();
+
+    const mediaUrl = req.file ? ('/uploads/' + req.file.filename) : null;
+
+    await new Post({
+        author,
+        content,
+        media: mediaUrl
+    }).save();
+
     res.redirect('/dashboard');
 });
+
 
 app.post('/api/vote/:id', isAuth, async (req, res) => {
     const post = await Post.findById(req.params.id);
