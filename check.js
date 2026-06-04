@@ -1,26 +1,52 @@
 const fs = require('fs');
-try {
-    const s = fs.readFileSync('index.js', 'utf8');
-    const backticks = (s.match(/`/g)||[]).length;
-    const singles = (s.match(/'/g)||[]).length;
-    const doubles = (s.match(/"/g)||[]).length;
-    const opens = (s.match(/\{/g)||[]).length;
-    const closes = (s.match(/\}/g)||[]).length;
 
-    console.log('\n==== XAVIROX OS DIAGNOSTIC ====');
-    console.log('1. Backticks (`) Line:', backticks % 2 === 0 ? '✅ Balanced' : '❌ UNBALANCED (Khula chuta hai!)');
-    console.log('2. Single Quotes (\'):', singles % 2 === 0 ? '✅ Balanced' : '❌ UNBALANCED (Khula chuta hai!)');
-    console.log('3. Double Quotes ("):', doubles % 2 === 0 ? '✅ Balanced' : '❌ UNBALANCED (Khula chuta hai!)');
-    console.log(`4. Brackets Count: Open { (${opens}) | Close } (${closes})`);
+try {
+    const content = fs.readFileSync('index.js', 'utf8');
+    let insideBacktick = false;
+    let insideSingle = false;
+    let insideDouble = false;
+    let backtickStartLine = 0;
+    let singleStartLine = 0;
     
-    if (opens > closes) {
-        console.log(`👉 Aapko file ke aakhir mein exact [ ${opens - closes} ] brackets '}' aur lagane hain.`);
-    } else if (closes > opens) {
-        console.log(`👉 Aapke paas [ ${closes - opens} ] extra brackets '}' hain, unhe mitao.`);
-    } else {
-        console.log('✅ Brackets balanced hain!');
+    let lineNum = 1;
+    
+    for (let i = 0; i < content.length; i++) {
+        const char = content[i];
+        
+        if (char === '\n') {
+            lineNum++;
+            continue;
+        }
+        
+        // Escape character (\) ko skip karein taake check kharab na ho
+        if (char === '\\') {
+            i++; 
+            continue;
+        }
+        
+        // Check Backtick
+        if (char === '`' && !insideSingle && !insideDouble) {
+            insideBacktick = !insideBacktick;
+            if (insideBacktick) backtickStartLine = lineNum;
+        }
+        
+        // Check Single Quote
+        if (char === "'" && !insideBacktick && !insideDouble) {
+            insideSingle = !insideSingle;
+            if (insideSingle) singleStartLine = lineNum;
+        }
+        
+        // Check Double Quote
+        if (char === '"' && !insideBacktick && !insideSingle) {
+            insideDouble = !insideDouble;
+        }
     }
-    console.log('===============================\n');
-} catch(e) {
+    
+    console.log('\n====================================');
+    console.log(insideBacktick ? `❌ Backtick (\`) is line par khula chuta hai: LINE ${backtickStartLine}` : '✅ Backticks bilkul sahi hain!');
+    console.log(insideSingle ? `❌ Single Quote (') is line par khula chuta hai: LINE ${singleStartLine}` : '✅ Single Quotes bilkul sahi hain!');
+    console.log('====================================\n');
+
+} catch (e) {
     console.log('Error:', e.message);
 }
