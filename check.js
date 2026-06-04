@@ -7,10 +7,8 @@ try {
     const idx = content.indexOf(target);
 
     if (idx !== -1) {
-        // Code ko 'submitAuraDuel' se pehle tak bilkul clean cut kar rahe hain
         let cleanBase = content.substring(0, idx);
         
-        // Sahi aur balanced submitAuraDuel function ka code
         const perfectCode = `async function submitAuraDuel(event) {
         event.preventDefault();
         const opponentInput = document.getElementById('duelOpponent');
@@ -41,35 +39,37 @@ try {
 
     init();\n`;
 
-        // HTML String, Script tags aur Express routes ke saare possible closing combinations
+        // Ab hum bina ')' wale aur doosre safe brackets combinations try kar rahe hain
         const endings = [
-            `</script>\n\`);\n});\n}`,
-            `</script>\n</body>\n</html>\n\`);\n});\n}`,
-            `</script>\n\`);\n}`,
-            `</script>\n</body>\n</html>\n\`);\n}`,
-            `</script>\n\`);\n});`,
-            `</script>\n</body>\n</html>\n\`);\n});`
+            `</script>\n\`;\n});\n}`,
+            `</script>\n\`;\n}`,
+            `</script>\n\`;\n});`,
+            `</script>\n\`;\n}\n}`,
+            `</script>\n\`;`,
+            `</script>\n</body>\n</html>\n\`;\n}`,
+            `</script>\n</body>\n</html>\n\`;\n});\n}`
         ];
 
         let success = false;
 
-        // Ek ek karke har combination ko try aur compile karke check karega
         for (let end of endings) {
             fs.writeFileSync('index.js', cleanBase + perfectCode + end, 'utf8');
             try {
-                // Node check command chalakar verify kar rahe hain
+                // Sahi bracket system dhoondne ki koshish
                 execSync('node -c index.js', { stdio: 'ignore' });
                 console.log("\n🔥 BOOM!!! XAVIROX OS SYSTEM UNLOCKED!");
                 console.log("Syntax error 100% automatic fix ho gaya hai!");
                 success = true;
                 break;
             } catch (e) {
-                // Agar yeh fail ho toh agla loop chalega
+                // Fail hone par agla combination check karega
             }
         }
 
         if (!success) {
-            console.log("\n❌ Koi bhi combination match nahi kiya. Mujhe index.js ki line 1 se 20 ka code dikhayein taake wrapper pata chale.");
+            // Agar sab fail ho jayein toh default clean par chorenge taake naya error check ho sake
+            fs.writeFileSync('index.js', cleanBase + perfectCode + `</script>\n\`;`, 'utf8');
+            console.log("\n⚠️ Kuch combinations check kiye hain. Ek baar 'node -c index.js' chala kar dekhein kya error badla?");
         }
     } else {
         console.log("\n❌ 'submitAuraDuel' function nahi mila!");
