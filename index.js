@@ -1529,7 +1529,6 @@ const MASTER_UI = (content, user, sectors = [], activeSector = 'Global', allUser
             alert("Server error, please try again.");
         }
     }
-    
-    init();
-}); // Yeh event listener ya wrapper yahan close ho raha hai
+     init();
+}); //
 
