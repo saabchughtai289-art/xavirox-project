@@ -1547,4 +1547,4 @@ const MASTER_UI = (content, user, sectors = [], activeSector = 'Global', allUser
 
 }
 
-}
+});
