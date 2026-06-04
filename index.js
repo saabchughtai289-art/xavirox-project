@@ -1528,5 +1528,4 @@ method: 'POST',
             } catch (error) {
                 console.error("Request failed:", error);
                 alert("Server error, please try again.");
-            }
-        }); // Agar yeh kisi event listener ya function ke andar hai toh uske brackets
+}
