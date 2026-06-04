@@ -244,17 +244,188 @@ app.post('/api/vote/:id', isAuth, async (req, res) => {
 
 // Auth Boilerplate
 app.get('/login', (req, res) => {
-    res.send(`<body style="background:#000; display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; color:white;">
-        <div style="background:rgba(255,255,255,0.05); padding:60px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); width:400px; text-align:center; backdrop-filter:blur(20px);">
-            <h1 style="letter-spacing:10px; background:linear-gradient(to right, #ff007f, #007AFF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-size:35px; font-weight:900;">XAVIROX</h1>
-            <form action="/login" method="POST">
-                <input name="username" placeholder="Neural ID" style="width:100%; padding:18px; margin:15px 0; border-radius:15px; border:none; background:rgba(255,255,255,0.08); color:white; outline:none;" required>
-                <input name="password" type="password" placeholder="Access Key" style="width:100%; padding:18px; margin:15px 0; border-radius:15px; border:none; background:rgba(255,255,255,0.08); color:white; outline:none;" required>
-                <button style="width:100%; padding:18px; border-radius:50px; border:none; background:white; font-weight:900; cursor:pointer; margin-top:15px; font-size:16px;">INITIALIZE CORE</button>
-            </form>
-            <p style="font-size:12px; opacity:0.4; margin-top:30px;">New Entity? <a href="/signup" style="color:#ff007f; text-decoration:none;">Sync with Nebula</a></p>
+    res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XAVIROX | Login</title>
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+        /* Minimal utility layer so this page is self-operational without Tailwind build */
+        .w-screen{width:100vw} .h-screen{min-height:100vh} .flex{display:flex}
+        .items-center{align-items:center} .justify-center{justify-content:center} .overflow-hidden{overflow:hidden}
+        .relative{position:relative} .absolute{position:absolute} .top-4{top:1rem} .right-4{right:1rem}
+        .z-50{z-index:50} .text-emerald-400\/80{color:rgba(52,211,153,0.8)}
+        .font-mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+        .text-\[11px\]{font-size:11px}
+
+        /* Animated metric ticker pulse */
+        @keyframes metricPulse { 0%,100%{opacity:.65; transform: translateZ(0)} 50%{opacity:1; transform: translateZ(0) scale(1.02)} }
+        .metrics-pulse{ animation: metricPulse 1.7s ease-in-out infinite; }
+
+        /* Theme toggle button */
+        .theme-toggle-btn{
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 50;
+            width: 44px;
+            height: 44px;
+            border-radius: 9999px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            cursor:pointer;
+            box-shadow: 0 0 20px rgba(168,85,247,0.18);
+        }
+        .theme-toggle-btn:hover{ transform: scale(1.05); box-shadow: 0 0 28px rgba(168,85,247,0.28); }
+        .theme-toggle-btn:active{ transform: scale(0.99); }
+
+        /* Cyber subtle link styling */
+        a{ color: rgba(168,85,247,0.9); text-decoration:none; font-weight:800; }
+        a:hover{ text-shadow: 0 0 18px rgba(168,85,247,0.35); }
+
+        /* Glass glassmorphism card */
+        .glass{
+            backdrop-filter: blur(2xl);
+        }
+
+        /* Google button hover glow */
+        .google-btn{
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, filter 0.25s ease;
+        }
+        .google-btn:hover{
+            transform: scale(1.02);
+            box-shadow: 0 0 24px rgba(168,85,247,0.35), 0 0 18px rgba(0,242,255,0.18);
+            filter: saturate(1.15);
+        }
+
+        /* Inputs */
+        .cyber-input{
+            width: 100%;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(39,39,42,1);
+            color: rgb(161,161,170);
+            border-radius: 12px;
+            padding: 14px 16px;
+            outline: none;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .cyber-input:focus{
+            border-color: rgba(168,85,247,0.8);
+            box-shadow: 0 0 0 3px rgba(168,85,247,0.15);
+        }
+
+        /* Wide dark capsule google */
+        .google-btn{
+            width: 100%;
+            background: rgb(9,9,11);
+            border: 1px solid rgba(39,39,42,1);
+            color: rgb(228,228,231);
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap: 12px;
+            text-decoration:none;
+            margin-top: 6px;
+            box-shadow: 0 0 0 rgba(168,85,247,0.5);
+        }
+
+        .card-shadow{ box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        .halo{ background: radial-gradient(circle_at_center,rgba(147,51,234,0.15)_0%,transparent_60%); }
+    </style>
+</head>
+<body class="auth-workspace cosmic-theme-body">
+    <div class="auth-ambient-halo"></div>
+
+    <div class="theme-toggle-btn" id="cosmicThemeToggle" role="switch" aria-checked="false" aria-label="Toggle theme">
+        <span id="themeIcon" style="font-size:16px; font-weight:900; color:#e4e4e7;">☾</span>
+    </div>
+
+    <div class="w-screen h-screen flex items-center justify-center overflow-hidden relative" style="background:#030305;">
+        <div class="halo absolute inset-0" style="z-index:0"></div>
+
+        <div style="position:relative; z-index:2; width:100%; max-width:28rem; padding: 24px; display:flex; align-items:center; justify-content:center;">
+            <div class="backdrop-blur-2xl bg-zinc-900/40 border border-white/10 rounded-2xl p-8 w-full max-w-md card-shadow" style="width:100%; background: rgba(24,24,27,0.40); border: 1px solid rgba(255,255,255,0.10); border-radius: 16px; padding: 32px;">
+
+                <div class="auth-card-header" style="text-align:center; margin-bottom: 10px;">
+                    <div style="font-weight: 950; letter-spacing: 0.3em; color:#fff; text-transform:uppercase; font-size: 14px; opacity:0.9;">
+                        XAVIROX LOGIN
+                    </div>
+                    <div style="height:10px"></div>
+                </div>
+
+                <div class="metrics-pulse font-mono text-emerald-400/80" style="font-size:11px; text-align:center; margin: 6px 0 18px 0;">
+                    [ ⚡ 4,129 AGENTS SYNCED IN THE MATRIX ]
+                </div>
+
+                <form action="/login" method="POST">
+                    <input class="cyber-input" type="text" name="username" placeholder="NEURAL ID" required />
+                    <input class="cyber-input" type="password" name="password" placeholder="ACCESS KEY" required />
+
+                    <button type="submit" class="cyber-input" style="background: rgba(168,85,247,0.18); border-color: rgba(168,85,247,0.6); color:#fff; margin-top:8px; cursor:pointer; transition: transform 0.25s ease, box-shadow 0.25s ease;" onmouseover="this.style.transform='scale(1.01)'; this.style.boxShadow='0 0 24px rgba(168,85,247,0.25)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                        INITIALIZE CORE
+                    </button>
+                </form>
+
+                <div class="auth-divider" style="margin: 18px 0 8px; opacity:0.55;">GOOGLE UPLINK</div>
+
+                <a class="google-btn" href="/auth/google" aria-label="Login with Google">
+                    <i class="fa-brands fa-google" style="font-size:18px; filter: drop-shadow(0 0 8px rgba(66,133,244,0.8));"></i>
+                    CONTINUE WITH GOOGLE
+                </a>
+
+                <p style="font-size: 12px; opacity: 0.55; margin-top: 18px; text-align:center;">
+                    New Entity? <a href="/signup">Sync with Nebula</a>
+                </p>
+            </div>
         </div>
-    </body>`);
+    </div>
+
+    <script>
+        (function(){
+            const btn = document.getElementById('cosmicThemeToggle');
+            const icon = document.getElementById('themeIcon');
+            // Lightweight toggle that only flips a class; your global theme runtime may exist elsewhere.
+            const root = document.documentElement;
+            const body = document.body;
+            const current = localStorage.getItem('xavirox_login_theme') || 'dark';
+            const setIcon = (t)=>{ icon.textContent = (t === 'dark') ? '☾' : '☀'; };
+            const apply = (t)=>{
+                const isDark = t === 'dark';
+                btn.setAttribute('aria-checked', String(!isDark));
+                root.classList.toggle('dark', isDark);
+                body.classList.toggle('dark', isDark);
+                setIcon(t);
+            };
+            apply(current);
+
+            btn.addEventListener('click', ()=>{
+                const next = (root.classList.contains('dark')) ? 'light' : 'dark';
+                localStorage.setItem('xavirox_login_theme', next);
+                apply(next);
+            });
+        })();
+    </script>
+
+</body>
+</html>
+    `);
 });
 
 app.post('/signup', async (req, res) => {
