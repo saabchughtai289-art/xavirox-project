@@ -1528,4 +1528,9 @@ method: 'POST',
             } catch (error) {
                 console.error("Request failed:", error);
                 alert("Server error, please try again.");
+            }
+        }
+    }
+
+    init();
 }
