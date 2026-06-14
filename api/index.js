@@ -116,12 +116,17 @@ app.use(express.urlencoded({ extended: true }));
 // 📦 6. Production Session Setup with MongoDB (Warning khatam karne ke liye)
 const mongoSessionUrl = process.env.MONGODB_URI || process.env.MONGO_URI;
 
-const sessionStore = mongoSessionUrl
-    ? MongoStore.create({
+// connect-mongo v5+ requires you to provide one of: mongoUrl | clientPromise | client.
+// If no URL is present (common in misconfigured environments), do not initialize the store.
+let sessionStore = undefined;
+if (mongoSessionUrl) {
+    sessionStore = MongoStore.create({
         mongoUrl: mongoSessionUrl,
         ttl: 14 * 24 * 60 * 60
-    })
-    : undefined;
+    });
+} else {
+    console.warn('⚠️ Mongo session store disabled: missing MONGODB_URI/MONGO_URI');
+}
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'cosmic_secret_key',
