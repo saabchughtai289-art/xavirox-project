@@ -1,5 +1,5 @@
-- [x] Fix `signup.html` (make it valid static HTML frontend only)
-- [x] Ensure signup form submits to `/signup` with `username` + `password`
-- [x] Add minimal client-side validation + UX (disable button during submit, show errors)
-- [ ] Keep changes scoped ONLY to `signup.html`
-- [ ] Run a quick static check (open in browser)
+- [x] Inspect api/index.js to confirm duplicated Express app block boundaries
+- [ ] Remove the duplicated second Express app block (starting at // 1. Environment variables load karein after the first module.exports = app;)
+- [ ] Ensure only one module.exports = app remains
+- [x] Syntax-check api/index.js locally (node -c)
+- [ ] Run quick health check locally (if possible)
