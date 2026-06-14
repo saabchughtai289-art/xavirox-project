@@ -531,6 +531,52 @@ const requireAuthPage = (req, res, next) => {
     next();
 };
 
+// --- [AUTH: EMAIL/PASSWORD LOGIN] ---
+// Fixes Vercel "Cannot POST /login" by adding the missing route handler.
+app.post('/login', async (req, res) => {
+    try {
+        const username = (req.body && (req.body.username || req.body.email || '')).toString().trim().toLowerCase();
+        const password = (req.body && req.body.password != null) ? req.body.password.toString() : '';
+
+        if (!username || !password) {
+            return res.status(400).send('Missing username/email or password.');
+        }
+
+        // Ensure DB is ready (Vercel serverless can cold start)
+        await connectDB();
+
+        const userDoc = await User.findOne({
+            $or: [
+                { username },
+                { email: username }
+            ]
+        });
+
+        if (!userDoc || !userDoc.password) {
+            return res.status(401).send('Invalid credentials.');
+        }
+
+        const isMatch = await bcrypt.compare(password, userDoc.password);
+        if (!isMatch) {
+            return res.status(401).send('Invalid credentials.');
+        }
+
+        // Persist login on session (integrates with existing express-session + MongoStore)
+        if (req.session) {
+            req.session.user = {
+                id: userDoc._id,
+                username: userDoc.username
+            };
+        }
+
+        return res.redirect('/');
+    } catch (err) {
+        console.error('Login failed:', err);
+        // Clean error handling: do NOT crash server
+        return res.status(500).send('Login error. Please try again.');
+    }
+});
+
 // --- [AI HELPER ENGINE] ---
 function fileToGenerativePart(buffer, mimeType) {
     return { inlineData: { data: buffer.toString("base64"), mimeType } };
