@@ -119,8 +119,8 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URI, 
-        ttl: 14 * 24 * 60 * 60 
+        mongoUrl: process.env.MONGODB_URI || process.env.MONGO_URI,
+        ttl: 14 * 24 * 60 * 60
     }),
     cookie: {
         secure: true, 
