@@ -74,8 +74,24 @@
     - SAFETY: Strictly 0% compression, full scaled line-by-line codebase integrity locked.
 ==================================================================================================== */
 
+// 1. Sabse pehle environment variables load karein
+require('dotenv').config();
+
+// 2. Saare zaroori packages ko require (import) karein
 const express = require('express');
 const path = require('path');
+const mongoose = require('mongoose');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
+// 3. AI Module Import (Gemini Library)
+const { GoogleGenAI } = require('@google/genai');
+
+// 4. Aapki apni custom files (Cosmic Shell & Theme)
 const { AUTH_UI, buildGlitchMarketHtml, COSMIC_CLIENT_JS } = require('./cosmic-shell-v91');
 const {
     THEME_TOGGLE_HTML,
@@ -86,19 +102,11 @@ const {
     wrapAuraAvatar,
     topAlphaTickerHtml
 } = require('./cosmic-theme-v92');
-const mongoose = require('mongoose');
-const session = require('express-session');
-const bcrypt = require('bcryptjs');
-const multer = require('multer');
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
-// [AI MODULE IMPORT]
-const { GoogleGenAI } = require('@google/genai');
-
+// 5. Express App Initialization
 const app = express();
 
-// Vercel / reverse-proxy: required for secure cookies & OAuth HTTPS callbacks
+// Vercel / reverse-proxy settings
 app.set('trust proxy', 1);
 
 const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || (
@@ -107,7 +115,7 @@ const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || (
         : 'http://localhost:3000/auth/google/callback'
 );
 
-// Unified auth helpers (express-session + Passport)
+// [Yahan se aage aapka baki saara purana auth helpers aur routes ka code shuru hoga...]
 const isAuthenticated = (req) => {
     return (typeof req.isAuthenticated === 'function' && req.isAuthenticated()) || !!(req.session && req.session.user);
 };
