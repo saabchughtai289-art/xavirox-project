@@ -6,7 +6,8 @@ const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const path = require('path');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
+
 
 const app = express();
 
@@ -44,10 +45,15 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'xavirox_secret_key',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI,
-        ttl: 14 * 24 * 60 * 60 // 14 days session expiry
-    }),
+    store: process.env.MONGODB_URI
+        ? MongoStore.create({
+            mongoUrl: process.env.MONGODB_URI,
+            ttl: 14 * 24 * 60 * 60 // 14 days session expiry
+        })
+        : undefined,
+
+
+
     cookie: {
         secure: process.env.NODE_ENV === 'production', // Vercel par true hoga kyunke wahan HTTPS hota hai
         maxAge: 1000 * 60 * 60 * 24 // 1 day
@@ -58,7 +64,8 @@ app.use(session({
 let genAI = null;
 try {
     if (process.env.GEMINI_API_KEY) {
-        genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
         console.log('🤖 GEMINI AI CORE: Online and Linked');
     } else {
         console.log('⚠️ GEMINI WARNING: API Key missing. Server is running without AI.');
