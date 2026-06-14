@@ -114,17 +114,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // 📦 6. Production Session Setup with MongoDB (Warning khatam karne ke liye)
+const mongoSessionUrl = process.env.MONGODB_URI || process.env.MONGO_URI;
+
+const sessionStore = mongoSessionUrl
+    ? MongoStore.create({
+        mongoUrl: mongoSessionUrl,
+        ttl: 14 * 24 * 60 * 60
+    })
+    : undefined;
+
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'cosmic_secret_key', 
+    secret: process.env.SESSION_SECRET || 'cosmic_secret_key',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI || process.env.MONGO_URI,
-        ttl: 14 * 24 * 60 * 60
-    }),
+    store: sessionStore,
     cookie: {
-        secure: true, 
-        maxAge: 1000 * 60 * 60 * 24 * 14 
+        secure: true,
+        maxAge: 1000 * 60 * 60 * 24 * 14
     }
 }));
 
