@@ -116,17 +116,22 @@ app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 📦 6. Production Session Setup with MongoDB (Warning khatam karne ke liye)
+// 📦 6. Production Session Setup
+// connect-mongo can crash startup if MONGODB_URI is missing/misconfigured.
+// For "web from starting" we keep sessions working in that case (memory store).
 const mongoSessionUrl = process.env.MONGODB_URI || process.env.MONGO_URI;
 
-// connect-mongo v5+ requires you to provide one of: mongoUrl | clientPromise | client.
-// If no URL is present (common in misconfigured environments), do not initialize the store.
 let sessionStore = undefined;
 if (mongoSessionUrl) {
-    sessionStore = MongoStore.create({
-        mongoUrl: mongoSessionUrl,
-        ttl: 14 * 24 * 60 * 60
-    });
+    try {
+        sessionStore = MongoStore.create({
+            mongoUrl: mongoSessionUrl,
+            ttl: 14 * 24 * 60 * 60
+        });
+    } catch (e) {
+        console.warn('⚠️ Mongo session store disabled (init failed):', e?.message || e);
+        sessionStore = undefined;
+    }
 } else {
     console.warn('⚠️ Mongo session store disabled: missing MONGODB_URI/MONGO_URI');
 }
@@ -137,10 +142,11 @@ app.use(session({
     saveUninitialized: false,
     store: sessionStore,
     cookie: {
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
         maxAge: 1000 * 60 * 60 * 24 * 14
     }
 }));
+
 
 const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || (
     process.env.NODE_ENV === 'production'
@@ -150,13 +156,18 @@ const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || (
 
 // 🌌 7. Home Page Route (Cannot GET / hal karne ke liye)
 app.get('/', (req, res) => {
-    if (typeof AUTH_UI !== 'undefined') {
-        // AUTH_UI may export a function or a string. Never pass the function itself to res.send().
-        res.send(typeof AUTH_UI_HTML === 'function' ? AUTH_UI_HTML() : AUTH_UI_HTML);
-    } else {
-        res.send("<h1>🌌 Cosmic Shell v91 is Live!</h1><p>Server sahi chal raha hai bhai.</p>");
+    try {
+        // AUTH_UI may be a function (returns HTML) or a string.
+        // Never pass the function itself to res.send().
+        const html = (typeof AUTH_UI_HTML === 'function') ? AUTH_UI_HTML() : String(AUTH_UI_HTML || '');
+        if (html && typeof html === 'string') return res.send(html);
+        return res.send('<h1>🌌 Cosmic Shell is Live!</h1><p>Server is running.</p>');
+    } catch (e) {
+        console.error('Home page render failed:', e);
+        return res.send('<h1>🌌 Cosmic Shell is Live!</h1><p>Server is running (fallback UI).</p>');
     }
 });
+
 
 // [Yahan se aage aapka baki saara purana auth helpers aur routes ka code shuru hoga...]
 const isAuthenticated = (req) => {
