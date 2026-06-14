@@ -151,7 +151,8 @@ const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || (
 // 🌌 7. Home Page Route (Cannot GET / hal karne ke liye)
 app.get('/', (req, res) => {
     if (typeof AUTH_UI !== 'undefined') {
-        res.send(AUTH_UI_HTML);
+        // AUTH_UI may export a function or a string. Never pass the function itself to res.send().
+        res.send(typeof AUTH_UI_HTML === 'function' ? AUTH_UI_HTML() : AUTH_UI_HTML);
     } else {
         res.send("<h1>🌌 Cosmic Shell v91 is Live!</h1><p>Server sahi chal raha hai bhai.</p>");
     }
