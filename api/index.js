@@ -157,8 +157,6 @@ const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || (
 // 🌌 7. Home Page Route (Cannot GET / hal karne ke liye)
 app.get('/', (req, res) => {
     try {
-        // AUTH_UI may be a function (returns HTML) or a string.
-        // Never pass the function itself to res.send().
         const html = (typeof AUTH_UI_HTML === 'function') ? AUTH_UI_HTML() : String(AUTH_UI_HTML || '');
         if (html && typeof html === 'string') return res.send(html);
         return res.send('<h1>🌌 Cosmic Shell is Live!</h1><p>Server is running.</p>');
@@ -168,11 +166,11 @@ app.get('/', (req, res) => {
     }
 });
 
-
 // [Yahan se aage aapka baki saara purana auth helpers aur routes ka code shuru hoga...]
 const isAuthenticated = (req) => {
     return (typeof req.isAuthenticated === 'function' && req.isAuthenticated()) || !!(req.session && req.session.user);
 };
+
 
 const resolveRequestUser = async (req) => {
     if (req.session && req.session.user && req.session.user.username) {
