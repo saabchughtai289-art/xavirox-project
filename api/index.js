@@ -109,11 +109,39 @@ const app = express();
 // Vercel / reverse-proxy settings
 app.set('trust proxy', 1);
 
+// Body parsers (Zaroori hain taaki form ka data read ho sake)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// 📦 6. Production Session Setup with MongoDB (Warning khatam karne ke liye)
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'cosmic_secret_key', 
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI, 
+        ttl: 14 * 24 * 60 * 60 
+    }),
+    cookie: {
+        secure: true, 
+        maxAge: 1000 * 60 * 60 * 24 * 14 
+    }
+}));
+
 const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || (
     process.env.NODE_ENV === 'production'
         ? 'https://xavirox-project.vercel.app/auth/google/callback'
         : 'http://localhost:3000/auth/google/callback'
 );
+
+// 🌌 7. Home Page Route (Cannot GET / hal karne ke liye)
+app.get('/', (req, res) => {
+    if (typeof AUTH_UI !== 'undefined') {
+        res.send(AUTH_UI);
+    } else {
+        res.send("<h1>🌌 Cosmic Shell v91 is Live!</h1><p>Server sahi chal raha hai bhai.</p>");
+    }
+});
 
 // [Yahan se aage aapka baki saara purana auth helpers aur routes ka code shuru hoga...]
 const isAuthenticated = (req) => {
