@@ -1696,23 +1696,17 @@ const requireAuthForWrite = (req, res, next) => {
     return res.status(401).json({ error: 'Login required to perform this action.' });
 };
 
-// Guest mode enforcement: block all state-changing operations
+// Guest mode enforcement: allow browsing UI pages even when unauthenticated.
+// Block only state-changing endpoints.
 app.use((req, res, next) => {
-    // Allow safe/static GETs
+    // Always allow reads
     const isRead = req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS';
     if (isRead) return next();
 
     // Allow auth endpoints (so guests can login/signup)
     const p = req.path || '';
-    const allowed = [
-        '/login',
-        '/signup',
-        '/auth/google/callback'
-    ];
-    if (allowed.includes(p) || p.startsWith('/auth/google')) return next();
+    if (p === '/login' || p === '/signup' || p.startsWith('/auth/')) return next();
 
-    // Otherwise block writes for guests
-    return requireAuthForWrite(req, res, next);
-});
+    // Allow 
 
 module.exports = app;
