@@ -529,6 +529,56 @@ const requireAuthPage = (req, res, next) => {
     next();
 };
 
+// --- [AUTH: SIGNUP (CREATE USER)] ---
+// Serves the signup UI + creates the user document.
+app.get('/signup', async (req, res) => {
+    try {
+        return res.sendFile(path.join(process.cwd(), 'signup.html'));
+    } catch (e) {
+        return res.status(500).send('Signup page render failed.');
+    }
+});
+
+app.post('/signup', async (req, res) => {
+    try {
+        await connectDB();
+
+        const usernameRaw = (req.body?.username ?? '').toString().trim().toLowerCase();
+        const passwordRaw = (req.body?.password ?? '').toString();
+
+        if (!usernameRaw || !passwordRaw) {
+            return res.status(400).send('Username and password are required.');
+        }
+        if (!/^[a-z0-9_]+$/.test(usernameRaw)) {
+            return res.status(400).send('Use only letters, numbers, and underscore.');
+        }
+        if (passwordRaw.length < 6) {
+            return res.status(400).send('Password must be at least 6 characters.');
+        }
+
+        const existing = await User.findOne({ $or: [{ username: usernameRaw }, { email: usernameRaw }] });
+        if (existing) {
+            return res.status(409).send('Username already exists.');
+        }
+
+        const passwordHash = await bcrypt.hash(passwordRaw, 10);
+
+        const user = await new User({
+            username: usernameRaw,
+            password: passwordHash,
+            aura: 100,
+            unlockedAssets: [],
+            bio: 'No vibe announced yet...'
+        }).save();
+
+        // Auto-login could be added, but your UI flow expects redirect to login.
+        return res.redirect('/login');
+    } catch (err) {
+        console.error('Signup failed:', err);
+        return res.status(500).send('Signup error. Please try again.');
+    }
+});
+
 // --- [AUTH: EMAIL/PASSWORD LOGIN] ---
 // Fixes Vercel "Cannot POST /login" by adding the missing route handler.
 app.post('/login', async (req, res) => {
@@ -567,7 +617,7 @@ app.post('/login', async (req, res) => {
             };
         }
 
-        return res.redirect('/');
+        return res.redirect('/dashboard');
     } catch (err) {
         console.error('Login failed:', err);
         // Clean error handling: do NOT crash server
