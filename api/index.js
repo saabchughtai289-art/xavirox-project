@@ -1691,4 +1691,28 @@ const MASTER_UI = (content, user, sectors = [], activeSector = 'Global', allUser
 `;
 }
 
+const requireAuthForWrite = (req, res, next) => {
+    if (isAuthenticated(req)) return next();
+    return res.status(401).json({ error: 'Login required to perform this action.' });
+};
+
+// Guest mode enforcement: block all state-changing operations
+app.use((req, res, next) => {
+    // Allow safe/static GETs
+    const isRead = req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS';
+    if (isRead) return next();
+
+    // Allow auth endpoints (so guests can login/signup)
+    const p = req.path || '';
+    const allowed = [
+        '/login',
+        '/signup',
+        '/auth/google/callback'
+    ];
+    if (allowed.includes(p) || p.startsWith('/auth/google')) return next();
+
+    // Otherwise block writes for guests
+    return requireAuthForWrite(req, res, next);
+});
+
 module.exports = app;
