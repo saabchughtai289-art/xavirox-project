@@ -1,5 +1,4 @@
-- [x] Inspect api/index.js to confirm duplicated Express app block boundaries
-- [ ] Remove the duplicated second Express app block (starting at // 1. Environment variables load karein after the first module.exports = app;)
-- [ ] Ensure only one module.exports = app remains
-- [x] Syntax-check api/index.js locally (node -c)
-- [ ] Run quick health check locally (if possible)
+- [ ] Add GET /signup handler in api/index.js (serve signup.html contents)
+- [ ] Add POST /signup handler in api/index.js (create user with bcrypt hash, handle duplicates)
+- [ ] Re-test /signup flow on Vercel
+
